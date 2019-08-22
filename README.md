@@ -1,7 +1,7 @@
 # tiny-tensorrt
 a simple, efficient, easy-to-use nvidia TensorRT wrapper for cnn,sopport yolov3,openpose,mtcnn etc...
 
-current version is develop with TensorRT 5.1.5.0
+current version is develop with TensorRT 5.1.5.0, and this project is still under development, any issue is welcome :)
 # quick usage with docker
 ```bash
 # register at Nvidia NGC and pull official TensorRT image(https://ngc.nvidia.com/catalog/containers/nvidia:tensorrt)
