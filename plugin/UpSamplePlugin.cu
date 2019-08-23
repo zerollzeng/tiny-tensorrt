@@ -12,11 +12,9 @@ const char* UPSAMPLE_PLUGIN_NAMESPACE = "_TRT";
 const char* UPSAMPLE_PLUGIN_NAME = "UpSamplePlugin_TRT";
 
 UpSamplePlugin::UpSamplePlugin(const float scale) : mScale{scale} {
-    spdlog::info("create UpSamplePlugin instance");
 }
 
 UpSamplePlugin::UpSamplePlugin(const void* data, size_t length) {
-    spdlog::info("create UpSamplePlugin instance from serialData");
     const char *d = reinterpret_cast<const char *>(data), *a = d;
       read(d, mCHW);
       read(d, mDataType);
@@ -30,7 +28,6 @@ UpSamplePlugin::UpSamplePlugin(const void* data, size_t length) {
 }
 
 UpSamplePlugin::~UpSamplePlugin() {
-    spdlog::info("delete UpSamplePlugin instances");
 }
 
 Dims UpSamplePlugin::getOutputDimensions(int index, const Dims* inputs, int nbInputDims) {
@@ -46,7 +43,6 @@ Dims UpSamplePlugin::getOutputDimensions(int index, const Dims* inputs, int nbIn
 }
 
 void UpSamplePlugin::configureWithFormat(const Dims* inputDims, int nbInputs, const Dims* outputDims, int nbOutputs, DataType type, PluginFormat format, int maxBatchSize) {
-    spdlog::info("configureWithFormat...");
     //std::cout << "type " << int(type) << "format " << (int)format <<std::endl;
     assert((type == DataType::kFLOAT || type == DataType::kHALF || type == DataType::kINT8) && format == PluginFormat::kNCHW);
 
@@ -64,10 +60,6 @@ int UpSamplePlugin::initialize() {
     
     mOutputHeight = (int)(inputHeight * mScale);
     mOutputWidth = (int)(inputWidth * mScale);
-
-    spdlog::info("initialize...");
-    spdlog::info("mCHW: {},{},{}",mCHW.d[0],mCHW.d[1],mCHW.d[2]);
-    spdlog::info("mOutputWidth:{},mOutputHeight:{}",mOutputWidth,mOutputHeight);
 
     return 0;
 }

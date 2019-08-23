@@ -1,5 +1,6 @@
 #include "YoloLayerPlugin.hpp"
 #include "utils.h"
+#include "spdlog/spdlog.h"
 #include <cassert>
 
 const char* YOLOLAYER_PLUGIN_VERSION = "01";
@@ -9,7 +10,6 @@ const char* YOLOLAYER_PLUGIN_NAME = "YoloLayerPlugin_TRT";
 
 static constexpr int CHECK_COUNT = 3;
 static constexpr float IGNORE_THRESH = 0.5f;
-static constexpr int CLASS_NUM = 1;
 
 struct YoloKernel
 {
@@ -18,49 +18,60 @@ struct YoloKernel
     float anchors[CHECK_COUNT*2];
 };
 
-// //YOLO 608
-// YoloKernel yolo1 = {
-//     19,
-//     19,
-//     {116,90,  156,198,  373,326}
-// };
-// YoloKernel yolo2 = {
-//     38,
-//     38,
-//     {30,61,  62,45,  59,119}
-// };
-// YoloKernel yolo3 = {
-//     76,
-//     76,
-//     {10,13,  16,30,  33,23}
-// };
+//YOLO 608
+YoloKernel yolo1_608 = {
+    19,
+    19,
+    {116,90,  156,198,  373,326}
+};
+YoloKernel yolo2_608 = {
+    38,
+    38,
+    {30,61,  62,45,  59,119}
+};
+YoloKernel yolo3_608 = {
+    76,
+    76,
+    {10,13,  16,30,  33,23}
+};
 
 // YOLO 416
-YoloKernel yolo1 = {
+YoloKernel yolo1_416 = {
     13,
     13,
     {116,90,  156,198,  373,326}
 };
-YoloKernel yolo2 = {
+YoloKernel yolo2_416 = {
     26,
     26,
     {30,61,  62,45,  59,119}
 };
-YoloKernel yolo3 = {
+YoloKernel yolo3_416 = {
     52,
     52,
     {10,13,  16,30,  33,23}
 };
 
-YoloLayerPlugin::YoloLayerPlugin(int classCount)
+YoloLayerPlugin::YoloLayerPlugin(int classCount, int netSize)
 {
     mClassCount = classCount;
-    mYoloKernel.clear();
-    mYoloKernel.push_back(yolo1);
-    mYoloKernel.push_back(yolo2);
-    mYoloKernel.push_back(yolo3);
-
     mKernelCount = mYoloKernel.size();
+    mYolo3NetSize = netSize;
+    mYoloKernel.clear();
+    switch(netSize) {
+    case 608:
+        mYoloKernel.push_back(yolo1_608);
+        mYoloKernel.push_back(yolo2_608);
+        mYoloKernel.push_back(yolo3_608);
+        break;
+    case 416:
+        mYoloKernel.push_back(yolo1_416);
+        mYoloKernel.push_back(yolo2_416);
+        mYoloKernel.push_back(yolo3_416);
+        break;
+    default:
+        spdlog::error("error: unsupport netSize, make sure it's 416 or 608");
+    }
 }
 
 // create the plugin at runtime from a byte stream
@@ -68,6 +79,7 @@ YoloLayerPlugin::YoloLayerPlugin(const void* data, size_t length)
 {
     const char *d = reinterpret_cast<const char *>(data), *a = d;
     read(d, mClassCount);
+    read(d, mYolo3NetSize);
     read(d, mThreadCount);
     read(d, mKernelCount);
     mYoloKernel.resize(mKernelCount);
@@ -125,13 +137,14 @@ int YoloLayerPlugin::enqueue(int batchSize, const void*const * inputs, void** ou
 
 size_t YoloLayerPlugin::getSerializationSize() const
 {  
-    return sizeof(mClassCount) + sizeof(mThreadCount) + sizeof(mKernelCount) + sizeof(YoloKernel) * mYoloKernel.size();
+    return sizeof(mClassCount) + sizeof(mYolo3NetSize) + sizeof(mThreadCount) + sizeof(mKernelCount) + sizeof(YoloKernel) * mYoloKernel.size();
 }
 
 void YoloLayerPlugin::serialize(void* buffer) const
 {
     char* d = static_cast<char*>(buffer), *a = d;
     write(d, mClassCount);
+    write(d, mYolo3NetSize);
     write(d, mThreadCount);
     write(d, mKernelCount);
     auto kernelSize = mKernelCount*sizeof(YoloKernel);
@@ -154,7 +167,7 @@ void YoloLayerPlugin::destroy() {
 }
 
 IPluginV2* YoloLayerPlugin::clone() const {
-    return new YoloLayerPlugin(mClassCount);
+    return new YoloLayerPlugin(mClassCount,mYolo3NetSize);
 }
 
 const char* YoloLayerPlugin::getPluginNamespace() const {

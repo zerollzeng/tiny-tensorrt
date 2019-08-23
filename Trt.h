@@ -1,10 +1,11 @@
 /*
  * @Description: In User Settings Edit
  * @Author: your name
- * @Date: 2019-08-21 14:06:47
- * @LastEditTime: 2019-08-21 17:04:19
+ * @Date: 2019-08-23 14:26:05
+ * @LastEditTime: 2019-08-23 14:38:00
  * @LastEditors: Please set LastEditors
  */
+
 #ifndef TRT_HPP
 #define TRT_HPP
 
@@ -16,10 +17,8 @@
 #include <NvInfer.h>
 #include "NvCaffeParser.h"
 
-#include "plugin/PluginFactory.hpp"
 
-
-class Logger : public nvinfer1::ILogger {
+class TrtLogger : public nvinfer1::ILogger {
     void log(Severity severity, const char* msg) override
     {
         // suppress info-level messages
@@ -33,9 +32,21 @@ enum class RUN_MODE {
     FLOAT16 = 1,    
     INT8 = 2
 };
+
+struct TrtPluginParams {
+    // yolo-det layer
+    int yoloClassNum = 1; 
+    int yolo3NetSize = 416; // 416 or 608
+
+    // upsample layer
+    int upsampleScale = 2;
+};
+
+class PluginFactory;
+
 class Trt {
 public:
-    Trt(int yoloClassNum = 1);
+    Trt(TrtPluginParams* param = nullptr);
 
     ~Trt();
 
@@ -100,7 +111,7 @@ protected:
     void SaveEngine(std::string fileName);
 
 protected:
-    Logger mLogger;
+    TrtLogger mLogger;
 
     // tensorrt run mode, see RUN_MODE, only support fp32 now.
     RUN_MODE mRunMode;

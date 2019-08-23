@@ -1,3 +1,10 @@
+/*
+ * @Description: yolo-det layer
+ * @Author: zerollzeng
+ * @Date: 2019-08-23 11:09:26
+ * @LastEditTime: 2019-08-23 12:18:15
+ * @LastEditors: Please set LastEditors
+ */
 #ifndef YOLO_LAYER_PLUGIN_HPP
 #define YOLO_LAYER_PLUGIN_HPP
 
@@ -19,7 +26,7 @@ using namespace plugin;
 class YoloLayerPlugin : public nvinfer1::IPluginV2
 {
 public:
-    YoloLayerPlugin(int classCount);
+    YoloLayerPlugin(int classCount, int netSize);
 
     // create the plugin at runtime from a byte stream
     YoloLayerPlugin(const void *data, size_t length);
@@ -76,6 +83,7 @@ public:
     
 private:
     int mClassCount;
+    int mYolo3NetSize;
     int mKernelCount;
     std::vector<YoloKernel> mYoloKernel;
     int mThreadCount = 512;

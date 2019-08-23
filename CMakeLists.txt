@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.0)
-set(CMAKE_CXX_FLAGS "-std=c++11")
+
 
 project(tinytrt)
+
+set(CMAKE_CXX_FLAGS "-std=c++11")
 
 set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
@@ -31,3 +33,5 @@ set_target_properties(tinytrt PROPERTIES POSITION_INDEPENDENT_CODE ON)
 # target_link_libraries(tinytrt nvparsers)
 # target_link_libraries(tinytrt nvcaffe_parser)
 # target_link_libraries(tinytrt ${CUDART})
+
+add_subdirectory(sample/yolov3)

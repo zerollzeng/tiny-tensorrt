@@ -1,16 +1,27 @@
-/* Class Plugin Factory Definitions */
-// caffe parser plugin implementation
+/*
+ * @Description: In User Settings Edit
+ * @Author: zerollzeng
+ * @Date: 2019-08-23 11:55:03
+ * @LastEditTime: 2019-08-23 14:46:24
+ * @LastEditors: Please set LastEditors
+ */
 
 #include "plugin/PluginFactory.hpp"
 #include "plugin/PRELUPlugin.hpp"
 #include "plugin/UpSamplePlugin.hpp"
 #include "plugin/YoloLayerPlugin.hpp"
-
+#include "spdlog/spdlog.h"
 #include <algorithm>
 #include <cassert>
 
-PluginFactory::PluginFactory(int yoloClassNum) {
-    mYoloClassNum = yoloClassNum;
+PluginFactory::PluginFactory(TrtPluginParams params) {
+    spdlog::info("create plugin factory");
+    mYoloClassNum = params.yoloClassNum;
+    mYolo3NetSize = params.yolo3NetSize;
+
+    mUpsampleScale = params.upsampleScale;
+    spdlog::info("yolo3 params: class: {}, netSize: {} ",mYoloClassNum,mYolo3NetSize);
+    spdlog::info("upsample params: scale: {}",mUpsampleScale);
 }
 
 bool PluginFactory::isPluginV2(const char* layerName) 
@@ -34,10 +45,10 @@ IPluginV2* PluginFactory::createPlugin(const char *layerName, const Weights* wei
         return (IPluginV2*)(new PReLUPlugin(weights, nbWeights));
     } 
     else if(strName.find("upsample") != std::string::npos) {
-        return (IPluginV2*)(new UpSamplePlugin(2));
+        return (IPluginV2*)(new UpSamplePlugin(mUpsampleScale));
     }
     else if(strName.find("yolo-det") != std::string::npos) {
-        return (IPluginV2*)(new YoloLayerPlugin(mYoloClassNum));
+        return (IPluginV2*)(new YoloLayerPlugin(mYoloClassNum,mYolo3NetSize));
     }
     else
     {

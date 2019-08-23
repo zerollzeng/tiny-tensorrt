@@ -2,13 +2,14 @@
  * @Description: In User Settings Edit
  * @Author: your name
  * @Date: 2019-08-21 14:06:38
- * @LastEditTime: 2019-08-22 17:20:44
+ * @LastEditTime: 2019-08-23 14:33:38
  * @LastEditors: Please set LastEditors
  */
 #include "Trt.h"
 #include "utils.h"
 #include "spdlog/spdlog.h"
 #include "Int8EntropyCalibrator.h"
+#include "plugin/PluginFactory.hpp"
 
 #include <string>
 #include <vector>
@@ -20,13 +21,22 @@
 #include "NvInfer.h"
 #include "NvCaffeParser.h"
 
-Trt::Trt(int yoloClassNum) {
-    mPluginFactory = new PluginFactory(yoloClassNum);
+
+
+Trt::Trt(TrtPluginParams* params /*= nullptr */) {
+    if(params == nullptr) {
+        TrtPluginParams p;
+        mPluginFactory = new PluginFactory(p);
+    } else {
+        mPluginFactory = new PluginFactory(*params);
+    }
+    
 }
 
 Trt::~Trt() {
     if(mPluginFactory != nullptr) {
         delete mPluginFactory;
+        mPluginFactory = nullptr;
     }
 }
 
