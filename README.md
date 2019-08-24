@@ -38,6 +38,6 @@ see [tensorrt-zoo](https://github.com/zerollzeng/tensorrt-zoo), it implement som
 
 
 # Acknowledgement
-this project is highly motivated by [lewes6369/tensorRTWrapper](https://github.com/lewes6369/tensorRTWrapper), he did a great 
+this project is highly motivated by [lewes6369/tensorRTWrapper](https://github.com/lewes6369/tensorRTWrapper) 
 
 
