@@ -34,4 +34,3 @@ set_target_properties(tinytrt PROPERTIES POSITION_INDEPENDENT_CODE ON)
 # target_link_libraries(tinytrt nvcaffe_parser)
 # target_link_libraries(tinytrt ${CUDART})
 
-add_subdirectory(sample/yolov3)
