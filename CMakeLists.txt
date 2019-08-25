@@ -9,7 +9,7 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 
 find_package(CUDA REQUIRED)
 
-include_directories(plugin)
+# include_directories(plugin)
 include_directories(spdlog)
 include_directories(./)
 # include_directories(${CUDA_INCLUDE_DIRS})

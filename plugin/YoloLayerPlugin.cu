@@ -8,16 +8,6 @@ const char* YOLOLAYER_PLUGIN_TYPE = "YoloLayerPlugin";
 const char* YOLOLAYER_PLUGIN_NAMESPACE = "_TRT";
 const char* YOLOLAYER_PLUGIN_NAME = "YoloLayerPlugin_TRT";
 
-static constexpr int CHECK_COUNT = 3;
-static constexpr float IGNORE_THRESH = 0.5f;
-
-struct YoloKernel
-{
-    int width;
-    int height;
-    float anchors[CHECK_COUNT*2];
-};
-
 //YOLO 608
 YoloKernel yolo1_608 = {
     19,
@@ -52,6 +42,8 @@ YoloKernel yolo3_416 = {
     {10,13,  16,30,  33,23}
 };
 
+using namespace nvinfer1;
+
 YoloLayerPlugin::YoloLayerPlugin(int classCount, int netSize)
 {
     mClassCount = classCount;
@@ -80,7 +72,6 @@ YoloLayerPlugin::YoloLayerPlugin(const void* data, size_t length)
     const char *d = reinterpret_cast<const char *>(data), *a = d;
     read(d, mClassCount);
     read(d, mYolo3NetSize);
-    read(d, mThreadCount);
     read(d, mKernelCount);
     mYoloKernel.resize(mKernelCount);
     auto kernelSize = mKernelCount*sizeof(YoloKernel);
@@ -137,7 +128,7 @@ int YoloLayerPlugin::enqueue(int batchSize, const void*const * inputs, void** ou
 
 size_t YoloLayerPlugin::getSerializationSize() const
 {  
-    return sizeof(mClassCount) + sizeof(mYolo3NetSize) + sizeof(mThreadCount) + sizeof(mKernelCount) + sizeof(YoloKernel) * mYoloKernel.size();
+    return sizeof(mClassCount) + sizeof(mYolo3NetSize) + sizeof(mKernelCount) + sizeof(YoloKernel) * mYoloKernel.size();
 }
 
 void YoloLayerPlugin::serialize(void* buffer) const
@@ -145,7 +136,6 @@ void YoloLayerPlugin::serialize(void* buffer) const
     char* d = static_cast<char*>(buffer), *a = d;
     write(d, mClassCount);
     write(d, mYolo3NetSize);
-    write(d, mThreadCount);
     write(d, mKernelCount);
     auto kernelSize = mKernelCount*sizeof(YoloKernel);
     memcpy(d,mYoloKernel.data(),kernelSize);
@@ -347,7 +337,7 @@ void YoloLayerPlugin::forwardGpu(const float *const * inputs,float * output,cuda
         const auto& yolo = mYoloKernel[i];
         numElem = yolo.width*yolo.height*batchSize;
         CUDA_CHECK(cudaMemcpy(devAnchor,yolo.anchors,AnchorLen,cudaMemcpyHostToDevice));
-        CalDetection<<< (yolo.width*yolo.height*batchSize + mThreadCount - 1) / mThreadCount, mThreadCount>>>
+        CalDetection<<< (yolo.width*yolo.height*batchSize + 512 - 1) / 512, 512>>>
                 (inputs[i],output, numElem, yolo.width, yolo.height, (float *)devAnchor, mClassCount ,outputElem);
     }
 

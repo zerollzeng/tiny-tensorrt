@@ -6,7 +6,7 @@
  * @LastEditors: Please set LastEditors
  */
 
-#include "plugin/PluginFactory.hpp"
+#include "plugin/PluginFactory.h"
 #include "plugin/PRELUPlugin.hpp"
 #include "plugin/UpSamplePlugin.hpp"
 #include "plugin/YoloLayerPlugin.hpp"

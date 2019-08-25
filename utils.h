@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <algorithm>
+#include <numeric>
 #include "cuda_runtime.h"
 #include <NvInfer.h>
 

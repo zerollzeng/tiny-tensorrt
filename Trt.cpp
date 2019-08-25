@@ -9,7 +9,7 @@
 #include "utils.h"
 #include "spdlog/spdlog.h"
 #include "Int8EntropyCalibrator.h"
-#include "plugin/PluginFactory.hpp"
+#include "plugin/PluginFactory.h"
 
 #include <string>
 #include <vector>

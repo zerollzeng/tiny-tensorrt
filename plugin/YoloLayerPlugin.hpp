@@ -12,6 +12,7 @@
 #include <iostream>
 #include <map>
 #include <cuda_runtime_api.h>
+#include <vector>
 
 #include "NvInfer.h"
 #include "NvInferPlugin.h"
@@ -19,8 +20,15 @@
 #include "PRELUKernel.cuh"
 #include "utils.h"
 
-using namespace nvinfer1;
-using namespace plugin;
+static constexpr int CHECK_COUNT = 3;
+static constexpr float IGNORE_THRESH = 0.5f;
+
+struct YoloKernel
+{
+    int width;
+    int height;
+    float anchors[CHECK_COUNT*2];
+};
 
 
 class YoloLayerPlugin : public nvinfer1::IPluginV2
@@ -37,13 +45,13 @@ public:
         return 1;
     }
 
-    virtual Dims getOutputDimensions(int index, const Dims* inputs, int nbInputDims) override;
+    virtual nvinfer1::Dims getOutputDimensions(int index, const nvinfer1::Dims* inputs, int nbInputDims) override;
 
-    virtual bool supportsFormat(DataType type, PluginFormat format) const override {
-        return type == DataType::kFLOAT && format == PluginFormat::kNCHW;
+    virtual bool supportsFormat(nvinfer1::DataType type, nvinfer1::PluginFormat format) const override {
+        return type == nvinfer1::DataType::kFLOAT && format == nvinfer1::PluginFormat::kNCHW;
     }
 
-    virtual void configureWithFormat(const Dims* inputDims, int nbInputs, const Dims* outputDims, int nbOutputs, DataType type, PluginFormat format, int maxBatchSize) override {
+    virtual void configureWithFormat(const nvinfer1::Dims* inputDims, int nbInputs, const nvinfer1::Dims* outputDims, int nbOutputs, nvinfer1::DataType type, nvinfer1::PluginFormat format, int maxBatchSize) override {
 
     }
     
@@ -69,7 +77,7 @@ public:
     
     virtual void destroy();
     
-    virtual IPluginV2* clone() const override;
+    virtual nvinfer1::IPluginV2* clone() const override;
 
     virtual void setPluginNamespace(const char* pluginNamespace) override {
 
@@ -86,7 +94,6 @@ private:
     int mYolo3NetSize;
     int mKernelCount;
     std::vector<YoloKernel> mYoloKernel;
-    int mThreadCount = 512;
 
     //cpu
     void* mInputBuffer  {nullptr}; 
@@ -104,13 +111,13 @@ public:
     virtual const char* getPluginVersion() const override;
 
     // return a list of fields that needs to be passed to createPlugin
-    virtual const PluginFieldCollection* getFieldNames() override;
+    virtual const nvinfer1::PluginFieldCollection* getFieldNames() override;
 
     // return nullptr in case of error
-    virtual IPluginV2* createPlugin(const char* name, const PluginFieldCollection *fc) override;
+    virtual nvinfer1::IPluginV2* createPlugin(const char* name, const nvinfer1::PluginFieldCollection *fc) override;
 
     // Called during deserialization of plugin layer. Return a plugin object.
-    virtual IPluginV2* deserializePlugin(const char* name, const void* serialData, size_t serialLenth) override;
+    virtual nvinfer1::IPluginV2* deserializePlugin(const char* name, const void* serialData, size_t serialLenth) override;
 
     // Set the namespace of the plugin creator based on the plugin library it belongs to. This can be set while registering the plugin creator
     virtual void setPluginNamespace(const char* pluginNamespace) override;
