@@ -5,7 +5,7 @@ project(tinytrt)
 
 set(CMAKE_CXX_FLAGS "-std=c++11")
 
-set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib CACHE PATH "")
+# set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib CACHE PATH "")
 
 find_package(CUDA REQUIRED)
 
