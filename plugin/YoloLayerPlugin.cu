@@ -47,7 +47,6 @@ using namespace nvinfer1;
 YoloLayerPlugin::YoloLayerPlugin(int classCount, int netSize)
 {
     mClassCount = classCount;
-    mKernelCount = mYoloKernel.size();
     mYolo3NetSize = netSize;
     mYoloKernel.clear();
     switch(netSize) {
@@ -64,6 +63,7 @@ YoloLayerPlugin::YoloLayerPlugin(int classCount, int netSize)
     default:
         spdlog::error("error: unsupport netSize, make sure it's 416 or 608");
     }
+    mKernelCount = mYoloKernel.size();
 }
 
 // create the plugin at runtime from a byte stream
