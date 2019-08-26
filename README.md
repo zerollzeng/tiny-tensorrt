@@ -17,11 +17,10 @@ current version is develop with TensorRT 5.1.5.0, and this project is still unde
 ```bash
 # register at Nvidia NGC and pull official TensorRT image(https://ngc.nvidia.com/catalog/containers/nvidia:tensorrt)
 docker pull nvcr.io/nvidia/tensorrt:19.07-py3
-mkdir build
-mkdir lib
-cd build && cmake .. && make
+# build in docker
+mkdir build && cd build && cmake .. && make
 ```
-then you can intergrate it into your own project with libtinytrt.so in ./lib and Trt.h.
+then you can intergrate it into your own project with libtinytrt.so and Trt.h.
 
 # How to use tiny-tensorrt
 see [tensorrt-zoo](https://github.com/zerollzeng/tensorrt-zoo), it implement some common computer vision model with tiny tensor_rt
@@ -32,12 +31,16 @@ see [tensorrt-zoo](https://github.com/zerollzeng/tensorrt-zoo), it implement som
 - PRELU, under test with openpose.
 
 # Roadmap
+- [x] engine serialization
 - [x] int8 support
-- [ ] fix upsample bug
 - [ ] support more model and layer
+- [ ] maybe a handing calibrator data creating tool
+- [ ] test in nvidia p4
 
 
 # Acknowledgement
-this project is highly motivated by [lewes6369/tensorRTWrapper](https://github.com/lewes6369/tensorRTWrapper) 
+this project is highly motivated by [lewes6369/tensorRTWrapper](https://github.com/lewes6369/tensorRTWrapper) and [lewes6369/TensorRT-Yolov3](https://github.com/lewes6369/TensorRT-Yolov3), I make use of his upsample and yolo-det plugin with slightly optimization.
+
+and I use [spdlog](https://github.com/gabime/spdlog) for some fancy log output, it's very lightweight for intergrate. 
 
 
