@@ -39,7 +39,7 @@ struct TrtPluginParams {
     int yolo3NetSize = 416; // 416 or 608
 
     // upsample layer
-    int upsampleScale = 2;
+    float upsampleScale = 2;
 };
 
 class PluginFactory;

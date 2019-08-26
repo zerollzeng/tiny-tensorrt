@@ -40,7 +40,7 @@ private:
     int mYolo3NetSize;
 
     // upsample layer params
-    int mUpsampleScale;
+    float mUpsampleScale;
 };
 
 
