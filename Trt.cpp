@@ -20,6 +20,7 @@
 
 #include "NvInfer.h"
 #include "NvCaffeParser.h"
+#include "NvOnnxParser.h"
 
 
 
@@ -49,12 +50,28 @@ void Trt::CreateEngine(const std::string& prototxt,
                        RUN_MODE mode) {
     mRunMode = mode;
     if(!DeserializeEngine(engineFile)) {
-        BuildEngine(prototxt,caffeModel,engineFile,outputBlobName,calibratorData,maxBatchSize);
+        if(!BuildEngine(prototxt,caffeModel,engineFile,outputBlobName,calibratorData,maxBatchSize)) {
+            spdlog::error("error: could not deserialize or build engine");
+            return;
+        }
     }
     spdlog::info("create execute context and malloc device memory...");
     InitEngine();
     // Notice: close profiler
     //mContext->setProfiler(mProfiler);
+}
+
+void Trt::CreateEngine(const std::string& onnxModelpath,
+                       const std::string& engineFile,
+                       int maxBatchSize) {
+    if(!DeserializeEngine(engineFile)) {
+        if(!BuildEngine(onnxModelpath,engineFile,maxBatchSize)) {
+            spdlog::error("error: could not deserialize or build engine");
+            return;
+        }
+    }
+    spdlog::info("create execute context and malloc device memory...");
+    InitEngine();
 }
 
 void Trt::Forward(const cudaStream_t& stream) {
@@ -150,7 +167,7 @@ bool Trt::BuildEngine(const std::string& prototxt,
                         const std::vector<std::vector<float>>& calibratorData,
                         int maxBatchSize) {
         mBatchSize = maxBatchSize;
-        spdlog::info("create engine by build...");
+        spdlog::info("build caffe engine with {} and {}", prototxt, caffeModel);
         nvinfer1::IBuilder* builder = nvinfer1::createInferBuilder(mLogger);
         assert(builder != nullptr);
         nvinfer1::INetworkDefinition* network = builder->createNetwork();
@@ -227,7 +244,7 @@ bool Trt::BuildEngine(const std::string& prototxt,
         spdlog::info("build engine...");
         mEngine = builder -> buildCudaEngine(*network);
         assert(mEngine != nullptr);
-        spdlog::info("serialize engine to file...");
+        spdlog::info("serialize engine to {}", engineFile);
         SaveEngine(engineFile);
         
         builder->destroy();
@@ -238,6 +255,31 @@ bool Trt::BuildEngine(const std::string& prototxt,
             calibrator = nullptr;
         }
         return true;
+}
+
+bool Trt::BuildEngine(const std::string& onnxModelpath,
+                      const std::string& engineFile,
+                      int maxBatchSize) {
+    mBatchSize = maxBatchSize;
+    spdlog::info("build onnx engine from {}...",onnxModelpath);
+    nvinfer1::IBuilder* builder = nvinfer1::createInferBuilder(mLogger);
+    assert(builder != nullptr);
+    nvinfer1::INetworkDefinition* network = builder->createNetwork();
+    assert(network != nullptr);
+    nvonnxparser::IParser* parser = nvonnxparser::createParser(*network, mLogger);
+    if(!parser->parseFromFile(onnxModelpath.c_str(), static_cast<int>(ILogger::Severity::kINFO))) {
+        spdlog::error("error: could not parse onnx engine");
+        return false;
+    }
+    mEngine = builder->buildCudaEngine(*network);
+    assert(mEngine != nullptr);
+    spdlog::info("serialize engine to {}", engineFile);
+    SaveEngine(engineFile);
+
+    builder->destroy();
+    network->destroy();
+    parser->destroy();
+    return true;
 }
 
 void Trt::InitEngine() {
@@ -262,7 +304,17 @@ void Trt::InitEngine() {
         mBindingName[i] = name;
         mBindingDims[i] = dims;
         mBindingDataType[i] = dtype;
+        if(mEngine->bindingIsInput(i)) {
+            spdlog::info("input: ");
+        } else {
+            spdlog::info("output: ");
+        }
         spdlog::info("binding index: {}, name: {}, size in byte: {}",i,name,totalSize);
+        spdlog::info("binding dims with {} dimemsion",dims.nbDims);
+        for(int j=0;j<dims.nbDims;j++) {
+            std::cout << dims.d[j] << " x ";
+        }
+        std::cout << "\b\b  "<< std::endl;
         mBinding[i] = safeCudaMalloc(totalSize);
         if(mEngine->bindingIsInput(i)) {
             mInputSize++;

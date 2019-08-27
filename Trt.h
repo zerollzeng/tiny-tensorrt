@@ -54,7 +54,7 @@ public:
      * description: create engine from caffe prototxt and caffe model
      * @prototxt: caffe prototxt
      * @caffemodel: caffe model contain network parameters
-     * @saveEngine: serialzed engine file, if it does not exit, will build engine from
+     * @engineFile: serialzed engine file, if it does not exit, will build engine from
      *             prototxt and caffe model, which take about 1 minites, otherwise will
      *             deserialize enfine from engine file, which is very fast.
      * @outputBlobName: specify which layer is network output, find it in caffe prototxt
@@ -63,11 +63,15 @@ public:
      */
     void CreateEngine(const std::string& prototxt, 
                         const std::string& caffeModel,
-                        const std::string& saveEngine,
+                        const std::string& engineFile,
                         const std::vector<std::string>& outputBlobName,
                         const std::vector<std::vector<float>>& calibratorData,
                         int maxBatchSize,
                         RUN_MODE mode);
+    
+    void CreateEngine(const std::string& onnxModelpath,
+                      const std::string& engineFile,
+                      int maxBatchSize);
 
     void Forward(const cudaStream_t& stream);
 
@@ -100,6 +104,10 @@ protected:
                     const std::vector<std::string>& outputBlobName,
                     const std::vector<std::vector<float>>& calibratorData,
                     int maxBatchSize);
+
+    bool BuildEngine(const std::string& onnxModelpath,
+                     const std::string& engineFile,
+                     int maxBatchSize);
     /**
      * description: Init resource such as device memory, must implement it
      */

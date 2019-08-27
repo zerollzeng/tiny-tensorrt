@@ -31,9 +31,14 @@ see [tensorrt-zoo](https://github.com/zerollzeng/tensorrt-zoo), it implement som
 - PRELU, under test with openpose.
 
 # Roadmap
+- [x] caffe model support
+- [x] PRELU support
+- [x] upsample support
 - [x] engine serialization
-- [x] int8 support
-- [ ] support more model and layer
+- [x] caffe model int8 support
+- [x] onnx support
+- [ ] support more model and layer --working on
+- [ ] python api support ---working on
 - [ ] maybe a handing calibrator data creating tool
 - [ ] test in nvidia p4
 
