@@ -27,12 +27,6 @@ class TrtLogger : public nvinfer1::ILogger {
     }
 };
 
-enum class RUN_MODE {
-    FLOAT32 = 0,
-    FLOAT16 = 1,    
-    INT8 = 2
-};
-
 struct TrtPluginParams {
     // yolo-det layer
     int yoloClassNum = 1; 
@@ -46,7 +40,9 @@ class PluginFactory;
 
 class Trt {
 public:
-    Trt(TrtPluginParams* param = nullptr);
+    Trt();
+
+    Trt(TrtPluginParams params);
 
     ~Trt();
 
@@ -67,11 +63,13 @@ public:
                         const std::vector<std::string>& outputBlobName,
                         const std::vector<std::vector<float>>& calibratorData,
                         int maxBatchSize,
-                        RUN_MODE mode);
+                        int mode);
     
     void CreateEngine(const std::string& onnxModelpath,
                       const std::string& engineFile,
                       int maxBatchSize);
+
+    void Forward();
 
     void Forward(const cudaStream_t& stream);
 
@@ -80,19 +78,27 @@ public:
      */
     void PrintTime();
 
-    void CopyFromHostToDevice(const void* pData, int index,const cudaStream_t& stream);
+    void DataTransfer(std::vector<float>& data, int bindIndex, bool isHostToDevice);
 
-    void CopyFromDeviceToHost(void* pData, int index,const  cudaStream_t& stream);
+    void DataTransfer(std::vector<float>& data, int bindIndex, bool isHostToDevice, cudaStream_t& stream);
+
+    void CopyFromHostToDevice(const std::vector<float>& input, int bindIndex);
+
+    void CopyFromDeviceToHost(std::vector<float>& output, int bindIndex);
+
+    void CopyFromHostToDevice(const std::vector<float>& input, int bindIndex,const cudaStream_t& stream);
+
+    void CopyFromDeviceToHost(std::vector<float>& output, int bindIndex,const cudaStream_t& stream);
 
     int GetMaxBatchSize();
 
-    void* GetBindingPtr(int index) const;
+    void* GetBindingPtr(int bindIndex) const;
 
-    size_t GetBindingSize(int index) const;
+    size_t GetBindingSize(int bindIndex) const;
 
-    nvinfer1::Dims GetBindingDims(int index) const;
+    nvinfer1::Dims GetBindingDims(int bindIndex) const;
 
-    nvinfer1::DataType GetBindingDataType(int index) const;
+    nvinfer1::DataType GetBindingDataType(int bindIndex) const;
 
 protected:
 
@@ -116,13 +122,13 @@ protected:
     /**
      * description: save engine to engine file
      */
-    void SaveEngine(std::string fileName);
+    void SaveEngine(const std::string& fileName);
 
 protected:
     TrtLogger mLogger;
 
-    // tensorrt run mode, see RUN_MODE, only support fp32 now.
-    RUN_MODE mRunMode;
+    // tensorrt run mode, see int, only support fp32 now.
+    int mRunMode;
 
     nvinfer1::ICudaEngine* mEngine;
 

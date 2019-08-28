@@ -22,16 +22,13 @@
 #include "NvCaffeParser.h"
 #include "NvOnnxParser.h"
 
+Trt::Trt() {
+    TrtPluginParams params;
+    mPluginFactory = new PluginFactory(params);
+}
 
-
-Trt::Trt(TrtPluginParams* params /*= nullptr */) {
-    if(params == nullptr) {
-        TrtPluginParams p;
-        mPluginFactory = new PluginFactory(p);
-    } else {
-        mPluginFactory = new PluginFactory(*params);
-    }
-    
+Trt::Trt(TrtPluginParams params) {
+    mPluginFactory = new PluginFactory(params);
 }
 
 Trt::~Trt() {
@@ -47,7 +44,7 @@ void Trt::CreateEngine(const std::string& prototxt,
                        const std::vector<std::string>& outputBlobName,
                        const std::vector<std::vector<float>>& calibratorData,
                        int maxBatchSize,
-                       RUN_MODE mode) {
+                       int mode) {
     mRunMode = mode;
     if(!DeserializeEngine(engineFile)) {
         if(!BuildEngine(prototxt,caffeModel,engineFile,outputBlobName,calibratorData,maxBatchSize)) {
@@ -74,69 +71,91 @@ void Trt::CreateEngine(const std::string& onnxModelpath,
     InitEngine();
 }
 
+void Trt::Forward() {
+    mContext->execute(mBatchSize, &mBinding[0]);
+}
+
 void Trt::Forward(const cudaStream_t& stream) {
-    if(stream != 0) {
-        mContext->enqueue(mBatchSize, &mBinding[0], stream, nullptr);
-    } else {
-        mContext->execute(mBatchSize,&mBinding[0]);
-    }
+    mContext->enqueue(mBatchSize, &mBinding[0], stream, nullptr);
 }
 
 void Trt::PrintTime() {
-    
+
 }
 
-void Trt::CopyFromHostToDevice(const void* pData, int index, const cudaStream_t& stream) {
-    if(stream != 0) {
-        CUDA_CHECK(cudaMemcpyAsync(mBinding[index], pData, mBindingSize[index], cudaMemcpyHostToDevice, stream));
+void Trt::DataTransfer(std::vector<float>& data, int bindIndex, bool isHostToDevice) {
+    assert(data.size()*sizeof(float) == mBindingSize[bindIndex]);
+    if(isHostToDevice) {
+        CUDA_CHECK(cudaMemcpy(mBinding[bindIndex], data.data(), mBindingSize[bindIndex], cudaMemcpyHostToDevice));
     } else {
-        CUDA_CHECK(cudaMemcpy(mBinding[index], pData, mBindingSize[index], cudaMemcpyHostToDevice));
+        CUDA_CHECK(cudaMemcpy(data.data(), mBinding[bindIndex], mBindingSize[bindIndex], cudaMemcpyDeviceToHost));
     }
 }
 
-void Trt::CopyFromDeviceToHost(void* pData, int index, const cudaStream_t& stream) {
-    if(stream != 0) {
-        CUDA_CHECK(cudaMemcpyAsync(pData, mBinding[index], mBindingSize[index], cudaMemcpyDeviceToHost, stream));
+void Trt::DataTransfer(std::vector<float>& data, int bindIndex, bool isHostToDevice, cudaStream_t& stream) {
+    assert(data.size()*sizeof(float) == mBindingSize[bindIndex]);
+    if(isHostToDevice) {
+        CUDA_CHECK(cudaMemcpyAsync(mBinding[bindIndex], data.data(), mBindingSize[bindIndex], cudaMemcpyHostToDevice, stream));
     } else {
-        CUDA_CHECK(cudaMemcpy(pData, mBinding[index], mBindingSize[index], cudaMemcpyDeviceToHost));
+        CUDA_CHECK(cudaMemcpyAsync(data.data(), mBinding[bindIndex], mBindingSize[bindIndex], cudaMemcpyDeviceToHost, stream));
     }
+}
+
+void Trt::CopyFromHostToDevice(const std::vector<float>& input, int bindIndex) {
+    CUDA_CHECK(cudaMemcpy(mBinding[bindIndex], input.data(), mBindingSize[bindIndex], cudaMemcpyHostToDevice));
+}
+
+void Trt::CopyFromHostToDevice(const std::vector<float>& input, int bindIndex, const cudaStream_t& stream) {
+    CUDA_CHECK(cudaMemcpyAsync(mBinding[bindIndex], input.data(), mBindingSize[bindIndex], cudaMemcpyHostToDevice, stream));
+}
+
+void Trt::CopyFromDeviceToHost(std::vector<float>& output, int bindIndex) {
+    CUDA_CHECK(cudaMemcpy(output.data(), mBinding[bindIndex], mBindingSize[bindIndex], cudaMemcpyDeviceToHost));
+}
+
+void Trt::CopyFromDeviceToHost(std::vector<float>& output, int bindIndex, const cudaStream_t& stream) {
+    CUDA_CHECK(cudaMemcpyAsync(output.data(), mBinding[bindIndex], mBindingSize[bindIndex], cudaMemcpyDeviceToHost, stream));
 }
 
 int Trt::GetMaxBatchSize() {
     return mBatchSize;
 }
 
-void* Trt::GetBindingPtr(int index) const {
-    return mBinding[index];
+void* Trt::GetBindingPtr(int bindIndex) const {
+    return mBinding[bindIndex];
 }
 
-size_t Trt::GetBindingSize(int index) const {
-    return mBindingSize[index];
+size_t Trt::GetBindingSize(int bindIndex) const {
+    return mBindingSize[bindIndex];
 }
 
-nvinfer1::Dims Trt::GetBindingDims(int index) const {
-    return mBindingDims[index];
+nvinfer1::Dims Trt::GetBindingDims(int bindIndex) const {
+    return mBindingDims[bindIndex];
 }
 
-nvinfer1::DataType Trt::GetBindingDataType(int index) const {
-    return mBindingDataType[index];
+nvinfer1::DataType Trt::GetBindingDataType(int bindIndex) const {
+    return mBindingDataType[bindIndex];
 }
 
-void Trt::SaveEngine(std::string fileName) {
-    if(mEngine) {
+void Trt::SaveEngine(const std::string& fileName) {
+    if(fileName == "") {
+        spdlog::warn("empty engine file name, skip save");
+        return;
+    }
+    if(mEngine != nullptr) {
+        spdlog::info("save engine to {}...",fileName);
         nvinfer1::IHostMemory* data = mEngine->serialize();
         std::ofstream file;
         file.open(fileName,std::ios::binary | std::ios::out);
         if(!file.is_open()) {
-            std::cout << "read create engine file" << fileName <<" failed" << std::endl;
+            spdlog::error("read create engine file {} failed",fileName);
             return;
         }
         file.write((const char*)data->data(), data->size());
         file.close();
         data->destroy();
-        std::cout << "save engine to: " << fileName << " done" << std::endl;
     } else {
-        std::cout << "save engine failed" << std::endl;
+        spdlog::error("engine is empty, save engine failed");
     }
 }
 
@@ -204,7 +223,7 @@ bool Trt::BuildEngine(const std::string& prototxt,
         }
         spdlog::info("parse network done");
         Int8EntropyCalibrator* calibrator = nullptr; // NOTE: memory leak here
-        if (mRunMode == RUN_MODE::INT8)
+        if (mRunMode == 2)
         {
             spdlog::info("set int8 inference mode");
             if (!builder->platformHasFastInt8())
@@ -221,7 +240,7 @@ bool Trt::BuildEngine(const std::string& prototxt,
             builder->setInt8Calibrator(calibrator);
         }
         
-        if (mRunMode == RUN_MODE::FLOAT16)
+        if (mRunMode == 1)
         {
             spdlog::info("setFp16Mode");
             if (!builder->platformHasFastFp16()) {
@@ -309,7 +328,7 @@ void Trt::InitEngine() {
         } else {
             spdlog::info("output: ");
         }
-        spdlog::info("binding index: {}, name: {}, size in byte: {}",i,name,totalSize);
+        spdlog::info("binding bindIndex: {}, name: {}, size in byte: {}",i,name,totalSize);
         spdlog::info("binding dims with {} dimemsion",dims.nbDims);
         for(int j=0;j<dims.nbDims;j++) {
             std::cout << dims.d[j] << " x ";
