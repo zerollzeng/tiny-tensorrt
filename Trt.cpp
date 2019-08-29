@@ -2,8 +2,8 @@
  * @Description: In User Settings Edit
  * @Author: your name
  * @Date: 2019-08-21 14:06:38
- * @LastEditTime: 2019-08-23 14:33:38
- * @LastEditors: Please set LastEditors
+ * @LastEditTime: 2019-08-29 15:21:10
+ * @LastEditors: zerollzeng
  */
 #include "Trt.h"
 #include "utils.h"
@@ -72,10 +72,19 @@ void Trt::CreateEngine(const std::string& onnxModelpath,
 }
 
 void Trt::Forward() {
+    cudaEvent_t start,stop;
+    float elapsedTime;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    cudaEventRecord(start, 0);
     mContext->execute(mBatchSize, &mBinding[0]);
+    cudaEventRecord(stop, 0);
+	cudaEventSynchronize(stop);
+	cudaEventElapsedTime(&elapsedTime, start, stop);
+    spdlog::info("net forward takes {} ms", elapsedTime);
 }
 
-void Trt::Forward(const cudaStream_t& stream) {
+void Trt::ForwardAsync(const cudaStream_t& stream) {
     mContext->enqueue(mBatchSize, &mBinding[0], stream, nullptr);
 }
 
@@ -84,19 +93,25 @@ void Trt::PrintTime() {
 }
 
 void Trt::DataTransfer(std::vector<float>& data, int bindIndex, bool isHostToDevice) {
-    assert(data.size()*sizeof(float) == mBindingSize[bindIndex]);
     if(isHostToDevice) {
+        assert(data.size()*sizeof(float) == mBindingSize[bindIndex]);
         CUDA_CHECK(cudaMemcpy(mBinding[bindIndex], data.data(), mBindingSize[bindIndex], cudaMemcpyHostToDevice));
     } else {
+        data.resize(mBindingSize[bindIndex]/sizeof(float));
         CUDA_CHECK(cudaMemcpy(data.data(), mBinding[bindIndex], mBindingSize[bindIndex], cudaMemcpyDeviceToHost));
     }
+    for(int i=0; i<10; i++) {
+        std::cout << data[i] << " ";
+    }
+    std::cout << std::endl;
 }
 
-void Trt::DataTransfer(std::vector<float>& data, int bindIndex, bool isHostToDevice, cudaStream_t& stream) {
-    assert(data.size()*sizeof(float) == mBindingSize[bindIndex]);
+void Trt::DataTransferAsync(std::vector<float>& data, int bindIndex, bool isHostToDevice, cudaStream_t& stream) {
     if(isHostToDevice) {
+        assert(data.size()*sizeof(float) == mBindingSize[bindIndex]);
         CUDA_CHECK(cudaMemcpyAsync(mBinding[bindIndex], data.data(), mBindingSize[bindIndex], cudaMemcpyHostToDevice, stream));
     } else {
+        data.resize(mBindingSize[bindIndex]/sizeof(float));
         CUDA_CHECK(cudaMemcpyAsync(data.data(), mBinding[bindIndex], mBindingSize[bindIndex], cudaMemcpyDeviceToHost, stream));
     }
 }
@@ -222,7 +237,7 @@ bool Trt::BuildEngine(const std::string& prototxt,
             std::cout << "\b " << std::endl;
         }
         spdlog::info("parse network done");
-        Int8EntropyCalibrator* calibrator = nullptr; // NOTE: memory leak here
+        Int8EntropyCalibrator* calibrator = nullptr;
         if (mRunMode == 2)
         {
             spdlog::info("set int8 inference mode");
@@ -232,7 +247,10 @@ bool Trt::BuildEngine(const std::string& prototxt,
             
             if (calibratorData.size() > 0 ){
                 auto endPos= prototxt.find_last_of(".");
-                auto beginPos= prototxt.find_last_of('/') + 1; // NOTE: optimize here
+                auto beginPos= prototxt.find_last_of('/') + 1;
+                if(prototxt.find("/") == std::string::npos) {
+                    beginPos = 0;
+                }
                 std::string calibratorName = prototxt.substr(beginPos,endPos - beginPos);
                 std::cout << "create calibrator,Named:" << calibratorName << std::endl;
                 calibrator = new Int8EntropyCalibrator(maxBatchSize,calibratorData,calibratorName,false);
@@ -279,6 +297,7 @@ bool Trt::BuildEngine(const std::string& prototxt,
 bool Trt::BuildEngine(const std::string& onnxModelpath,
                       const std::string& engineFile,
                       int maxBatchSize) {
+    spdlog::warn("The ONNX Parser shipped with TensorRT 5.1.x supports ONNX IR (Intermediate Representation) version 0.0.3, opset version 9");
     mBatchSize = maxBatchSize;
     spdlog::info("build onnx engine from {}...",onnxModelpath);
     nvinfer1::IBuilder* builder = nvinfer1::createInferBuilder(mLogger);
@@ -286,7 +305,7 @@ bool Trt::BuildEngine(const std::string& onnxModelpath,
     nvinfer1::INetworkDefinition* network = builder->createNetwork();
     assert(network != nullptr);
     nvonnxparser::IParser* parser = nvonnxparser::createParser(*network, mLogger);
-    if(!parser->parseFromFile(onnxModelpath.c_str(), static_cast<int>(ILogger::Severity::kINFO))) {
+    if(!parser->parseFromFile(onnxModelpath.c_str(), static_cast<int>(ILogger::Severity::kWARNING))) {
         spdlog::error("error: could not parse onnx engine");
         return false;
     }

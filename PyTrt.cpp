@@ -1,7 +1,18 @@
+/*
+ * @Author: zerollzeng
+ * @Date: 2019-08-29 15:45:15
+ * @LastEditors: zerollzeng
+ * @LastEditTime: 2019-08-29 17:34:29
+ */
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <pybind11/stl_bind.h>
 
 #include "Trt.h"
+
+// PYBIND11_MAKE_OPAQUE(std::vector<float>);
+using vector_f = std::vector<float>;
+PYBIND11_MAKE_OPAQUE(vector_f);
 
 PYBIND11_MODULE(pytrt, m) {
     m.doc() = "python interface of tiny-tensorrt";
