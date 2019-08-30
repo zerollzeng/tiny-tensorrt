@@ -2,27 +2,26 @@
  * @Author: zerollzeng
  * @Date: 2019-08-29 15:45:15
  * @LastEditors: zerollzeng
- * @LastEditTime: 2019-08-29 17:34:29
+ * @LastEditTime: 2019-08-30 17:05:53
  */
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
-#include <pybind11/stl_bind.h>
+#include "pybind11/pybind11.h"
+#include "pybind11/numpy.h"
+#include "pybind11/stl.h"
+
+namespace py = pybind11;
 
 #include "Trt.h"
 
-// PYBIND11_MAKE_OPAQUE(std::vector<float>);
-using vector_f = std::vector<float>;
-PYBIND11_MAKE_OPAQUE(vector_f);
 
 PYBIND11_MODULE(pytrt, m) {
     m.doc() = "python interface of tiny-tensorrt";
-    pybind11::class_<TrtPluginParams>(m, "TrtPluginParams")
-        .def(pybind11::init<>());
-    pybind11::class_<Trt>(m, "Trt")
-        .def(pybind11::init([]() {
+    py::class_<TrtPluginParams>(m, "TrtPluginParams")
+        .def(py::init<>());
+    py::class_<Trt>(m, "Trt")
+        .def(py::init([]() {
             return std::unique_ptr<Trt>(new Trt());
         }))
-        .def(pybind11::init([](TrtPluginParams params) { 
+        .def(py::init([](TrtPluginParams params) { 
             return std::unique_ptr<Trt>(new Trt(params));
         }))
         .def("CreateEngine", (void (Trt::*)(const std::string&,
@@ -35,7 +34,38 @@ PYBIND11_MODULE(pytrt, m) {
         .def("CreateEngine", (void (Trt::*)(const std::string&,
                                             const std::string&,
                                             int)) &Trt::CreateEngine, "create engine with onnx model")
-        .def("Forward", (void (Trt::*)()) &Trt::Forward)
-        .def("DataTransfer", (void (Trt::*)(std::vector<float>&, int, bool)) &Trt::DataTransfer, "transfer data between host and device");
+        .def("DoInference", [](Trt& self, py::array_t<float, py::array::c_style | py::array::forcecast> array) {
+            std::vector<float> input;
+            input.resize(array.size());
+            std::memcpy(input.data(), array.data(), array.size()*sizeof(float));
+            self.DataTransfer(input, 0, 1);
+            self.Forward();
+        })
+        .def("GetOutput", [](Trt& self, int outputIndex) {
+            std::vector<float> output;
+            self.DataTransfer(output, outputIndex, 0);
+            nvinfer1::Dims dims = self.GetBindingDims(outputIndex);
+            ssize_t nbDims= dims.nbDims;
+            std::vector<ssize_t> shape;
+            for(int i=0;i<nbDims;i++){
+                shape.push_back(dims.d[i]);
+            }
+            std::vector<ssize_t> strides;
+            for(int i=0;i<nbDims;i++){
+                ssize_t stride = sizeof(float);
+                for(int j=1;j<nbDims;j++) {
+                    stride = stride * shape[j];
+                }
+                strides.push_back(stride);
+            }
+            return py::array(py::buffer_info(
+                output.data(),
+                sizeof(float),
+                py::format_descriptor<float>::format(),
+                nbDims,
+                shape,
+                strides
+            ));            
+        })
         ;
 }

@@ -9,7 +9,11 @@ set(CMAKE_CXX_FLAGS "-std=c++11")
 
 find_package(CUDA REQUIRED)
 
+# find_package(PythonLibs REQUIRED)
+# include_directories(${PYTHON_INCLUDE_DIRS})
+
 include_directories(spdlog)
+include_directories(pybind11/include)
 include_directories(./)
 
 # TensorRT
@@ -17,6 +21,7 @@ find_path(TENSORRT_INCLUDE_DIR NvInfer.h
   HINTS ${TENSORRT_ROOT} ${CUDA_TOOLKIT_ROOT_DIR}
   PATH_SUFFIXES include)
 MESSAGE(STATUS "Found TensorRT headers at ${TENSORRT_INCLUDE_DIR}")
+
 
 file(GLOB trt_source
      Trt.cpp

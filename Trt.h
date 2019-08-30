@@ -1,7 +1,7 @@
 /*
  * @Date: 2019-08-29 09:48:01
  * @LastEditors: zerollzeng
- * @LastEditTime: 2019-08-29 16:44:50
+ * @LastEditTime: 2019-08-30 16:49:42
  */
 
 #ifndef TRT_HPP
@@ -12,8 +12,9 @@
 #include <iostream>
 #include <numeric>
 
-#include <NvInfer.h>
+#include "NvInfer.h"
 #include "NvCaffeParser.h"
+
 
 
 class TrtLogger : public nvinfer1::ILogger {
@@ -216,4 +217,5 @@ protected:
     // batch size
     int mBatchSize; 
 };
+
 #endif

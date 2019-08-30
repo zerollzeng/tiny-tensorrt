@@ -2,7 +2,7 @@
  * @Description: In User Settings Edit
  * @Author: your name
  * @Date: 2019-08-21 14:06:38
- * @LastEditTime: 2019-08-29 15:21:10
+ * @LastEditTime: 2019-08-30 17:04:04
  * @LastEditors: zerollzeng
  */
 #include "Trt.h"
@@ -94,14 +94,12 @@ void Trt::PrintTime() {
 
 void Trt::DataTransfer(std::vector<float>& data, int bindIndex, bool isHostToDevice) {
     if(isHostToDevice) {
+        std::cout << "data size: " << data.size()*sizeof(float) << ", bindSize: " << mBindingSize[bindIndex] << std::endl;
         assert(data.size()*sizeof(float) == mBindingSize[bindIndex]);
         CUDA_CHECK(cudaMemcpy(mBinding[bindIndex], data.data(), mBindingSize[bindIndex], cudaMemcpyHostToDevice));
     } else {
         data.resize(mBindingSize[bindIndex]/sizeof(float));
         CUDA_CHECK(cudaMemcpy(data.data(), mBinding[bindIndex], mBindingSize[bindIndex], cudaMemcpyDeviceToHost));
-    }
-    for(int i=0; i<10; i++) {
-        std::cout << data[i] << " ";
     }
     std::cout << std::endl;
 }
@@ -359,4 +357,3 @@ void Trt::InitEngine() {
         }
     }
 }
-
