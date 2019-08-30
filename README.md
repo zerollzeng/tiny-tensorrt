@@ -2,7 +2,7 @@
  * @Description: In User Settings Edit
  * @Author: zerollzeng
  * @Date: 2019-08-23 09:16:35
- * @LastEditTime: 2019-08-29 11:18:36
+ * @LastEditTime: 2019-08-30 08:37:37
  * @LastEditors: zerollzeng
  -->
 
@@ -36,7 +36,7 @@ see [tensorrt-zoo](https://github.com/zerollzeng/tensorrt-zoo), it implement som
 - [x] engine serialization
 - [x] caffe model int8 support
 - [x] onnx support
-- [x] python api support
+- [ ] python api support --working on, have bug data transfer
 - [ ] maybe a handing calibrator data creating tool
 - [ ] test in nvidia p4
 
