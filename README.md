@@ -11,6 +11,11 @@ a simple, efficient, easy-to-use nvidia TensorRT wrapper for cnn with c++ and py
 
 this project is fully test with TensorRT 5.1.5.0, cuda 9.0/9.2/10.0, ubuntu 16.04. I test it with 1060ti, 1050ti, 1080ti, 1660ti, 2080, and 2080ti.
 
+# System Requirements
+cuda
+TensorRT
+
+for python api, python 2.x/3.x and numpy in needed
 # Quick start
 ```bash
 # register at Nvidia NGC and pull official TensorRT image(https://ngc.nvidia.com/catalog/containers/nvidia:tensorrt)
@@ -18,7 +23,41 @@ docker pull nvcr.io/nvidia/tensorrt:19.07-py3
 # build in docker
 mkdir build && cd build && cmake .. && make
 ```
-then you can intergrate it into your own project with libtinytrt.so and Trt.h.
+then you can intergrate it into your own project with libtinytrt.so and Trt.h, for python module, you get pytrt.so
+
+c++ usage
+```c++
+Trt trt;
+trt.CreateEngine("pathto/sample.prototxt",
+                 "pathto/sample.caffemodel",
+                 "pathto/engineFile", // since build engine is time consuming,so save we can serialize engine to file, it's much more faster
+                 "outputblob",
+                 calibratorData,
+                 maxBatchSize
+                 runMode);
+// trt.CreateEngine(onnxModelPath,engineFile,maxBatchSize); // for onnx model
+
+// you might need to do some pre-processing in input such as normalization, it depends on your model.
+trt.DataTransfer(input,0,True); // 0 for input index, you can get it from CreateEngine phase log output, True for copy input date to gpu
+trt.Forward();
+trt.DataTransfer(output, outputIndex, False) // False for copy output to memory, you can get outputIndex in CreateEngine phase
+// them you can do post processing in output
+```
+
+```python
+import sys
+sys.path.append("path/to/pytrt.so")
+import pytrt
+
+trt = pytrt.Trt()
+trt.CreateEngine(prototxt, caffemodel, engineFile, outputBlobName, calibratorData, maxBatchSize, mode)
+# trt.CreateEngine(onnxModelPath, engineFile, maxBatchSize)
+# see c++ CreateEngine
+
+trt.DoInference(input_numpy_array) # slightly different from c++
+output_numpy_array = trt.GetOutput(outputIndex)
+# post processing
+```
 
 # How to use tiny-tensorrt
 see [tensorrt-zoo](https://github.com/zerollzeng/tensorrt-zoo), it implement some common computer vision model with tiny tensor_rt
