@@ -62,8 +62,7 @@ output_numpy_array = trt.GetOutput(outputIndex)
 # post processing
 ```
 
-# How to use tiny-tensorrt
-see [tensorrt-zoo](https://github.com/zerollzeng/tensorrt-zoo), it implement some common computer vision model with tiny tensor_rt
+also see [tensorrt-zoo](https://github.com/zerollzeng/tensorrt-zoo), it implement some common computer vision model with tiny tensor_rt, it has serveral good samples
 
 # Support layer
 - upsample with custom scale (it have bug in deserialization, will fix it next week), under test with yolov3.
