@@ -17,6 +17,8 @@ TensorRT
 
 for python api, python 2.x/3.x and numpy in needed
 # Quick start
+
+## prepare environment with official docker image
 ```bash
 # register at Nvidia NGC and pull official TensorRT image(https://ngc.nvidia.com/catalog/containers/nvidia:tensorrt)
 docker pull nvcr.io/nvidia/tensorrt:19.07-py3
@@ -25,7 +27,7 @@ mkdir build && cd build && cmake .. && make
 ```
 then you can intergrate it into your own project with libtinytrt.so and Trt.h, for python module, you get pytrt.so
 
-c++ usage
+## use tiny-tensorrt with c++
 ```c++
 Trt trt;
 trt.CreateEngine("pathto/sample.prototxt",
@@ -44,6 +46,7 @@ trt.DataTransfer(output, outputIndex, False) // False for copy output to memory,
 // them you can do post processing in output
 ```
 
+## use tiny-tensorrt with python
 ```python
 import sys
 sys.path.append("path/to/pytrt.so")
