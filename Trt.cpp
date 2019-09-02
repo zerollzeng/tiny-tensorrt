@@ -2,7 +2,7 @@
  * @Description: In User Settings Edit
  * @Author: your name
  * @Date: 2019-08-21 14:06:38
- * @LastEditTime: 2019-08-30 17:04:04
+ * @LastEditTime: 2019-09-02 19:36:32
  * @LastEditors: zerollzeng
  */
 #include "Trt.h"
@@ -94,14 +94,12 @@ void Trt::PrintTime() {
 
 void Trt::DataTransfer(std::vector<float>& data, int bindIndex, bool isHostToDevice) {
     if(isHostToDevice) {
-        std::cout << "data size: " << data.size()*sizeof(float) << ", bindSize: " << mBindingSize[bindIndex] << std::endl;
         assert(data.size()*sizeof(float) == mBindingSize[bindIndex]);
         CUDA_CHECK(cudaMemcpy(mBinding[bindIndex], data.data(), mBindingSize[bindIndex], cudaMemcpyHostToDevice));
     } else {
         data.resize(mBindingSize[bindIndex]/sizeof(float));
         CUDA_CHECK(cudaMemcpy(data.data(), mBinding[bindIndex], mBindingSize[bindIndex], cudaMemcpyDeviceToHost));
     }
-    std::cout << std::endl;
 }
 
 void Trt::DataTransferAsync(std::vector<float>& data, int bindIndex, bool isHostToDevice, cudaStream_t& stream) {

@@ -2,7 +2,7 @@
  * @Author: zerollzeng
  * @Date: 2019-08-29 15:45:15
  * @LastEditors: zerollzeng
- * @LastEditTime: 2019-08-30 17:05:53
+ * @LastEditTime: 2019-09-02 19:13:44
  */
 #include "pybind11/pybind11.h"
 #include "pybind11/numpy.h"
@@ -53,7 +53,7 @@ PYBIND11_MODULE(pytrt, m) {
             std::vector<ssize_t> strides;
             for(int i=0;i<nbDims;i++){
                 ssize_t stride = sizeof(float);
-                for(int j=1;j<nbDims;j++) {
+                for(int j=i+1;j<nbDims;j++) {
                     stride = stride * shape[j];
                 }
                 strides.push_back(stride);
