@@ -2,7 +2,7 @@
  * @Description: In User Settings Edit
  * @Author: your name
  * @Date: 2019-08-21 14:06:38
- * @LastEditTime: 2019-09-02 19:36:32
+ * @LastEditTime: 2019-09-04 09:43:01
  * @LastEditors: zerollzeng
  */
 #include "Trt.h"
@@ -46,6 +46,14 @@ void Trt::CreateEngine(const std::string& prototxt,
                        int maxBatchSize,
                        int mode) {
     mRunMode = mode;
+    spdlog::info("prototxt: {}",prototxt);
+    spdlog::info("caffeModel: {}",caffeModel);
+    spdlog::info("engineFile: {}",engineFile);
+    spdlog::info("outputBlobName: ");
+    for(size_t i=0;i<outputBlobName.size();i++) {
+        std::cout << outputBlobName[i] << " ";
+    }
+    std::cout << std::endl;
     if(!DeserializeEngine(engineFile)) {
         if(!BuildEngine(prototxt,caffeModel,engineFile,outputBlobName,calibratorData,maxBatchSize)) {
             spdlog::error("error: could not deserialize or build engine");

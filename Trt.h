@@ -1,7 +1,7 @@
 /*
  * @Date: 2019-08-29 09:48:01
  * @LastEditors: zerollzeng
- * @LastEditTime: 2019-08-30 16:49:42
+ * @LastEditTime: 2019-09-04 09:40:50
  */
 
 #ifndef TRT_HPP
@@ -162,6 +162,8 @@ public:
      */
     nvinfer1::DataType GetBindingDataType(int bindIndex) const;
 
+    std::vector<std::string> mBindingName;
+
 protected:
 
     bool DeserializeEngine(const std::string& engineFile);
@@ -207,8 +209,6 @@ protected:
     std::vector<size_t> mBindingSize;
 
     std::vector<nvinfer1::Dims> mBindingDims;
-
-    std::vector<std::string> mBindingName;
 
     std::vector<nvinfer1::DataType> mBindingDataType;
 

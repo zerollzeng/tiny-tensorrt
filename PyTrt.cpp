@@ -2,11 +2,13 @@
  * @Author: zerollzeng
  * @Date: 2019-08-29 15:45:15
  * @LastEditors: zerollzeng
- * @LastEditTime: 2019-09-02 19:13:44
+ * @LastEditTime: 2019-09-04 09:44:19
  */
 #include "pybind11/pybind11.h"
 #include "pybind11/numpy.h"
 #include "pybind11/stl.h"
+
+#include "spdlog/spdlog.h"
 
 namespace py = pybind11;
 
@@ -41,7 +43,15 @@ PYBIND11_MODULE(pytrt, m) {
             self.DataTransfer(input, 0, 1);
             self.Forward();
         })
-        .def("GetOutput", [](Trt& self, int outputIndex) {
+        .def("GetOutput", [](Trt& self, std::string& bindName) {
+            std::vector<std::string>::iterator it = std::find(self.mBindingName.begin(), self.mBindingName.end(), bindName);
+            int outputIndex;
+            if(it != self.mBindingName.end()) {
+                outputIndex = std::distance(self.mBindingName.begin(), it);
+            } else {
+                spdlog::error("invalid output binding name: {}", bindName);
+                return py::array();
+            }
             std::vector<float> output;
             self.DataTransfer(output, outputIndex, 0);
             nvinfer1::Dims dims = self.GetBindingDims(outputIndex);
