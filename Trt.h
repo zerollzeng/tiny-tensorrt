@@ -1,7 +1,7 @@
 /*
  * @Date: 2019-08-29 09:48:01
  * @LastEditors: zerollzeng
- * @LastEditTime: 2019-09-04 09:40:50
+ * @LastEditTime: 2019-09-11 10:25:00
  */
 
 #ifndef TRT_HPP
@@ -129,11 +129,16 @@ public:
 
     void CopyFromDeviceToHost(std::vector<float>& output, int bindIndex,const cudaStream_t& stream);
 
+    
+    void SetDevice(int device);
+
+    int GetDevice() const;
+
     /**
      * @description: get max batch size of build engine.
      * @return: max batch size of build engine.
      */
-    int GetMaxBatchSize();
+    int GetMaxBatchSize() const;
 
     /**
      * @description: get binding data pointer in device. for example if you want to do some post processing

@@ -2,7 +2,7 @@
  * @Description: In User Settings Edit
  * @Author: your name
  * @Date: 2019-08-21 14:06:38
- * @LastEditTime: 2019-09-04 09:43:01
+ * @LastEditTime: 2019-09-11 13:39:10
  * @LastEditors: zerollzeng
  */
 #include "Trt.h"
@@ -136,7 +136,23 @@ void Trt::CopyFromDeviceToHost(std::vector<float>& output, int bindIndex, const 
     CUDA_CHECK(cudaMemcpyAsync(output.data(), mBinding[bindIndex], mBindingSize[bindIndex], cudaMemcpyDeviceToHost, stream));
 }
 
-int Trt::GetMaxBatchSize() {
+void Trt::SetDevice(int device) {
+    spdlog::warn("warning: make sure save engine file match choosed device");
+    CUDA_CHECK(cudaSetDevice(device));
+}
+
+int Trt::GetDevice() const { 
+    int* device = nullptr; //NOTE: memory leaks here
+    CUDA_CHECK(cudaGetDevice(device));
+    if(device != nullptr) {
+        return device[0];
+    } else {
+        spdlog::error("Get Device Error");
+        return -1;
+    }
+}
+
+int Trt::GetMaxBatchSize() const{
     return mBatchSize;
 }
 
