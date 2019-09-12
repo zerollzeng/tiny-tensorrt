@@ -2,7 +2,7 @@
  * @Description: In User Settings Edit
  * @Author: zerollzeng
  * @Date: 2019-08-23 09:16:35
- * @LastEditTime: 2019-09-12 16:20:35
+ * @LastEditTime: 2019-09-12 16:23:10
  * @LastEditors: zerollzeng
  -->
 
@@ -88,4 +88,5 @@ this project is originally motivated by [lewes6369/tensorRTWrapper](https://gith
 
 and I use [spdlog](https://github.com/gabime/spdlog) for some fancy log output, it's very lightweight for intergrate. 
 
+I use pybind11 for python api binding.
 
