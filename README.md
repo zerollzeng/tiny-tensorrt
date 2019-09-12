@@ -2,17 +2,17 @@
  * @Description: In User Settings Edit
  * @Author: zerollzeng
  * @Date: 2019-08-23 09:16:35
- * @LastEditTime: 2019-09-12 16:05:22
+ * @LastEditTime: 2019-09-12 16:20:35
  * @LastEditors: zerollzeng
  -->
 
 # tiny-tensorrt
 a simple, efficient, easy-to-use nvidia TensorRT wrapper for cnn with c++ and python api,sopport caffe and onnx format models.
 
-this project is fully test with TensorRT 5.1.5.0, cuda 9.0/9.2/10.0, ubuntu 16.04. I test it with 1060ti, 1050ti, 1080ti, 1660ti, 2080, and 2080ti.
+this project is fully test with TensorRT 5.1.5.0, cuda 10.0, ubuntu 16.04. I test it with 1060ti, 1050ti, 1080ti, 1660ti, 2080, and 2080ti.
 
 # System Requirements
-cuda
+cuda 10.0+
 TensorRT
 
 for python api, python 2.x/3.x and numpy in needed
