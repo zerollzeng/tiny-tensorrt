@@ -1,6 +1,13 @@
+/*
+ * @Author: zerollzeng
+ * @Date: 2019-09-06 15:13:19
+ * @LastEditors: zerollzeng
+ * @LastEditTime: 2019-09-12 15:58:07
+ */
 #include <cassert>
 #include <cstring>
 #include <cuda_runtime.h>
+#include <cuda_fp16.h>
 
 #include "NvInfer.h"
 #include "NvInferPlugin.h"
@@ -113,14 +120,13 @@ size_t PReLUPlugin::getWorkspaceSize(int maxBatchSize) const
 
 int PReLUPlugin::enqueue(int batchSize, const void *const *inputs, void **outputs, void *workspace, cudaStream_t stream)
 {
-    const float zerof{0.0f};
-    
     const int count = batchSize * mNbInputCount;
     const int channels = mNbInputChannels;
     const int dim = mNbInputWidth * mNbInputHeight;
     const int div_factor = mChannelShared ? mNbInputChannels : 1; // mChannelShared default is false
     if (mWeights.type == DataType::kFLOAT)
     {
+        const float zerof{0.0f};
         CUDA_CHECK(Forward_gpu(count, channels, dim,
                             reinterpret_cast<const float *>(mDeviceKernel),
                             reinterpret_cast<const float *>(inputs[0]),
@@ -131,16 +137,14 @@ int PReLUPlugin::enqueue(int batchSize, const void *const *inputs, void **output
     }
     else // DataType::kHALF
     {
-        // const __half zeroh = __float2half(0.0f);
-        // CUDA_CHECK(Forward_gpu<__half>(count, channels, dim,
-        //                           reinterpret_cast<const __half *>(mDeviceKernel),
-        //                           reinterpret_cast<const __half *>(inputs[0]),
-        //                           reinterpret_cast<__half *>(outputs[0]),
-        //                           zeroh,
-        //                           div_factor,
-        //                           stream));
-        std::cout << "prelu don't support fp16 now" << std::endl;
-        exit(0);
+        const half zeroh = __float2half(0.0f);
+        CUDA_CHECK(Forward_gpu<half>(count, channels, dim,
+                                  reinterpret_cast<const half *>(mDeviceKernel),
+                                  reinterpret_cast<const half *>(inputs[0]),
+                                  reinterpret_cast<half *>(outputs[0]),
+                                  zeroh,
+                                  div_factor,
+                                  stream));
     }
 
     return 0;

@@ -166,10 +166,10 @@ return (((x*d1+y)*d2)+z)*d3+w;
 template <typename Dtype>
 __global__ void upscale(const Dtype *input, Dtype *output,
         int no_elements, int scale_factor, int d1, int d2, int d3) {
-int ii = threadIdx.x + blockDim.x * blockIdx.x;
-if (ii >= no_elements) return;
-int ipidx = translate_idx(ii, d1, d2, d3, scale_factor);
-output[ii]=input[ipidx];
+    int ii = threadIdx.x + blockDim.x * blockIdx.x;
+    if (ii >= no_elements) return;
+    int ipidx = translate_idx(ii, d1, d2, d3, scale_factor);
+    output[ii]=input[ipidx];
 }
 
 template <typename Dtype>

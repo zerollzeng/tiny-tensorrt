@@ -8,7 +8,19 @@ set(CMAKE_CXX_FLAGS "-std=c++11")
 # set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib CACHE PATH "")
 
 find_package(CUDA REQUIRED)
-
+set(
+    CUDA_NVCC_FLAGS
+    ${CUDA_NVCC_FLAGS};
+    -O2
+    # -arch=sm_50 
+    # -gencode=arch=compute_50,code=sm_50 
+    # -gencode=arch=compute_52,code=sm_52 
+    # -gencode=arch=compute_60,code=sm_60 
+    # -gencode=arch=compute_61,code=sm_61 
+    # -gencode=arch=compute_70,code=sm_70 
+    -gencode=arch=compute_75,code=sm_75
+    -gencode=arch=compute_75,code=compute_75 
+)
 # find_package(PythonLibs REQUIRED)
 # include_directories(${PYTHON_INCLUDE_DIRS})
 

@@ -2,7 +2,7 @@
  * @Description: In User Settings Edit
  * @Author: zerollzeng
  * @Date: 2019-08-23 09:16:35
- * @LastEditTime: 2019-09-02 19:38:14
+ * @LastEditTime: 2019-09-12 16:05:22
  * @LastEditors: zerollzeng
  -->
 
@@ -79,7 +79,8 @@ also see [tensorrt-zoo](https://github.com/zerollzeng/tensorrt-zoo), it implemen
 - [x] onnx support
 - [x] python api support
 - [ ] maybe a handing calibrator data creating tool
-- [ ] test in nvidia p4
+- [x] test in nvidia p4
+- [x] set device
 
 
 # Acknowledgement
