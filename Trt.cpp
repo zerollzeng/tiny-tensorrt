@@ -2,7 +2,7 @@
  * @Description: In User Settings Edit
  * @Author: your name
  * @Date: 2019-08-21 14:06:38
- * @LastEditTime: 2019-09-27 11:43:04
+ * @LastEditTime: 2019-09-27 17:02:33
  * @LastEditors: zerollzeng
  */
 #include "Trt.h"
@@ -97,7 +97,7 @@ void Trt::ForwardAsync(const cudaStream_t& stream) {
 }
 
 void Trt::PrintTime() {
-
+    mProfiler.printLayerTimes(1);
 }
 
 void Trt::DataTransfer(std::vector<float>& data, int bindIndex, bool isHostToDevice) {

@@ -1,7 +1,7 @@
 /*
  * @Date: 2019-08-29 09:48:01
  * @LastEditors: zerollzeng
- * @LastEditTime: 2019-09-11 10:25:00
+ * @LastEditTime: 2019-09-27 17:02:03
  */
 
 #ifndef TRT_HPP
@@ -23,6 +23,33 @@ class TrtLogger : public nvinfer1::ILogger {
         // suppress info-level messages
         if (severity != Severity::kINFO)
             std::cout << msg << std::endl;
+    }
+};
+
+class Profiler : public nvinfer1::IProfiler
+{
+public:
+    void printLayerTimes(int itrationsTimes)
+    {
+        float totalTime = 0;
+        for (size_t i = 0; i < mProfile.size(); i++)
+        {
+            printf("%-40.40s %4.3fms\n", mProfile[i].first.c_str(), mProfile[i].second / itrationsTimes);
+            totalTime += mProfile[i].second;
+        }
+        printf("Time over all layers: %4.3f\n", totalTime / itrationsTimes);
+    }
+private:
+    typedef std::pair<std::string, float> Record;
+    std::vector<Record> mProfile;
+
+    virtual void reportLayerTime(const char* layerName, float ms)
+    {
+        auto record = std::find_if(mProfile.begin(), mProfile.end(), [&](const Record& r){ return r.first == layerName; });
+        if (record == mProfile.end())
+            mProfile.push_back(std::make_pair(layerName, ms));
+        else
+            record->second += ms;
     }
 };
 
@@ -196,7 +223,9 @@ protected:
 protected:
     TrtLogger mLogger;
 
-    // tensorrt run mode, see int, only support fp32 now.
+    Profiler mProfiler;
+
+    // tensorrt run mode 0:fp32 1:fp16 2:int8
     int mRunMode;
 
     nvinfer1::ICudaEngine* mEngine;
