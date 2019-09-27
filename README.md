@@ -2,7 +2,7 @@
  * @Description: In User Settings Edit
  * @Author: zerollzeng
  * @Date: 2019-08-23 09:16:35
- * @LastEditTime: 2019-09-27 16:13:39
+ * @LastEditTime: 2019-09-27 16:23:30
  * @LastEditors: zerollzeng
  -->
 
@@ -39,7 +39,7 @@ this project is fully test with TensorRT 5.1.5.0, cuda 10.0, ubuntu 16.04. I tes
 ## prepare environment with official docker image
 ```bash
 # register at Nvidia NGC and pull official TensorRT image(https://ngc.nvidia.com/catalog/containers/nvidia:tensorrt)
-docker pull nvcr.io/nvidia/tensorrt:19.07-py3
+docker pull nvcr.io/nvidia/tensorrt:19.08-py3
 # build in docker
 mkdir build && cd build && cmake .. && make
 ```
