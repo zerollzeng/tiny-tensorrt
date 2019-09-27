@@ -2,7 +2,7 @@
  * @Description: In User Settings Edit
  * @Author: your name
  * @Date: 2019-08-21 14:06:38
- * @LastEditTime: 2019-09-11 13:39:10
+ * @LastEditTime: 2019-09-27 11:43:04
  * @LastEditors: zerollzeng
  */
 #include "Trt.h"
@@ -224,7 +224,7 @@ bool Trt::BuildEngine(const std::string& prototxt,
         spdlog::info("build caffe engine with {} and {}", prototxt, caffeModel);
         nvinfer1::IBuilder* builder = nvinfer1::createInferBuilder(mLogger);
         assert(builder != nullptr);
-        nvinfer1::INetworkDefinition* network = builder->createNetwork();
+        nvinfer1::INetworkDefinition* network = builder->createNetworkV2(nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
         assert(network != nullptr);
         nvcaffeparser1::ICaffeParser* parser = nvcaffeparser1::createCaffeParser();
         if(mPluginFactory != nullptr) {
@@ -257,14 +257,15 @@ bool Trt::BuildEngine(const std::string& prototxt,
             std::cout << "\b " << std::endl;
         }
         spdlog::info("parse network done");
+        nvinfer1::IBuilderConfig* config = nvinfer1::createBuilderConfig();
+
         Int8EntropyCalibrator* calibrator = nullptr;
         if (mRunMode == 2)
         {
             spdlog::info("set int8 inference mode");
-            if (!builder->platformHasFastInt8())
+            if (!builder->platformHasFastInt8()) {
                 spdlog::warn("Warning: current platform doesn't support int8 inference");
-            builder->setInt8Mode(true);
-            
+            }
             if (calibratorData.size() > 0 ){
                 auto endPos= prototxt.find_last_of(".");
                 auto beginPos= prototxt.find_last_of('/') + 1;
@@ -275,7 +276,17 @@ bool Trt::BuildEngine(const std::string& prototxt,
                 std::cout << "create calibrator,Named:" << calibratorName << std::endl;
                 calibrator = new Int8EntropyCalibrator(maxBatchSize,calibratorData,calibratorName,false);
             }
-            builder->setInt8Calibrator(calibrator);
+            // enum class BuilderFlag : int
+            // {
+            //     kFP16 = 0,         //!< Enable FP16 layer selection.
+            //     kINT8 = 1,         //!< Enable Int8 layer selection.
+            //     kDEBUG = 2,        //!< Enable debugging of layers via synchronizing after every layer.
+            //     kGPU_FALLBACK = 3, //!< Enable layers marked to execute on GPU if layer cannot execute on DLA.
+            //     kSTRICT_TYPES = 4, //!< Enables strict type constraints.
+            //     kREFIT = 5,        //!< Enable building a refittable engine.
+            // };
+            config->setFlag(nvinfer1::BuilderFlag::kINT8);
+            config->setInt8Calibrator(calibrator);
         }
         
         if (mRunMode == 1)
@@ -284,27 +295,26 @@ bool Trt::BuildEngine(const std::string& prototxt,
             if (!builder->platformHasFastFp16()) {
                 spdlog::warn("the platform do not has fast for fp16");
             }
-            builder->setFp16Mode(true);
+            config->setFlag(nvinfer1::BuilderFlag::kFP16);
         }
         builder->setMaxBatchSize(mBatchSize);
-        builder->setMaxWorkspaceSize(10 << 20); // Warning: here might have bug
+        // set the maximum GPU temporary memory which the engine can use at execution time.
+        config->setMaxWorkspaceSize(10 << 20);
         spdlog::info("fp16 support: {}",builder->platformHasFastFp16 ());
         spdlog::info("int8 support: {}",builder->platformHasFastInt8 ());
         spdlog::info("Max batchsize: {}",builder->getMaxBatchSize());
-        spdlog::info("Max workspace size: {}",builder->getMaxWorkspaceSize());
+        spdlog::info("Max workspace size: {}",config->getMaxWorkspaceSize());
         spdlog::info("Number of DLA core: {}",builder->getNbDLACores());
         spdlog::info("Max DLA batchsize: {}",builder->getMaxDLABatchSize());
-        spdlog::info("Current use DLA core: {}",builder->getDLACore());
-        spdlog::info("Half2 mode: {}",builder->getHalf2Mode());
-        spdlog::info("INT8 mode: {}",builder->getInt8Mode());
-        spdlog::info("FP16 mode: {}",builder->getFp16Mode());
+        spdlog::info("Current use DLA core: {}",config->getDLACore()); // TODO: set DLA core
         spdlog::info("build engine...");
-        mEngine = builder -> buildCudaEngine(*network);
+        mEngine = builder -> buildCudaEngineWithConfig(*network, *config);
         assert(mEngine != nullptr);
         spdlog::info("serialize engine to {}", engineFile);
         SaveEngine(engineFile);
         
         builder->destroy();
+        config->destroy();
         network->destroy();
         parser->destroy();
         if(calibrator){
