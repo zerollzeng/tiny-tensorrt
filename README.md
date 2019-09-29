@@ -2,7 +2,7 @@
  * @Description: In User Settings Edit
  * @Author: zerollzeng
  * @Date: 2019-08-23 09:16:35
- * @LastEditTime: 2019-09-29 18:27:59
+ * @LastEditTime: 2019-09-29 19:33:49
  * @LastEditors: zerollzeng
  -->
 
@@ -48,6 +48,7 @@ then you can intergrate it into your own project with libtinytrt.so and Trt.h, f
 ## use tiny-tensorrt with c++
 ```c++
 Trt trt;
+// create engine and running context, note that engine file is device specific, so don't copy engine file to new device, it may cause crash
 trt.CreateEngine("pathto/sample.prototxt",
                  "pathto/sample.caffemodel",
                  "pathto/engineFile", // since build engine is time consuming,so save we can serialize engine to file, it's much more faster
@@ -59,8 +60,12 @@ trt.CreateEngine("pathto/sample.prototxt",
 
 // you might need to do some pre-processing in input such as normalization, it depends on your model.
 trt.DataTransfer(input,0,True); // 0 for input index, you can get it from CreateEngine phase log output, True for copy input date to gpu
+
+//run model, it will read your input and run inference. and generate output.
 trt.Forward();
-trt.DataTransfer(output, outputIndex, False) // False for copy output to memory, you can get outputIndex in CreateEngine phase
+
+//  get output.
+trt.DataTransfer(output, outputIndex, False) // you can get outputIndex in CreateEngine phase
 // them you can do post processing in output
 ```
 
@@ -83,7 +88,7 @@ output_numpy_array = trt.GetOutput(outputIndex)
 also see [tensorrt-zoo](https://github.com/zerollzeng/tensorrt-zoo), it implement some common computer vision model with tiny tensor_rt, it has serveral good samples
 
 # Support layer
-- upsample with custom scale (it have bug in deserialization, will fix it next week), under test with yolov3.
+- upsample with custom scale, under test with yolov3.
 - yolo-det, last layer of yolov3 which sum three scales output and generate final result for nms. under test with yolov3.
 - PRELU, under test with openpose.
 
