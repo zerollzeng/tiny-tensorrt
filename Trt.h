@@ -1,7 +1,7 @@
 /*
  * @Date: 2019-08-29 09:48:01
  * @LastEditors: zerollzeng
- * @LastEditTime: 2019-09-27 17:02:03
+ * @LastEditTime: 2019-09-29 10:33:23
  */
 
 #ifndef TRT_HPP
@@ -11,6 +11,7 @@
 #include <vector>
 #include <iostream>
 #include <numeric>
+#include <algorithm>
 
 #include "NvInfer.h"
 #include "NvCaffeParser.h"
@@ -235,8 +236,6 @@ protected:
     PluginFactory* mPluginFactory;
 
     nvinfer1::IRuntime* mRuntime;
-
-    nvinfer1::IProfiler* mProfiler;
 
     std::vector<void*> mBinding;
 

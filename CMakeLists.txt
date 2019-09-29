@@ -21,8 +21,10 @@ set(
     -gencode=arch=compute_75,code=sm_75
     -gencode=arch=compute_75,code=compute_75 
 )
-# find_package(PythonLibs REQUIRED)
-# include_directories(${PYTHON_INCLUDE_DIRS})
+
+# set(Python3_ROOT_DIR /root/miniconda3/bin)
+# find_package(Python3 REQUIRED)
+include_directories(${PYTHON_INCLUDE_DIRS})
 
 include_directories(spdlog)
 include_directories(pybind11/include)

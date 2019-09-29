@@ -2,7 +2,7 @@
  * @Description: In User Settings Edit
  * @Author: your name
  * @Date: 2019-08-21 14:06:38
- * @LastEditTime: 2019-09-27 17:02:33
+ * @LastEditTime: 2019-09-29 18:25:48
  * @LastEditors: zerollzeng
  */
 #include "Trt.h"
@@ -224,17 +224,23 @@ bool Trt::BuildEngine(const std::string& prototxt,
         spdlog::info("build caffe engine with {} and {}", prototxt, caffeModel);
         nvinfer1::IBuilder* builder = nvinfer1::createInferBuilder(mLogger);
         assert(builder != nullptr);
-        nvinfer1::INetworkDefinition* network = builder->createNetworkV2(nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
+        // NetworkDefinitionCreationFlag::kEXPLICIT_BATCH 
+        nvinfer1::INetworkDefinition* network = builder->createNetworkV2(0);
         assert(network != nullptr);
+        std::cout << "debug 1" << std::endl;
         nvcaffeparser1::ICaffeParser* parser = nvcaffeparser1::createCaffeParser();
+        std::cout << "debug 2" << std::endl;
         if(mPluginFactory != nullptr) {
             parser->setPluginFactoryV2(mPluginFactory);
         }
+        std::cout << "debug 3" << std::endl;
         // Notice: change here to costom data type
         const nvcaffeparser1::IBlobNameToTensor* blobNameToTensor = parser->parse(prototxt.c_str(),caffeModel.c_str(),*network,nvinfer1::DataType::kFLOAT);
+        std::cout << "debug 4" << std::endl;
         for(auto& s : outputBlobName) {
             network->markOutput(*blobNameToTensor->find(s.c_str()));
         }
+        std::cout << "debug 5" << std::endl;
         spdlog::info("Number of network layers: {}",network->getNbLayers());
         spdlog::info("Number of input: ", network->getNbInputs());
         std::cout << "Input layer: " << std::endl;
@@ -257,7 +263,7 @@ bool Trt::BuildEngine(const std::string& prototxt,
             std::cout << "\b " << std::endl;
         }
         spdlog::info("parse network done");
-        nvinfer1::IBuilderConfig* config = nvinfer1::createBuilderConfig();
+        nvinfer1::IBuilderConfig* config = builder->createBuilderConfig();
 
         Int8EntropyCalibrator* calibrator = nullptr;
         if (mRunMode == 2)
@@ -308,7 +314,7 @@ bool Trt::BuildEngine(const std::string& prototxt,
         spdlog::info("Max DLA batchsize: {}",builder->getMaxDLABatchSize());
         spdlog::info("Current use DLA core: {}",config->getDLACore()); // TODO: set DLA core
         spdlog::info("build engine...");
-        mEngine = builder -> buildCudaEngineWithConfig(*network, *config);
+        mEngine = builder -> buildEngineWithConfig(*network, *config);
         assert(mEngine != nullptr);
         spdlog::info("serialize engine to {}", engineFile);
         SaveEngine(engineFile);
@@ -332,14 +338,16 @@ bool Trt::BuildEngine(const std::string& onnxModelpath,
     spdlog::info("build onnx engine from {}...",onnxModelpath);
     nvinfer1::IBuilder* builder = nvinfer1::createInferBuilder(mLogger);
     assert(builder != nullptr);
-    nvinfer1::INetworkDefinition* network = builder->createNetwork();
+    // NetworkDefinitionCreationFlag::kEXPLICIT_BATCH 
+    nvinfer1::INetworkDefinition* network = builder->createNetworkV2(0);
     assert(network != nullptr);
     nvonnxparser::IParser* parser = nvonnxparser::createParser(*network, mLogger);
     if(!parser->parseFromFile(onnxModelpath.c_str(), static_cast<int>(ILogger::Severity::kWARNING))) {
         spdlog::error("error: could not parse onnx engine");
         return false;
     }
-    mEngine = builder->buildCudaEngine(*network);
+    nvinfer1::IBuilderConfig* config = builder->createBuilderConfig();
+    mEngine = builder -> buildEngineWithConfig(*network, *config);
     assert(mEngine != nullptr);
     spdlog::info("serialize engine to {}", engineFile);
     SaveEngine(engineFile);
