@@ -2,7 +2,7 @@
  * @Description: In User Settings Edit
  * @Author: zerollzeng
  * @Date: 2019-08-23 09:16:35
- * @LastEditTime: 2019-09-29 19:33:49
+ * @LastEditTime: 2019-10-10 17:50:58
  * @LastEditors: zerollzeng
  -->
 
@@ -47,6 +47,8 @@ then you can intergrate it into your own project with libtinytrt.so and Trt.h, f
 
 ## use tiny-tensorrt with c++
 ```c++
+#include "Trt.h"
+
 Trt trt;
 // create engine and running context, note that engine file is device specific, so don't copy engine file to new device, it may cause crash
 trt.CreateEngine("pathto/sample.prototxt",

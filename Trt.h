@@ -22,7 +22,7 @@ class TrtLogger : public nvinfer1::ILogger {
     void log(Severity severity, const char* msg) override
     {
         // suppress info-level messages
-        if (severity != Severity::kINFO)
+        if (severity != Severity::kVERBOSE)
             std::cout << msg << std::endl;
     }
 };
