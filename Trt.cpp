@@ -2,7 +2,7 @@
  * @Description: In User Settings Edit
  * @Author: your name
  * @Date: 2019-08-21 14:06:38
- * @LastEditTime: 2019-09-29 18:25:48
+ * @LastEditTime: 2019-10-16 17:56:02
  * @LastEditors: zerollzeng
  */
 #include "Trt.h"
@@ -227,20 +227,15 @@ bool Trt::BuildEngine(const std::string& prototxt,
         // NetworkDefinitionCreationFlag::kEXPLICIT_BATCH 
         nvinfer1::INetworkDefinition* network = builder->createNetworkV2(0);
         assert(network != nullptr);
-        std::cout << "debug 1" << std::endl;
         nvcaffeparser1::ICaffeParser* parser = nvcaffeparser1::createCaffeParser();
-        std::cout << "debug 2" << std::endl;
         if(mPluginFactory != nullptr) {
             parser->setPluginFactoryV2(mPluginFactory);
         }
-        std::cout << "debug 3" << std::endl;
         // Notice: change here to costom data type
         const nvcaffeparser1::IBlobNameToTensor* blobNameToTensor = parser->parse(prototxt.c_str(),caffeModel.c_str(),*network,nvinfer1::DataType::kFLOAT);
-        std::cout << "debug 4" << std::endl;
         for(auto& s : outputBlobName) {
             network->markOutput(*blobNameToTensor->find(s.c_str()));
         }
-        std::cout << "debug 5" << std::endl;
         spdlog::info("Number of network layers: {}",network->getNbLayers());
         spdlog::info("Number of input: ", network->getNbInputs());
         std::cout << "Input layer: " << std::endl;
