@@ -2,7 +2,7 @@
  * @Description: In User Settings Edit
  * @Author: your name
  * @Date: 2019-08-21 14:06:38
- * @LastEditTime: 2019-10-16 17:56:02
+ * @LastEditTime: 2019-10-18 17:02:37
  * @LastEditors: zerollzeng
  */
 #include "Trt.h"
@@ -68,9 +68,10 @@ void Trt::CreateEngine(const std::string& prototxt,
 
 void Trt::CreateEngine(const std::string& onnxModelpath,
                        const std::string& engineFile,
+                       const std::vector<std::string>& customOutput,
                        int maxBatchSize) {
     if(!DeserializeEngine(engineFile)) {
-        if(!BuildEngine(onnxModelpath,engineFile,maxBatchSize)) {
+        if(!BuildEngine(onnxModelpath,engineFile,customOutput,maxBatchSize)) {
             spdlog::error("error: could not deserialize or build engine");
             return;
         }
@@ -327,8 +328,9 @@ bool Trt::BuildEngine(const std::string& prototxt,
 
 bool Trt::BuildEngine(const std::string& onnxModelpath,
                       const std::string& engineFile,
+                      const std::vector<std::string>& customOutput,
                       int maxBatchSize) {
-    spdlog::warn("The ONNX Parser shipped with TensorRT 5.1.x supports ONNX IR (Intermediate Representation) version 0.0.3, opset version 9");
+    spdlog::warn("The ONNX Parser shipped with TensorRT 5.1.x+ supports ONNX IR (Intermediate Representation) version 0.0.3, opset version 9");
     mBatchSize = maxBatchSize;
     spdlog::info("build onnx engine from {}...",onnxModelpath);
     nvinfer1::IBuilder* builder = nvinfer1::createInferBuilder(mLogger);
@@ -341,7 +343,40 @@ bool Trt::BuildEngine(const std::string& onnxModelpath,
         spdlog::error("error: could not parse onnx engine");
         return false;
     }
+    for(int i=0;i<network->getNbLayers();i++) {
+        nvinfer1::ILayer* custom_output = network->getLayer(i);
+        for(int j=0;j<custom_output->getNbInputs();j++) {
+            nvinfer1::ITensor* input_tensor = custom_output->getInput(j);
+            std::cout << input_tensor->getName() << " ";
+        }
+        std::cout << " -------> ";
+        for(int j=0;j<custom_output->getNbOutputs();j++) {
+            nvinfer1::ITensor* output_tensor = custom_output->getOutput(j);
+            std::cout << output_tensor->getName() << " ";
+        }
+        std::cout << std::endl;
+    }  
+    if(customOutput.size() > 0) {
+        spdlog::info("unmark original output...");
+        for(int i=0;i<network->getNbOutputs();i++) {
+            nvinfer1::ITensor* origin_output = network->getOutput(i);
+            network->unmarkOutput(*origin_output);
+        }
+        spdlog::info("mark custom output...");
+        for(int i=0;i<network->getNbLayers();i++) {
+            nvinfer1::ILayer* custom_output = network->getLayer(i);
+            nvinfer1::ITensor* output_tensor = custom_output->getOutput(0);
+            for(size_t j=0; j<customOutput.size();j++) {
+                std::string layer_name(output_tensor->getName());
+                if(layer_name == customOutput[j]) {
+                    network->markOutput(*output_tensor);
+                    break;
+                }
+            }
+        }    
+    }
     nvinfer1::IBuilderConfig* config = builder->createBuilderConfig();
+    config->setMaxWorkspaceSize(10 << 20);
     mEngine = builder -> buildEngineWithConfig(*network, *config);
     assert(mEngine != nullptr);
     spdlog::info("serialize engine to {}", engineFile);

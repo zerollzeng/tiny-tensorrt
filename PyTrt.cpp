@@ -2,7 +2,7 @@
  * @Author: zerollzeng
  * @Date: 2019-08-29 15:45:15
  * @LastEditors: zerollzeng
- * @LastEditTime: 2019-09-04 09:44:19
+ * @LastEditTime: 2019-10-18 16:10:31
  */
 #include "pybind11/pybind11.h"
 #include "pybind11/numpy.h"
@@ -35,6 +35,7 @@ PYBIND11_MODULE(pytrt, m) {
                                             int)) &Trt::CreateEngine, "create engine with caffe model")
         .def("CreateEngine", (void (Trt::*)(const std::string&,
                                             const std::string&,
+                                            const std::vector<std::string>&,
                                             int)) &Trt::CreateEngine, "create engine with onnx model")
         .def("DoInference", [](Trt& self, py::array_t<float, py::array::c_style | py::array::forcecast> array) {
             std::vector<float> input;

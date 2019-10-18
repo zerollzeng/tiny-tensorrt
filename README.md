@@ -2,7 +2,7 @@
  * @Description: In User Settings Edit
  * @Author: zerollzeng
  * @Date: 2019-08-23 09:16:35
- * @LastEditTime: 2019-10-16 18:15:37
+ * @LastEditTime: 2019-10-18 17:04:15
  * @LastEditors: zerollzeng
  -->
 
@@ -13,7 +13,8 @@ a simple, efficient, easy-to-use nvidia TensorRT wrapper for cnn with c++ and py
 TensorRT release it's 6.x version, I upgrade tiny-tensorrt with it, so the old 5.x version was in trt-5.1.5.0 branch.
 
 # Roadmap
-- [x] upgrade with TensorRT 6.0.1.5 :fire::fire::fire: --- 2019.9.29
+- [x] custom onnx model output :fire::fire::fire: ---2019.10.18
+- [x] upgrade with TensorRT 6.0.1.5 --- 2019.9.29
 - [ ] support more model and layer --working on
 - [x] caffe model support
 - [x] PRELU support

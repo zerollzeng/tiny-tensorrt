@@ -1,7 +1,7 @@
 /*
  * @Date: 2019-08-29 09:48:01
  * @LastEditors: zerollzeng
- * @LastEditTime: 2019-09-29 10:33:23
+ * @LastEditTime: 2019-10-18 16:13:28
  */
 
 #ifndef TRT_HPP
@@ -112,6 +112,7 @@ public:
      */
     void CreateEngine(const std::string& onnxModelpath,
                       const std::string& engineFile,
+                      const std::vector<std::string>& customOutput,
                       int maxBatchSize);
 
     /**
@@ -210,6 +211,7 @@ protected:
 
     bool BuildEngine(const std::string& onnxModelpath,
                      const std::string& engineFile,
+                     const std::vector<std::string>& customOutput,
                      int maxBatchSize);
     /**
      * description: Init resource such as device memory
