@@ -1,7 +1,7 @@
 /*
  * @Date: 2019-08-29 09:48:01
  * @LastEditors: zerollzeng
- * @LastEditTime: 2019-10-18 16:13:28
+ * @LastEditTime: 2019-10-21 17:37:57
  */
 
 #ifndef TRT_HPP
@@ -149,7 +149,6 @@ public:
      */
     void DataTransferAsync(std::vector<float>& data, int bindIndex, bool isHostToDevice, cudaStream_t& stream);
 
-    // this four data method tranfer might be deprecated in future
     void CopyFromHostToDevice(const std::vector<float>& input, int bindIndex);
 
     void CopyFromDeviceToHost(std::vector<float>& output, int bindIndex);
@@ -157,7 +156,6 @@ public:
     void CopyFromHostToDevice(const std::vector<float>& input, int bindIndex,const cudaStream_t& stream);
 
     void CopyFromDeviceToHost(std::vector<float>& output, int bindIndex,const cudaStream_t& stream);
-
     
     void SetDevice(int device);
 
@@ -213,6 +211,7 @@ protected:
                      const std::string& engineFile,
                      const std::vector<std::string>& customOutput,
                      int maxBatchSize);
+                     
     /**
      * description: Init resource such as device memory
      */
