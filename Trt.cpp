@@ -2,7 +2,7 @@
  * @Description: In User Settings Edit
  * @Author: your name
  * @Date: 2019-08-21 14:06:38
- * @LastEditTime: 2019-10-18 17:02:37
+ * @LastEditTime: 2019-10-22 15:58:20
  * @LastEditors: zerollzeng
  */
 #include "Trt.h"
@@ -21,6 +21,7 @@
 #include "NvInfer.h"
 #include "NvCaffeParser.h"
 #include "NvOnnxParser.h"
+#include "NvUffParser.h"
 
 Trt::Trt() {
     TrtPluginParams params;
@@ -66,12 +67,27 @@ void Trt::CreateEngine(const std::string& prototxt,
     //mContext->setProfiler(mProfiler);
 }
 
-void Trt::CreateEngine(const std::string& onnxModelpath,
+void Trt::CreateEngine(const std::string& onnxModel,
                        const std::string& engineFile,
                        const std::vector<std::string>& customOutput,
                        int maxBatchSize) {
     if(!DeserializeEngine(engineFile)) {
         if(!BuildEngine(onnxModelpath,engineFile,customOutput,maxBatchSize)) {
+            spdlog::error("error: could not deserialize or build engine");
+            return;
+        }
+    }
+    spdlog::info("create execute context and malloc device memory...");
+    InitEngine();
+}
+
+void Trt::CreateEngine(const std::string& uffModel,
+                       const std::string& engineFile,
+                       const std::vector<std::string>& inputTensorName,
+                       const std::vector<std::string>& outputTensorName,
+                       int maxBatchSize) {
+    if(!DeserializeEngine(engineFile)) {
+        if(!BuildEngine(uffModel,engineFile,inputTensorName,outputTensorName,maxBatchSize)) {
             spdlog::error("error: could not deserialize or build engine");
             return;
         }
@@ -386,6 +402,23 @@ bool Trt::BuildEngine(const std::string& onnxModelpath,
     network->destroy();
     parser->destroy();
     return true;
+}
+
+bool Trt::BuildEngine(const std::string& uffModel,
+                      const std::string& engineFile,
+                      std::vector<std::string>& inputTensorName,
+                      std::vector<std::string>& outputTensorName,
+                      int maxBatchSize) {
+    mBatchSize = maxBatchSize;
+    spdlog::info("build uff engine with {}...", uffModel);
+    nvinfer1::IBuilder* builder = nvinfer1::createInferBuilder(mLogger);
+    assert(builder != nullptr);
+    // NetworkDefinitionCreationFlag::kEXPLICIT_BATCH 
+    nvinfer1::INetworkDefinition* network = builder->createNetworkV2(0);
+    assert(network != nullptr);
+    nvuffparser::IUffParser* parser = nvuffparser::createUffParser();
+    assert(parser != nullptr);
+    
 }
 
 void Trt::InitEngine() {

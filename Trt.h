@@ -1,7 +1,7 @@
 /*
  * @Date: 2019-08-29 09:48:01
  * @LastEditors: zerollzeng
- * @LastEditTime: 2019-10-21 17:37:57
+ * @LastEditTime: 2019-10-22 16:57:31
  */
 
 #ifndef TRT_HPP
@@ -14,7 +14,6 @@
 #include <algorithm>
 
 #include "NvInfer.h"
-#include "NvCaffeParser.h"
 
 
 
@@ -104,15 +103,31 @@ public:
     
     /**
      * @description: create engine from onnx model
-     * @onnxModelPath: path to onnx model
+     * @onnxModel: path to onnx model
      * @engineFile: path to saved engien file will be load or save, if it's empty them will not
      *              save engine file
      * @maxBatchSize: max batch size for inference.
      * @return: 
      */
-    void CreateEngine(const std::string& onnxModelpath,
+    void CreateEngine(const std::string& onnxModel,
                       const std::string& engineFile,
                       const std::vector<std::string>& customOutput,
+                      int maxBatchSize);
+
+    /**
+     * @description: create engine from uff model
+     * @uffModel: path to uff model
+     * @engineFile: path to saved engien file will be load or save, if it's empty them will not
+     *              save engine file
+     * @inputTensorName: input tensor
+     * @outputTensorName: output tensor
+     * @maxBatchSize: max batch size for inference.
+     * @return: 
+     */
+    void CreateEngine(const std::string& uffModel,
+                      const std::string& engineFile,
+                      std::vector<std::string>& inputTensorName,
+                      std::vector<std::string>& outputTensorName,
                       int maxBatchSize);
 
     /**
@@ -211,6 +226,12 @@ protected:
                      const std::string& engineFile,
                      const std::vector<std::string>& customOutput,
                      int maxBatchSize);
+
+    bool BrildEngine(const std::string& uffModel,
+                      const std::string& engineFile,
+                      std::vector<std::string>& inputTensorName,
+                      std::vector<std::string>& outputTensorName,
+                      int maxBatchSize);
                      
     /**
      * description: Init resource such as device memory
