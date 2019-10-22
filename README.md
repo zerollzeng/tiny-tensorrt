@@ -2,12 +2,12 @@
  * @Description: In User Settings Edit
  * @Author: zerollzeng
  * @Date: 2019-08-23 09:16:35
- * @LastEditTime: 2019-10-22 17:00:34
+ * @LastEditTime: 2019-10-22 17:02:04
  * @LastEditors: zerollzeng
  -->
 
 # tiny-tensorrt
-a simple, efficient, easy-to-use nvidia TensorRT wrapper for cnn with c++ and python api,sopport caffe and onnx format models.
+a simple, efficient, easy-to-use nvidia TensorRT wrapper for cnn with c++ and python api,support caffe and onnx format models.
 
 # Note
 TensorRT release it's 6.x version, I upgrade tiny-tensorrt with it, so the old 5.x version was in trt-5.1.5.0 branch.
