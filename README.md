@@ -2,7 +2,7 @@
  * @Description: In User Settings Edit
  * @Author: zerollzeng
  * @Date: 2019-08-23 09:16:35
- * @LastEditTime: 2019-10-22 17:22:11
+ * @LastEditTime: 2019-10-23 09:42:47
  * @LastEditors: zerollzeng
  -->
 
@@ -33,11 +33,11 @@ I won't add features to 5.x version. keep with new version is better
 # System Requirements
 cuda 10.0+
 
-TensorRT
+TensorRT 6.x
 
 for python api, python 2.x/3.x and numpy in needed
 
-this project is fully test with TensorRT 5.1.5.0, cuda 10.0, ubuntu 16.04. I test it with 1060ti, 1050ti, 1080ti, 1660ti, 2080, 2080ti and p4.
+this project is fully test in ubuntu 16.04. I test it with 1060ti, 1050ti, 1080ti, 1660ti, 2080, 2080ti and p4.
 # Quick start
 
 ## prepare environment with official docker image
@@ -59,9 +59,9 @@ trt.CreateEngine("pathto/sample.prototxt",
                  "pathto/engineFile", // since build engine is time consuming,so save we can serialize engine to file, it's much more faster
                  "outputblob",
                  calibratorData,
-                 maxBatchSize
+                 maxBatchSize,
                  runMode);
-// trt.CreateEngine(onnxModelPath,engineFile,maxBatchSize); // for onnx model
+// trt.CreateEngine(onnxModel,engineFile,maxBatchSize); // for onnx model
 
 // you might need to do some pre-processing in input such as normalization, it depends on your model.
 trt.DataTransfer(input,0,True); // 0 for input index, you can get it from CreateEngine phase log output, True for copy input date to gpu
@@ -77,12 +77,12 @@ trt.DataTransfer(output, outputIndex, False) // you can get outputIndex in Creat
 ## use tiny-tensorrt with python
 ```python
 import sys
-sys.path.append("path/to/pytrt.so")
+sys.path.append("path/to/where_pytrt.so_located/")
 import pytrt
 
 trt = pytrt.Trt()
 trt.CreateEngine(prototxt, caffemodel, engineFile, outputBlobName, calibratorData, maxBatchSize, mode)
-# trt.CreateEngine(onnxModelPath, engineFile, maxBatchSize)
+# trt.CreateEngine(onnxModel, engineFile, maxBatchSize)
 # see c++ CreateEngine
 
 trt.DoInference(input_numpy_array) # slightly different from c++
@@ -104,4 +104,9 @@ this project is originally motivated by [lewes6369/tensorRTWrapper](https://gith
 and I use [spdlog](https://github.com/gabime/spdlog) for some fancy log output, it's very lightweight for intergrate. 
 
 I use pybind11 for python api binding.
+
+# About License
+For the 3rd-party module and TensorRT, maybe you need to follow their license
+
+For the part I wrote, you can do anything you want
 

@@ -1,7 +1,7 @@
 /*
  * @Date: 2019-08-29 09:48:01
  * @LastEditors: zerollzeng
- * @LastEditTime: 2019-10-22 16:57:31
+ * @LastEditTime: 2019-10-23 13:49:49
  */
 
 #ifndef TRT_HPP
@@ -126,8 +126,8 @@ public:
      */
     void CreateEngine(const std::string& uffModel,
                       const std::string& engineFile,
-                      std::vector<std::string>& inputTensorName,
-                      std::vector<std::string>& outputTensorName,
+                      const std::vector<std::string>& inputTensorName,
+                      const std::vector<std::string>& outputTensorName,
                       int maxBatchSize);
 
     /**
@@ -222,15 +222,15 @@ protected:
                     const std::vector<std::vector<float>>& calibratorData,
                     int maxBatchSize);
 
-    bool BuildEngine(const std::string& onnxModelpath,
+    bool BuildEngine(const std::string& onnxModel,
                      const std::string& engineFile,
                      const std::vector<std::string>& customOutput,
                      int maxBatchSize);
 
-    bool BrildEngine(const std::string& uffModel,
+    bool BuildEngine(const std::string& uffModel,
                       const std::string& engineFile,
-                      std::vector<std::string>& inputTensorName,
-                      std::vector<std::string>& outputTensorName,
+                      const std::vector<std::string>& inputTensorName,
+                      const std::vector<std::string>& outputTensorName,
                       int maxBatchSize);
                      
     /**

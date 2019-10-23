@@ -2,7 +2,7 @@
  * @Description: In User Settings Edit
  * @Author: your name
  * @Date: 2019-08-21 14:06:38
- * @LastEditTime: 2019-10-22 15:58:20
+ * @LastEditTime: 2019-10-23 13:58:06
  * @LastEditors: zerollzeng
  */
 #include "Trt.h"
@@ -72,7 +72,7 @@ void Trt::CreateEngine(const std::string& onnxModel,
                        const std::vector<std::string>& customOutput,
                        int maxBatchSize) {
     if(!DeserializeEngine(engineFile)) {
-        if(!BuildEngine(onnxModelpath,engineFile,customOutput,maxBatchSize)) {
+        if(!BuildEngine(onnxModel,engineFile,customOutput,maxBatchSize)) {
             spdlog::error("error: could not deserialize or build engine");
             return;
         }
@@ -342,20 +342,20 @@ bool Trt::BuildEngine(const std::string& prototxt,
         return true;
 }
 
-bool Trt::BuildEngine(const std::string& onnxModelpath,
+bool Trt::BuildEngine(const std::string& onnxModel,
                       const std::string& engineFile,
                       const std::vector<std::string>& customOutput,
                       int maxBatchSize) {
     spdlog::warn("The ONNX Parser shipped with TensorRT 5.1.x+ supports ONNX IR (Intermediate Representation) version 0.0.3, opset version 9");
     mBatchSize = maxBatchSize;
-    spdlog::info("build onnx engine from {}...",onnxModelpath);
+    spdlog::info("build onnx engine from {}...",onnxModel);
     nvinfer1::IBuilder* builder = nvinfer1::createInferBuilder(mLogger);
     assert(builder != nullptr);
     // NetworkDefinitionCreationFlag::kEXPLICIT_BATCH 
     nvinfer1::INetworkDefinition* network = builder->createNetworkV2(0);
     assert(network != nullptr);
     nvonnxparser::IParser* parser = nvonnxparser::createParser(*network, mLogger);
-    if(!parser->parseFromFile(onnxModelpath.c_str(), static_cast<int>(ILogger::Severity::kWARNING))) {
+    if(!parser->parseFromFile(onnxModel.c_str(), static_cast<int>(ILogger::Severity::kWARNING))) {
         spdlog::error("error: could not parse onnx engine");
         return false;
     }
@@ -392,6 +392,7 @@ bool Trt::BuildEngine(const std::string& onnxModelpath,
         }    
     }
     nvinfer1::IBuilderConfig* config = builder->createBuilderConfig();
+    builder->setMaxBatchSize(mBatchSize);
     config->setMaxWorkspaceSize(10 << 20);
     mEngine = builder -> buildEngineWithConfig(*network, *config);
     assert(mEngine != nullptr);
@@ -406,8 +407,8 @@ bool Trt::BuildEngine(const std::string& onnxModelpath,
 
 bool Trt::BuildEngine(const std::string& uffModel,
                       const std::string& engineFile,
-                      std::vector<std::string>& inputTensorName,
-                      std::vector<std::string>& outputTensorName,
+                      const std::vector<std::string>& inputTensorName,
+                      const std::vector<std::string>& outputTensorName,
                       int maxBatchSize) {
     mBatchSize = maxBatchSize;
     spdlog::info("build uff engine with {}...", uffModel);
@@ -418,7 +419,30 @@ bool Trt::BuildEngine(const std::string& uffModel,
     assert(network != nullptr);
     nvuffparser::IUffParser* parser = nvuffparser::createUffParser();
     assert(parser != nullptr);
-    
+    nvinfer1::Dims inputDim;
+    inputDim.nbDims = 3;
+    inputDim.d[0] = 3;
+    inputDim.d[1] = 272;
+    inputDim.d[2] = 480;
+    parser->registerInput(inputTensorName[0].c_str(), inputDim, nvuffparser::UffInputOrder::kNCHW);
+    parser->registerOutput(outputTensorName[0].c_str());
+    parser->registerOutput(outputTensorName[1].c_str());
+    parser->registerOutput(outputTensorName[2].c_str());
+    if(!parser->parse(uffModel.c_str(), *network, nvinfer1::DataType::kFLOAT)) {
+        spdlog::error("error: parse model failed");
+    }
+    nvinfer1::IBuilderConfig* config = builder->createBuilderConfig();
+    config->setMaxWorkspaceSize(10 << 20);
+    builder->setMaxBatchSize(mBatchSize);
+    mEngine = builder -> buildEngineWithConfig(*network, *config);
+    assert(mEngine != nullptr);
+    spdlog::info("serialize engine to {}", engineFile);
+    SaveEngine(engineFile);
+
+    builder->destroy();
+    network->destroy();
+    parser->destroy();
+    return true;
 }
 
 void Trt::InitEngine() {
