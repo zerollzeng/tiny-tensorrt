@@ -421,6 +421,7 @@ bool Trt::BuildEngine(const std::string& uffModel,
     nvuffparser::IUffParser* parser = nvuffparser::createUffParser();
     assert(parser != nullptr);
     assert(inputTensorNames.size() == inputDims.size());
+    //parse input
     for(size_t i=0;i<inputTensorNames.size();i++) {
         nvinfer1::Dims dim;
         dim.nbDims = inputDims[i].size();
@@ -429,7 +430,7 @@ bool Trt::BuildEngine(const std::string& uffModel,
         }
         parser->registerInput(inputTensorNames[i].c_str(), dim, nvuffparser::UffInputOrder::kNCHW);
     }
-    
+    //parse output
     for(size_t i=0;i<outputTensorNames.size();i++) {
         parser->registerOutput(outputTensorNames[i].c_str());
     }
