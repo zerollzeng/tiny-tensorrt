@@ -15,7 +15,7 @@ TensorRT release it's 6.x version, I upgrade tiny-tensorrt with it, so the old 5
 I won't add features to 5.x version. keep with new version is better
 
 # Roadmap
-- [ ] uff support --working on, very buggy :underage::underage::underage:
+- [ ] uff support --working on, you can use it now, but I try to make it better :underage::underage::underage:
 - [x] custom onnx model output node :fire::fire::fire: ---2019.10.18
 - [x] upgrade with TensorRT 6.0.1.5 --- 2019.9.29
 - [ ] support more model and layer --working on
