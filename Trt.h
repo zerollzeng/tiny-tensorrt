@@ -26,33 +26,6 @@ class TrtLogger : public nvinfer1::ILogger {
     }
 };
 
-class Profiler : public nvinfer1::IProfiler
-{
-public:
-    void printLayerTimes(int itrationsTimes)
-    {
-        float totalTime = 0;
-        for (size_t i = 0; i < mProfile.size(); i++)
-        {
-            printf("%-40.40s %4.3fms\n", mProfile[i].first.c_str(), mProfile[i].second / itrationsTimes);
-            totalTime += mProfile[i].second;
-        }
-        printf("Time over all layers: %4.3f\n", totalTime / itrationsTimes);
-    }
-private:
-    typedef std::pair<std::string, float> Record;
-    std::vector<Record> mProfile;
-
-    virtual void reportLayerTime(const char* layerName, float ms)
-    {
-        auto record = std::find_if(mProfile.begin(), mProfile.end(), [&](const Record& r){ return r.first == layerName; });
-        if (record == mProfile.end())
-            mProfile.push_back(std::make_pair(layerName, ms));
-        else
-            record->second += ms;
-    }
-};
-
 struct TrtPluginParams {
     // yolo-det layer
     int yoloClassNum = 1; 
@@ -144,11 +117,6 @@ public:
     void ForwardAsync(const cudaStream_t& stream);
 
     /**
-     * @description: print layer time, not support now
-     */
-    void PrintTime();
-
-    /**
      * @description: data transfer between host and device, for example befor Forward, you need
      *               copy input data from host to device, and after Forward, you need to transfer
      *               output result from device to host.
@@ -234,6 +202,8 @@ protected:
                       const std::vector<std::vector<int>>& inputDims,
                       const std::vector<std::string>& outputTensorName,
                       int maxBatchSize);
+
+    // void ParseUff(const std::string& uffModel);
                      
     /**
      * description: Init resource such as device memory
@@ -247,8 +217,6 @@ protected:
 
 protected:
     TrtLogger mLogger;
-
-    Profiler mProfiler;
 
     // tensorrt run mode 0:fp32 1:fp16 2:int8
     int mRunMode;

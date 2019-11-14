@@ -10,6 +10,7 @@
 #include "spdlog/spdlog.h"
 #include "Int8EntropyCalibrator.h"
 #include "plugin/PluginFactory.h"
+// #include "tensorflow/graph.pb.h"
 
 #include <string>
 #include <vector>
@@ -112,10 +113,6 @@ void Trt::Forward() {
 
 void Trt::ForwardAsync(const cudaStream_t& stream) {
     mContext->enqueue(mBatchSize, &mBinding[0], stream, nullptr);
-}
-
-void Trt::PrintTime() {
-    mProfiler.printLayerTimes(1);
 }
 
 void Trt::DataTransfer(std::vector<float>& data, int bindIndex, bool isHostToDevice) {
@@ -426,7 +423,7 @@ bool Trt::BuildEngine(const std::string& uffModel,
     for(size_t i=0;i<inputTensorNames.size();i++) {
         nvinfer1::Dims dim;
         dim.nbDims = inputDims[i].size();
-        for(size_t j=0;j<dim.nbDims;j++) {
+        for(int j=0;j<dim.nbDims;j++) {
             dim.d[j] = inputDims[i][j];
         }
         parser->registerInput(inputTensorNames[i].c_str(), dim, nvuffparser::UffInputOrder::kNCHW);
@@ -451,6 +448,24 @@ bool Trt::BuildEngine(const std::string& uffModel,
     parser->destroy();
     return true;
 }
+
+// void Trt::ParseUff(const std::string& uffModel) {
+//     spdlog::info("parse uff model, this parser is very simple");
+//     spdlog::info("I recommend you to see https://lutzroeder.github.io/netron/");
+//     spdlog::info("You will get a more user-friendly output");
+//     tensorflow::GraphDef graph;
+//     fstream input(uffModel.c_str(), ios::in | ios::binary);
+//     if (!graph.ParseFromIstream(&input)) {
+//         spdlog::error("Failed to parse uff model");
+//         return;
+//     }
+//     for(int i=0;i<graph.node_size();i++) {
+//         tensorflow::NodeDef node = graph.node(i);
+//         std::cout << "--------------------------------" << std::endl;
+//         std::cout << node.name() << ", " << node.op() << std::endl;
+//     }
+
+// }
 
 void Trt::InitEngine() {
     spdlog::info("init engine...");
