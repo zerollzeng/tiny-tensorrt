@@ -127,6 +127,7 @@ public:
     void CreateEngine(const std::string& uffModel,
                       const std::string& engineFile,
                       const std::vector<std::string>& inputTensorName,
+                      const std::vector<std::vector<int>>& inputDims,
                       const std::vector<std::string>& outputTensorName,
                       int maxBatchSize);
 
@@ -230,6 +231,7 @@ protected:
     bool BuildEngine(const std::string& uffModel,
                       const std::string& engineFile,
                       const std::vector<std::string>& inputTensorName,
+                      const std::vector<std::vector<int>>& inputDims,
                       const std::vector<std::string>& outputTensorName,
                       int maxBatchSize);
                      

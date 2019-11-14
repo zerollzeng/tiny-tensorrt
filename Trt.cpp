@@ -84,10 +84,11 @@ void Trt::CreateEngine(const std::string& onnxModel,
 void Trt::CreateEngine(const std::string& uffModel,
                        const std::string& engineFile,
                        const std::vector<std::string>& inputTensorNames,
+                       const std::vector<std::vector<int>>& inputDims,
                        const std::vector<std::string>& outputTensorNames,
                        int maxBatchSize) {
     if(!DeserializeEngine(engineFile)) {
-        if(!BuildEngine(uffModel,engineFile,inputTensorNames,outputTensorNames,maxBatchSize)) {
+        if(!BuildEngine(uffModel,engineFile,inputTensorNames,inputDims, outputTensorNames,maxBatchSize)) {
             spdlog::error("error: could not deserialize or build engine");
             return;
         }
@@ -408,7 +409,7 @@ bool Trt::BuildEngine(const std::string& onnxModel,
 bool Trt::BuildEngine(const std::string& uffModel,
                       const std::string& engineFile,
                       const std::vector<std::string>& inputTensorNames,
-                      const std::vector<std::vector>& inputDims,
+                      const std::vector<std::vector<int>>& inputDims,
                       const std::vector<std::string>& outputTensorNames,
                       int maxBatchSize) {
     mBatchSize = maxBatchSize;
