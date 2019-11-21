@@ -2,12 +2,14 @@
  * @Description: In User Settings Edit
  * @Author: zerollzeng
  * @Date: 2019-08-23 09:16:35
- * @LastEditTime: 2019-10-23 09:42:47
+ * @LastEditTime: 2019-11-21 11:10:23
  * @LastEditors: zerollzeng
  -->
 
+English | [中文简体](https://github.com/zerollzeng/tiny-tensorrt/blob/master/README-CN.md)
+
 # tiny-tensorrt
-a simple, efficient, easy-to-use nvidia TensorRT wrapper for cnn with c++ and python api,support caffe and onnx format models.
+a simple, efficient, easy-to-use nvidia TensorRT wrapper for cnn with c++ and python api,support caffe, uff and onnx format models.
 
 # Note
 TensorRT release it's 6.x version, I upgrade tiny-tensorrt with it, so the old 5.x version was in trt-5.1.5.0 branch. 
@@ -37,26 +39,30 @@ TensorRT 6.x
 
 for python api, python 2.x/3.x and numpy in needed
 
-this project is fully test in ubuntu 16.04. I test it with 1060ti, 1050ti, 1080ti, 1660ti, 2080, 2080ti and p4.
-# Quick start
+this project is fully test in ubuntu 16.04. I tested it with 1060ti, 1050ti, 1080ti, 1660ti, 2080, 2080ti and p4.
 
-## prepare environment with official docker image
-you need to install TensorRT at first, see [here](https://developer.nvidia.com/tensorrt)
+# Installation
+Make sure you had install dependencies list above, if you are familiar with docker, you can use [offcial docker](https://ngc.nvidia.com/catalog/containers/nvidia:tensorrt)
 ```bash
-# build in docker
+# clone project and submodule
+git clone --recurse-submodules -j8 https://github.com/zerollzeng/tiny-tensorrt.git
+
+cd tiny-tensorrt
+
 mkdir build && cd build && cmake .. && make
 ```
 then you can intergrate it into your own project with libtinytrt.so and Trt.h, for python module, you get pytrt.so
 
-## use tiny-tensorrt with c++
+# How-to-use-it
+c++
 ```c++
 #include "Trt.h"
 
 Trt trt;
 // create engine and running context, note that engine file is device specific, so don't copy engine file to new device, it may cause crash
-trt.CreateEngine("pathto/sample.prototxt",
-                 "pathto/sample.caffemodel",
-                 "pathto/engineFile", // since build engine is time consuming,so save we can serialize engine to file, it's much more faster
+trt.CreateEngine("path/to/sample.prototxt",
+                 "path/to/sample.caffemodel",
+                 "path/to/engineFile", // since build engine is time consuming,so save we can serialize engine to file, it's much more faster
                  "outputblob",
                  calibratorData,
                  maxBatchSize,
@@ -74,7 +80,7 @@ trt.DataTransfer(output, outputIndex, False) // you can get outputIndex in Creat
 // them you can do post processing in output
 ```
 
-## use tiny-tensorrt with python
+python
 ```python
 import sys
 sys.path.append("path/to/where_pytrt.so_located/")
@@ -92,10 +98,10 @@ output_numpy_array = trt.GetOutput(outputIndex)
 
 also see [tensorrt-zoo](https://github.com/zerollzeng/tensorrt-zoo), it implement some common computer vision model with tiny tensor_rt, it has serveral good samples
 
-# Support layer
+# Extra Support layer
 - upsample with custom scale, under test with yolov3.
 - yolo-det, last layer of yolov3 which sum three scales output and generate final result for nms. under test with yolov3.
-- PRELU, under test with openpose.
+- PRELU, under test with openpose and mtcnn.
 
 
 # Acknowledgement
