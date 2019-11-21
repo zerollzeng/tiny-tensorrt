@@ -1,3 +1,4 @@
+[English](https://github.com/zerollzeng/tiny-tensorrt/blob/master/README.md) | 中文简体
 # tiny-tensorrt
 一个非常高效易用的nvidia TensorRT封装,支持c++,python调用,支持caffe,onnx,tensorflow模型.
 
@@ -26,6 +27,19 @@ TensorRT更新了6.0的版本,api做了许多修改,所以我也升级tiny-tenso
 TensorRT 6.x 版本和 cuda 10.0+
 
 如果要使用python api, 那么还需要安装python2/3 和 numpy
+
+# 安装
+首先确保你已经安装了上述依赖, 如果你熟悉docker的话,也可以用[官方docker镜像](https://ngc.nvidia.com/catalog/containers/nvidia:tensorrt)
+```bash
+# clone project and submodule
+git clone --recurse-submodules -j8 https://github.com/zerollzeng/tiny-tensorrt.git
+
+cd tiny-tensorrt
+
+mkdir build && cd build && cmake .. && make
+```
+then you can intergrate it into your own project with libtinytrt.so and Trt.h, for python module, you get pytrt.so
+然后你就可以将它集成进你自己的项目里面,只需要libtinytrt.so和Trt.h, 如果要用python api, 使用pytrt.so
 
 # 使用方法
 c++
