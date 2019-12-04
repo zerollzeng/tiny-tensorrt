@@ -69,7 +69,7 @@ private:
     int mNbInputChannels, mNbInputHeight, mNbInputWidth, mNbInputCount;
     bool mChannelShared = false;
     Weights mWeights;
-    //DataType mDataType{DataType::kFLOAT};
+    DataType mDataType{DataType::kFLOAT};
 
     void* mDeviceKernel{nullptr};
     char mPluginNamespace;

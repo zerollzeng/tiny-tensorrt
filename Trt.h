@@ -1,7 +1,7 @@
 /*
  * @Date: 2019-08-29 09:48:01
  * @LastEditors: zerollzeng
- * @LastEditTime: 2019-10-23 13:49:49
+ * @LastEditTime: 2019-12-04 11:26:02
  */
 
 #ifndef TRT_HPP
@@ -221,13 +221,13 @@ protected:
     // tensorrt run mode 0:fp32 1:fp16 2:int8
     int mRunMode;
 
-    nvinfer1::ICudaEngine* mEngine;
+    nvinfer1::ICudaEngine* mEngine = nullptr;
 
-    nvinfer1::IExecutionContext* mContext;
+    nvinfer1::IExecutionContext* mContext = nullptr;
 
     PluginFactory* mPluginFactory;
 
-    nvinfer1::IRuntime* mRuntime;
+    nvinfer1::IRuntime* mRuntime = nullptr;
 
     std::vector<void*> mBinding;
 

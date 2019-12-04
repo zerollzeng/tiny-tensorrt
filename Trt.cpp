@@ -2,7 +2,7 @@
  * @Description: In User Settings Edit
  * @Author: your name
  * @Date: 2019-08-21 14:06:38
- * @LastEditTime: 2019-10-23 13:58:06
+ * @LastEditTime: 2019-12-04 18:26:30
  * @LastEditors: zerollzeng
  */
 #include "Trt.h"
@@ -37,6 +37,17 @@ Trt::~Trt() {
     if(mPluginFactory != nullptr) {
         delete mPluginFactory;
         mPluginFactory = nullptr;
+    }
+    if(mContext != nullptr) {
+        mContext->destroy();
+        mContext = nullptr;
+    }
+    if(mEngine !=nullptr) {
+        mEngine->destroy();
+        mEngine = nullptr;
+    }
+    for(size_t i=0;i<mBinding.size();i++) {
+        safeCudaFree(mBinding[i]);
     }
 }
 
@@ -224,6 +235,7 @@ bool Trt::DeserializeEngine(const std::string& engineFile) {
         mEngine = mRuntime->deserializeCudaEngine((void*)engineBuf.get(), bufCount, nullptr);
         mBatchSize = mEngine->getMaxBatchSize();
         spdlog::info("max batch size of deserialized engine: {}",mEngine->getMaxBatchSize());
+        mRuntime->destroy();
         return true;
     }
     return false;
@@ -247,7 +259,10 @@ bool Trt::BuildEngine(const std::string& prototxt,
             parser->setPluginFactoryV2(mPluginFactory);
         }
         // Notice: change here to costom data type
-        const nvcaffeparser1::IBlobNameToTensor* blobNameToTensor = parser->parse(prototxt.c_str(),caffeModel.c_str(),*network,nvinfer1::DataType::kFLOAT);
+        nvinfer1::DataType type = mRunMode==1 ? nvinfer1::DataType::kHALF : nvinfer1::DataType::kFLOAT;
+        const nvcaffeparser1::IBlobNameToTensor* blobNameToTensor = parser->parse(prototxt.c_str(),caffeModel.c_str(),
+                                                                                *network,type);
+        
         for(auto& s : outputBlobName) {
             network->markOutput(*blobNameToTensor->find(s.c_str()));
         }
@@ -316,6 +331,7 @@ bool Trt::BuildEngine(const std::string& prototxt,
         builder->setMaxBatchSize(mBatchSize);
         // set the maximum GPU temporary memory which the engine can use at execution time.
         config->setMaxWorkspaceSize(10 << 20);
+        
         spdlog::info("fp16 support: {}",builder->platformHasFastFp16 ());
         spdlog::info("int8 support: {}",builder->platformHasFastInt8 ());
         spdlog::info("Max batchsize: {}",builder->getMaxBatchSize());

@@ -49,6 +49,10 @@ inline void* safeCudaMalloc(size_t memSize) {
     return deviceMem;
 }
 
+inline void safeCudaFree(void* deviceMem) {
+    CUDA_CHECK(cudaFree(deviceMem));
+}
+
 template <typename T>
 void write(char *&buffer, const T &val)
 {

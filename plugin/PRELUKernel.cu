@@ -17,17 +17,32 @@ inline int CAFFE_GET_BLOCKS(const int N) {
        i += blockDim.x * gridDim.x)
 
 // /******** PReLU CUDA function ********/
-// // CUDA kernele for forward
-// __global__ void PReLUForward(const int n, const int channels, const int dim,
-//     const float* slope_data,
-//     const float* in, float* out,
-//     const float zero,
-//     const int div_factor) {
-//     CUDA_KERNEL_LOOP(index, n) {
-//         int c = (index / dim) % channels / div_factor;
-//         out[index] = in[index] > 0 ? in[index] : in[index] * slope_data[c];
-//     }
-// }
+// CUDA kernele for forward
+__global__ void PReLUForward(const int n, const int channels, const int dim,
+    const float* slope_data,
+    const float* in, float* out,
+    const float zero,
+    const int div_factor) {
+    CUDA_KERNEL_LOOP(index, n) {
+        int c = (index / dim) % channels / div_factor;
+        out[index] = in[index] > 0 ? in[index] : in[index] * slope_data[c];
+    }
+}
+
+__global__ void PReLUForward(const int n, const int channels, const int dim,
+    const __half* slope_data,
+    const __half* in, __half* out,
+    const __half zero,
+    const int div_factor) {
+    CUDA_KERNEL_LOOP(index, n) {
+        int c = (index / dim) % channels / div_factor;
+        if(__hgt(in[index], zero)) {
+            out[index] = in[index];
+        } else {
+            out[index] = __hmul(in[index],slope_data[c]);
+        }
+    }
+}
 
 
 // cudaError_t Forward_gpu(const int count, const int channels, const int dim,
@@ -63,17 +78,18 @@ inline int CAFFE_GET_BLOCKS(const int N) {
 
 /******** PReLU CUDA function ********/
 // CUDA kernele for forward
-template <typename Ftype>
-__global__ void PReLUForward(const int n, const int channels, const int dim,
-    const Ftype* slope_data,
-    const Ftype* in, Ftype* out,
-    const Ftype zero,
-    const int div_factor) {
-        CUDA_KERNEL_LOOP(index, n) {
-            int c = (index / dim) % channels / div_factor;
-            out[index] = (in[index] > (Ftype(zero))) ? in[index] : in[index] * *(reinterpret_cast<const Ftype*>(slope_data)+c);
-    }
-}
+// template <typename Ftype>
+// __global__ void PReLUForward(const int n, const int channels, const int dim,
+//     const Ftype* slope_data,
+//     const Ftype* in, Ftype* out,
+//     const Ftype zero,
+//     const int div_factor) {
+//         CUDA_KERNEL_LOOP(index, n) {
+//             int c = (index / dim) % channels / div_factor;
+//             // out[index] = (in[index] > (Ftype(zero))) ? in[index] : in[index] * *(reinterpret_cast<const Ftype*>(slope_data)+c);
+//             out[index] = (in[index] > (Ftype(zero))) ? in[index] : in[index] * *(slope_data+c);
+//     }
+// }
 
 
 template <typename Ftype>
@@ -96,9 +112,9 @@ template cudaError_t Forward_gpu<float>(const int count, const int channals, con
                 const float zero,
                 const int div_factor,
                 const cudaStream_t stream);
-template cudaError_t Forward_gpu<half>(const int count, const int channals, const int dim,
-                const half* mDeviceKernel,
-                const half* bottom_data, half* top_data,
-                const half zero,
+template cudaError_t Forward_gpu<__half>(const int count, const int channals, const int dim,
+                const __half* mDeviceKernel,
+                const __half* bottom_data, half* top_data,
+                const __half zero,
                 const int div_factor,
                 const cudaStream_t stream);
