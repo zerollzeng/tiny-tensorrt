@@ -2,7 +2,7 @@
  * @Description: In User Settings Edit
  * @Author: zerollzeng
  * @Date: 2019-08-23 09:16:35
- * @LastEditTime: 2019-12-09 12:39:49
+ * @LastEditTime: 2019-12-09 12:46:58
  * @LastEditors: zerollzeng
  -->
 
@@ -18,7 +18,7 @@ I won't add features to 5.x version. keep with new version is better
 
 # Roadmap
 - [x] custom plugin tutorial and well_commented sample!, will finish in this week :fire::fire::fire:
-- [ ] uff support 
+- [x] tensorflow pb support 
 - [x] custom onnx model output node  ---2019.10.18
 - [x] upgrade with TensorRT 6.0.1.5 --- 2019.9.29
 - [ ] support more model and layer --working on
