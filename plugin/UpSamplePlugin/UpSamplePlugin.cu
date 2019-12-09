@@ -1,6 +1,9 @@
 #include "UpSamplePlugin.hpp"
-#include "utils.h"
+#include "plugin_utils.h"
 #include "spdlog/spdlog.h"
+
+#include "cuda_runtime.h"
+#include "cuda_fp16.h"
 
 #include <cassert>
 
@@ -178,18 +181,6 @@ void UpSamplePlugin::forwardGpu(const Dtype* input,Dtype * output,
 
 int numElem = N*C*H*W;
 upscale<<<(numElem + NUM_THREADS - 1) / NUM_THREADS, NUM_THREADS>>>(input,output, numElem, mScale, C, H, W);
-}
-
-size_t type2size(DataType dataType) { 
-size_t _size = 0;
-switch (dataType)
-{
-    case DataType::kFLOAT: _size = sizeof(float);break;
-    case DataType::kHALF: _size = sizeof(__half);break;
-    case DataType::kINT8: _size = sizeof(u_int8_t);break;
-    default:std::cerr << "error data type" << std::endl;
-}
-return _size;
 }
 
 int UpSamplePlugin::enqueue(int batchSize, const void*const * inputs, void** outputs, void* workspace, cudaStream_t stream)

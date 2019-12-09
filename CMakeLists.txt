@@ -22,13 +22,10 @@ set(
     # -gencode=arch=compute_75,code=compute_75 
 )
 
-# set(Python3_ROOT_DIR /root/miniconda3/bin)
-# find_package(Python3 REQUIRED)
-include_directories(${PYTHON_INCLUDE_DIRS})
-
 include_directories(spdlog)
 include_directories(pybind11/include)
 include_directories(./)
+include_directories(./plugin)
 
 # TensorRT
 find_path(TENSORRT_INCLUDE_DIR NvInfer.h
@@ -37,16 +34,21 @@ find_path(TENSORRT_INCLUDE_DIR NvInfer.h
 MESSAGE(STATUS "Found TensorRT headers at ${TENSORRT_INCLUDE_DIR}")
 
 
-file(GLOB trt_source
+file(GLOB_RECURSE trt_source
      Trt.cpp
      Int8EntropyCalibrator.cpp
      plugin/*.cu
      plugin/*.cpp
      )
 cuda_add_library(tinytrt SHARED ${trt_source})
-target_compile_options(tinytrt PUBLIC -std=c++11 -Wall -Wfloat-conversion -DONNX_ML)
+target_compile_options(tinytrt PUBLIC -std=c++11 -Wall -Wfloat-conversion)
+target_include_directories(tinytrt PUBLIC plugin)
 set_target_properties(tinytrt PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
+
+# set(Python3_ROOT_DIR /root/miniconda3/bin)
+# find_package(Python3 REQUIRED)
+include_directories(${PYTHON_INCLUDE_DIRS})
 add_subdirectory(pybind11)
 pybind11_add_module(pytrt SHARED PyTrt.cpp)
 target_link_libraries(pytrt PRIVATE tinytrt)

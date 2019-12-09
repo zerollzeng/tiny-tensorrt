@@ -2,8 +2,8 @@
  * @Description: yolo-det layer
  * @Author: zerollzeng
  * @Date: 2019-08-23 11:09:26
- * @LastEditTime: 2019-08-23 12:18:15
- * @LastEditors: Please set LastEditors
+ * @LastEditTime: 2019-12-06 17:57:41
+ * @LastEditors: zerollzeng
  */
 #ifndef YOLO_LAYER_PLUGIN_HPP
 #define YOLO_LAYER_PLUGIN_HPP
@@ -16,9 +16,7 @@
 
 #include "NvInfer.h"
 #include "NvInferPlugin.h"
-#include "NvCaffeParser.h"
-#include "PRELUKernel.cuh"
-#include "utils.h"
+#include "plugin_utils.h"
 
 static constexpr int CHECK_COUNT = 3;
 static constexpr float IGNORE_THRESH = 0.5f;

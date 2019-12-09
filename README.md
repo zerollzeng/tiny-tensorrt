@@ -2,7 +2,7 @@
  * @Description: In User Settings Edit
  * @Author: zerollzeng
  * @Date: 2019-08-23 09:16:35
- * @LastEditTime: 2019-11-21 11:10:23
+ * @LastEditTime: 2019-12-09 12:39:49
  * @LastEditors: zerollzeng
  -->
 
@@ -17,8 +17,9 @@ TensorRT release it's 6.x version, I upgrade tiny-tensorrt with it, so the old 5
 I won't add features to 5.x version. keep with new version is better
 
 # Roadmap
-- [ ] uff support --working on, you can use it now, but I try to make it better :underage::underage::underage:
-- [x] custom onnx model output node :fire::fire::fire: ---2019.10.18
+- [x] custom plugin tutorial and well_commented sample!, will finish in this week :fire::fire::fire:
+- [ ] uff support 
+- [x] custom onnx model output node  ---2019.10.18
 - [x] upgrade with TensorRT 6.0.1.5 --- 2019.9.29
 - [ ] support more model and layer --working on
 - [x] caffe model support

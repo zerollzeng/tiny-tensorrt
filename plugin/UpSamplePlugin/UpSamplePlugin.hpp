@@ -7,8 +7,6 @@
 
 #include "NvInfer.h"
 #include "NvInferPlugin.h"
-#include "NvCaffeParser.h"
-#include "PRELUKernel.cuh"
 
 using namespace nvinfer1;
 using namespace plugin;

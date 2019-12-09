@@ -1,3 +1,10 @@
+/*
+ * @Email: zerollzeng@gmail.com
+ * @Author: zerollzeng
+ * @Date: 2019-11-12 11:53:56
+ * @LastEditors: zerollzeng
+ * @LastEditTime: 2019-12-06 17:17:13
+ */
 #ifndef UTILS_H
 #define UTILS_H
 
@@ -51,20 +58,6 @@ inline void* safeCudaMalloc(size_t memSize) {
 
 inline void safeCudaFree(void* deviceMem) {
     CUDA_CHECK(cudaFree(deviceMem));
-}
-
-template <typename T>
-void write(char *&buffer, const T &val)
-{
-    *reinterpret_cast<T *>(buffer) = val;
-    buffer += sizeof(T);
-}
-
-template <typename T>
-void read(const char *&buffer, T &val)
-{
-    val = *reinterpret_cast<const T *>(buffer);
-    buffer += sizeof(T);
 }
 
 inline void error(const std::string& message, const int line, const std::string& function, const std::string& file) {

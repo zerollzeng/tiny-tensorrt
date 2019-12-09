@@ -9,7 +9,7 @@
 #include "utils.h"
 #include "spdlog/spdlog.h"
 #include "Int8EntropyCalibrator.h"
-#include "plugin/PluginFactory.h"
+#include "PluginFactory.h"
 // #include "tensorflow/graph.pb.h"
 
 #include <string>

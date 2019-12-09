@@ -2,14 +2,14 @@
  * @Description: In User Settings Edit
  * @Author: zerollzeng
  * @Date: 2019-08-23 11:55:03
- * @LastEditTime: 2019-08-23 14:46:24
- * @LastEditors: Please set LastEditors
+ * @LastEditTime: 2019-12-06 18:17:06
+ * @LastEditors: zerollzeng
  */
 
-#include "plugin/PluginFactory.h"
-#include "plugin/PRELUPlugin.hpp"
-#include "plugin/UpSamplePlugin.hpp"
-#include "plugin/YoloLayerPlugin.hpp"
+#include "PluginFactory.h"
+#include "PreluPlugin/PreluPlugin.h"
+#include "UpSamplePlugin/UpSamplePlugin.hpp"
+#include "YoloLayerPlugin/YoloLayerPlugin.hpp"
 #include "spdlog/spdlog.h"
 #include <algorithm>
 #include <cassert>
@@ -42,7 +42,7 @@ IPluginV2* PluginFactory::createPlugin(const char *layerName, const Weights* wei
     if (strName.find("prelu") != std::string::npos) {
         // std::cout << "nbWeight: " << nbWeights << std::endl;
         // std::cout << "weights.count: " << weights->count << std::endl;
-        return (IPluginV2*)(new PReLUPlugin(weights, nbWeights));
+        return (IPluginV2*)(new PreluPlugin(weights, nbWeights));
     } 
     else if(strName.find("upsample") != std::string::npos) {
         return (IPluginV2*)(new UpSamplePlugin(mUpsampleScale));
