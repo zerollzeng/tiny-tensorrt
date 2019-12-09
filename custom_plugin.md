@@ -89,4 +89,8 @@ engine构建阶段会再次通过CustomPlugin(const Weights *weights, int nbWeig
 在使用引擎文件进行推理的过程中,从序列化文件恢复权重和参数,所以会先调用SamplePlugins(const void *data, size_t length)读取自定义层的相关信息,然后调用initialize() 进行初始化.在推理的过程中调用enqueue()进行推理.推理结束后如果在调用engine的destroy方法的时候会调用terminate()函数,释放
 掉initialize()申请的资源.
 
+### 示例文件
+
+请参见plugin/PreluPlugin内文件和plugin/plugin_utils.h以及plugin/plugin_utils.cpp,他们都有非常详细的注视,只需要按照模板实现即可~
+
 

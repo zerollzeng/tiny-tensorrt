@@ -29,7 +29,6 @@ I won't add features to 5.x version. keep with new version is better
 - [x] caffe model int8 support
 - [x] onnx support
 - [x] python api support
-- [ ] maybe a handing calibrator data creating tool
 - [x] test in nvidia p4
 - [x] set device
 

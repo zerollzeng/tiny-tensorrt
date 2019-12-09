@@ -8,8 +8,9 @@ TensorRT更新了6.0的版本,api做了许多修改,所以我也升级tiny-tenso
 但是请注意新的特性和更新不会同步到5.x分支,所以我建议使用最新的版本
 
 # 里程碑
-- [ ] uff支持 -- 现在已经可以用了,但是官方的感觉还是不太好用,我在尝试继续做简化 :underage::underage::underage:
-- [x] 自定义onnx模型输出节点 :fire::fire::fire: ---2019.10.18
+- [x] 自定义插件教程和非常详细的示例代码! 12月13日之前可以更新完 :fire::fire::fire:
+- [ ] uff支持
+- [x] 自定义onnx模型输出节点 ---2019.10.18
 - [x] 升级到TensorRT 6.0.1.5 --- 2019.9.29
 - [ ] 实现更多的层(有需要请给我提issue阿喂,但是我希望是通用的层) --working on
 - [x] caffe模型支持
@@ -19,7 +20,6 @@ TensorRT更新了6.0的版本,api做了许多修改,所以我也升级tiny-tenso
 - [x] caffe model int8支持
 - [x] onnx支持
 - [x] python api支持
-- [ ] 有想法做个量化校准工具,但是目前没有很好的idea
 - [x] 在p4显卡上测试
 - [x] 自定义使用显卡
 
