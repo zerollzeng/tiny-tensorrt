@@ -7,7 +7,7 @@
  */
 
 #include "PluginFactory.h"
-#include "PreluPlugin/PreluPlugin.h"
+#include "PReLUPlugin/PReLUPlugin.h"
 #include "UpSamplePlugin/UpSamplePlugin.hpp"
 #include "YoloLayerPlugin/YoloLayerPlugin.hpp"
 #include "spdlog/spdlog.h"
@@ -42,7 +42,7 @@ IPluginV2* PluginFactory::createPlugin(const char *layerName, const Weights* wei
     if (strName.find("prelu") != std::string::npos) {
         // std::cout << "nbWeight: " << nbWeights << std::endl;
         // std::cout << "weights.count: " << weights->count << std::endl;
-        return (IPluginV2*)(new PreluPlugin(weights, nbWeights));
+        return (IPluginV2*)(new PReLUPlugin(weights, nbWeights));
     } 
     else if(strName.find("upsample") != std::string::npos) {
         return (IPluginV2*)(new UpSamplePlugin(mUpsampleScale));

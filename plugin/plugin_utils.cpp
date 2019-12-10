@@ -3,7 +3,7 @@
  * @Author: zerollzeng
  * @Date: 2019-12-09 11:09:34
  * @LastEditors: zerollzeng
- * @LastEditTime: 2019-12-09 16:44:15
+ * @LastEditTime: 2019-12-10 16:41:57
  */
 #include "plugin_utils.h"
 
@@ -63,10 +63,4 @@ void convertAndCopyToBuffer(char*& buffer, const nvinfer1::Weights weights,
         copyToBuffer(buffer, weights.values, size);
     }
     buffer += size;
-}
-
-
-void deserializeToDevice(const char*& hostBuffer, void*& deviceWeights, size_t size) {
-    deviceWeights = copyToDevice(hostBuffer, size);
-    hostBuffer += size;
 }

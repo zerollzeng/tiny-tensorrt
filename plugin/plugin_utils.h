@@ -3,10 +3,10 @@
  * @Author: zerollzeng
  * @Date: 2019-12-04 14:26:15
  * @LastEditors: zerollzeng
- * @LastEditTime: 2019-12-10 11:40:16
+ * @LastEditTime: 2019-12-10 16:24:45
  */
-#ifndef PLUGIN_COMMOM_H
-#define PLUGIN_COMMOM_H
+#ifndef PLUGIN_UTILS_H
+#define PLUGIN_UTILS_H
 
 #include "NvInfer.h"
 #include "cuda_runtime.h"
@@ -16,6 +16,9 @@
 
 #include "utils.h"
 
+static const char* G_PLUGIN_NAMESPACE = "_TRT";
+static const char* G_PLUGIN_VERSION = "1";
+
 #define ASSERT(assertion)                                                                                              \
 {                                                                                                                  \
     if (!(assertion))                                                                                              \
@@ -24,9 +27,6 @@
         abort();                                                                                                   \
     }                                                                                                              \
 }
-
-static const char* G_PLUGIN_NAMESPACE = "_TRT";
-static const char* G_PLUGIN_VERSION = "1";
 
 template <typename T>
 void write(char *&buffer, const T &val)
@@ -54,4 +54,4 @@ void convertAndCopyToBuffer(char*& buffer, const nvinfer1::Weights weights,
 
 void deserializeToDevice(const char*& hostBuffer, void*& deviceWeights, size_t size);
 
-#endif //PLUGIN_COMMOM_H
+#endif //PLUGIN_UTILS_H

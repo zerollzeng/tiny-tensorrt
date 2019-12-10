@@ -3,7 +3,7 @@
  * @Author: zerollzeng
  * @Date: 2019-12-02 16:31:56
  * @LastEditors: zerollzeng
- * @LastEditTime: 2019-12-10 14:08:05
+ * @LastEditTime: 2019-12-10 18:01:35
  */
 #ifndef PRELU_PLUGIN_H // modidy to your file name
 #define PRELU_PLUGIN_H // 改成你自己的文件名
@@ -24,8 +24,10 @@
 #include "NvInfer.h"
 #include "NvInferPlugin.h"
 
+#include "spdlog/spdlog.h"
 
-class PreluPlugin : public nvinfer1::IPluginV2
+
+class PReLUPlugin : public nvinfer1::IPluginV2
 {
 public:
     /**
@@ -42,7 +44,7 @@ public:
      *       如果有额外的参数,也要把额外的参数添加进来,关于这个可以参考UpsamplePlugin的实现 .
      *       这个函数主要就是用来将权重和自定义层的其他参数读取到内部变量里面.
      */
-    PreluPlugin(const nvinfer1::Weights* weights, int nbWeight);
+    PReLUPlugin(const nvinfer1::Weights* weights, int nbWeight);
 
     /**
      * @description: create an plugin from serialized data, it's a counter part 
@@ -54,19 +56,23 @@ public:
      *       入到序列化数据里面.在IPluginCreator::deserializePlugin里面会调用到这个函数,
      *       注意写的顺序跟读的顺序必须是一样的.
      */
-    PreluPlugin(const void* data, size_t length);
+    PReLUPlugin(const void* data, size_t length);
+
+    virtual size_t getSerializationSize() const override;
+
+    virtual void serialize(void* buffer) const override;
 
     /**
      * @description: no params construction has no mean, so delete it
      * @描述: 无参构造函数没有意义
      */
-    PreluPlugin() = delete;
+    PReLUPlugin() = delete;
 
     /**
      * @description: destructiion, free resource
      * @描述:析构函数,释放资源
      */
-    ~PreluPlugin();
+    ~PReLUPlugin();
 
     /**
      * @description: return the number of output tensors. for prelu return 1 the
@@ -106,10 +112,6 @@ public:
 
     virtual size_t getWorkspaceSize(int maxBatchSize) const override;
 
-    virtual size_t getSerializationSize() const override;
-
-    virtual void serialize(void* buffer) const override;
-
     virtual const char* getPluginType() const override;
 
     virtual const char* getPluginVersion() const override;
@@ -118,7 +120,9 @@ public:
 
     virtual nvinfer1::IPluginV2* clone() const override;
 
-    virtual void setPluginNamespace(const char* pluginNamespace) override {}
+    virtual void setPluginNamespace(const char* pluginNamespace) override {
+        spdlog::error("setPluginNamespace: {}", pluginNamespace);
+    }
 
     virtual const char* getPluginNamespace() const override;
 
@@ -132,9 +136,9 @@ private:
     void* mDeviceKernel{nullptr};
 };
 
-class PreluPluginCreator : public nvinfer1::IPluginCreator {
+class PReLUPluginCreator : public nvinfer1::IPluginCreator {
 public:
-    PreluPluginCreator();
+    PReLUPluginCreator();
 
     // ------------------inherit from IPluginCreator-------------------
     // return the plugin type + plugin namesapce
@@ -153,7 +157,9 @@ public:
     virtual nvinfer1::IPluginV2* deserializePlugin(const char* name, const void* serialData, size_t serialLenth) override;
 
     // Set the namespace of the plugin creator based on the plugin library it belongs to. This can be set while registering the plugin creator
-    virtual void setPluginNamespace(const char* pluginNamespace) override {}
+    virtual void setPluginNamespace(const char* pluginNamespace) override {
+        spdlog::error("setPluginNamespace {}",pluginNamespace);
+    }
 
     // Return the namespace of the plugin creator object.
     virtual const char* getPluginNamespace() const override;

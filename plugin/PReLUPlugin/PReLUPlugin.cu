@@ -7,11 +7,12 @@
 #include "NvInferPlugin.h"
 
 #include "plugin_utils.h"
-#include "PreluPlugin.h"
+#include "PReLUPlugin.h"
 
 #include "spdlog/spdlog.h"
 
-static const char* G_PRELU_TYPE = "Prelu";
+static const char* G_PRELU_TYPE = "PReLU";
+static const char* G_PRELU_NAME = "PReLU_TRT";
 
 // CUDA: use 512 threads per block
 static const int CUDA_NUM_THREADS = 512;
@@ -57,14 +58,14 @@ cudaError_t Forward_gpu(const int count, const int channels, const int dim,
     return err;
 }
 
-PreluPlugin::PreluPlugin(const nvinfer1::Weights *weights, int nbWeights) {
+PReLUPlugin::PReLUPlugin(const nvinfer1::Weights *weights, int nbWeights) {
     mWeights = weights[0];
     mWeights.values = malloc(mWeights.count * type2size(mWeights.type));
     memcpy(const_cast<void *>(mWeights.values), weights[0].values, mWeights.count * type2size(mWeights.type));
 }
 
 // create the plugin at runtime from a byte stream
-PreluPlugin::PreluPlugin(const void *data, size_t length) {
+PReLUPlugin::PReLUPlugin(const void *data, size_t length) {
     const char *d = static_cast<const char *>(data), *a = d;
     read<int>(d, mNbInputChannels);
     read<int>(d, mNbInputHeight);
@@ -75,10 +76,28 @@ PreluPlugin::PreluPlugin(const void *data, size_t length) {
     mWeights.values = nullptr;
     mWeights.values = malloc(mWeights.count * type2size(mWeights.type));
     memcpy(const_cast<void *>(mWeights.values), d, mWeights.count * type2size(mWeights.type));
+    d = d + mWeights.count * type2size(mWeights.type);
     ASSERT(d == a + length);
 }
 
-PreluPlugin::~PreluPlugin() {
+size_t PReLUPlugin::getSerializationSize() const {
+    return sizeof(mNbInputChannels) + sizeof(mNbInputWidth) + sizeof(mNbInputHeight) + sizeof(mDataType) + 
+           sizeof(mWeights.count) + sizeof(mWeights.type) + mWeights.count * type2size(mWeights.type);
+}
+
+void PReLUPlugin::serialize(void *buffer) const {
+    char *d = static_cast<char *>(buffer), *a = d;
+    write(d, mNbInputChannels);
+    write(d, mNbInputHeight);
+    write(d, mNbInputWidth);
+    write(d, mDataType);
+    write(d, mWeights.count);
+    write(d, mWeights.type);
+    convertAndCopyToBuffer(d, mWeights, mWeights.type);
+    ASSERT(d == a + getSerializationSize());
+}
+
+PReLUPlugin::~PReLUPlugin() {
     if (mWeights.values) 
     {
         free(const_cast<void *>(mWeights.values));
@@ -91,11 +110,11 @@ PreluPlugin::~PreluPlugin() {
     }
 }
 
-int PreluPlugin::getNbOutputs() const {
+int PReLUPlugin::getNbOutputs() const {
     return 1;
 }
 
-nvinfer1::Dims PreluPlugin::getOutputDimensions(int index, const nvinfer1::Dims* inputs, int nbInputDims) {
+nvinfer1::Dims PReLUPlugin::getOutputDimensions(int index, const nvinfer1::Dims* inputs, int nbInputDims) {
     if(index == 0) {
         return nvinfer1::Dims3(inputs[0].d[0],inputs[0].d[1],inputs[0].d[2]);
     } // else if(index == n) {
@@ -106,12 +125,12 @@ nvinfer1::Dims PreluPlugin::getOutputDimensions(int index, const nvinfer1::Dims*
     }
 }
 
-bool PreluPlugin::supportsFormat(nvinfer1::DataType type, nvinfer1::PluginFormat format) const {
+bool PReLUPlugin::supportsFormat(nvinfer1::DataType type, nvinfer1::PluginFormat format) const {
     return (type == nvinfer1::DataType::kFLOAT | type == nvinfer1::DataType::kHALF) 
             && format == nvinfer1::PluginFormat::kNCHW;
 }
 
-void PreluPlugin::configureWithFormat(const nvinfer1::Dims* inputDims, int nbInputs, 
+void PReLUPlugin::configureWithFormat(const nvinfer1::Dims* inputDims, int nbInputs, 
                                       const nvinfer1::Dims* outputDims, int nbOutputs,
                                       nvinfer1::DataType type, nvinfer1::PluginFormat format, 
                                       int maxBatchSize) {
@@ -123,12 +142,12 @@ void PreluPlugin::configureWithFormat(const nvinfer1::Dims* inputDims, int nbInp
     mDataType = type;
 }
 
-int PreluPlugin::initialize() {
+int PReLUPlugin::initialize() {
     convertAndCopyToDeivce(mDeviceKernel, mWeights, mDataType);
     return 0;
 }
 
-void PreluPlugin::terminate() {
+void PReLUPlugin::terminate() {
     if (mWeights.values)
     {
         free(const_cast<void *>(mWeights.values));
@@ -141,12 +160,12 @@ void PreluPlugin::terminate() {
     }
 }
 
-size_t PreluPlugin::getWorkspaceSize(int maxBatchSize) const
+size_t PReLUPlugin::getWorkspaceSize(int maxBatchSize) const
 {
     return 0;
 }
 
-int PreluPlugin::enqueue(int batchSize, const void *const *inputs, void **outputs, void *workspace, cudaStream_t stream)
+int PReLUPlugin::enqueue(int batchSize, const void *const *inputs, void **outputs, void *workspace, cudaStream_t stream)
 {
     const int count = batchSize * mNbInputChannels * mNbInputWidth * mNbInputHeight;
     const int channels = mNbInputChannels;
@@ -176,45 +195,27 @@ int PreluPlugin::enqueue(int batchSize, const void *const *inputs, void **output
     return 0;
 }
 
-size_t PreluPlugin::getSerializationSize() const {
-    return sizeof(mNbInputChannels) + sizeof(mNbInputWidth) + sizeof(mNbInputHeight) + sizeof(mDataType) + 
-           sizeof(mWeights.count) + sizeof(mDataType) + mWeights.count * type2size(mDataType);
-}
-
-void PreluPlugin::serialize(void *buffer) const {
-    char *d = static_cast<char *>(buffer), *a = d;
-    write(d, mNbInputChannels);
-    write(d, mNbInputHeight);
-    write(d, mNbInputWidth);
-    write(d, mDataType);
-    write(d, mWeights.count);
-    write(d, mDataType);
-    convertAndCopyToBuffer(d, mWeights, mDataType);
-    ASSERT(d == a + getSerializationSize());
-}
-
-const char *PreluPlugin::getPluginType() const {
+const char *PReLUPlugin::getPluginType() const {
     return G_PRELU_TYPE;
 }
 
-const char *PreluPlugin::getPluginVersion() const {
+const char *PReLUPlugin::getPluginVersion() const {
     return G_PLUGIN_VERSION;
 }
 
-void PreluPlugin::destroy() {
+void PReLUPlugin::destroy() {
     delete this; 
 }
 
-nvinfer1::IPluginV2* PreluPlugin::clone() const {
-    return new PreluPlugin(&mWeights, 1);
+nvinfer1::IPluginV2* PReLUPlugin::clone() const {
+    return new PReLUPlugin(&mWeights, 1);
 }
 
-const char* PreluPlugin::getPluginNamespace() const {
+const char* PReLUPlugin::getPluginNamespace() const {
     return G_PLUGIN_NAMESPACE;
 }
 
-PreluPluginCreator::PreluPluginCreator()  {
-    spdlog::error("PreluPluginCreator()");
+PReLUPluginCreator::PReLUPluginCreator()  {
     mPluginAttributes.emplace_back(nvinfer1::PluginField("weights", nullptr, nvinfer1::PluginFieldType::kFLOAT32, 1));
     mPluginAttributes.emplace_back(nvinfer1::PluginField("nbWeight", nullptr, nvinfer1::PluginFieldType::kINT32, 1));
     mFC.nbFields = mPluginAttributes.size();
@@ -222,25 +223,22 @@ PreluPluginCreator::PreluPluginCreator()  {
 }
 
 // return PRELU_PLUGIN_TYPE + PRELU_PLUGIN_NAMESPACE
-const char* PreluPluginCreator::getPluginName() const {
-    spdlog::error("getPluginName()");
-    std::string plugin_type{G_PRELU_TYPE};
-    std::string plugin_namespace{G_PLUGIN_NAMESPACE};
-    return (plugin_type+plugin_namespace).c_str();
+const char* PReLUPluginCreator::getPluginName() const {
+    // std::string plugin_type{G_PRELU_TYPE};
+    // std::string plugin_namespace{G_PLUGIN_NAMESPACE};
+    // return (plugin_type+plugin_namespace).c_str();
+    return G_PRELU_NAME;
 }
 
-const char* PreluPluginCreator::getPluginVersion() const {
-    spdlog::error("getPluginVersion");
+const char* PReLUPluginCreator::getPluginVersion() const {
     return G_PLUGIN_VERSION;
 }
 
-const nvinfer1::PluginFieldCollection* PreluPluginCreator::getFieldNames() {
-    spdlog::error("getFieldNames");
+const nvinfer1::PluginFieldCollection* PReLUPluginCreator::getFieldNames() {
     return &mFC;
 }
 
-nvinfer1::IPluginV2* PreluPluginCreator::createPlugin(const char* name, const nvinfer1::PluginFieldCollection* fc) {
-    spdlog::error("createPlugin");
+nvinfer1::IPluginV2* PReLUPluginCreator::createPlugin(const char* name, const nvinfer1::PluginFieldCollection* fc) {
     int nbWeights;
     std::vector<float> weightValues;
     const nvinfer1::PluginField* fields = fc->fields;
@@ -262,18 +260,16 @@ nvinfer1::IPluginV2* PreluPluginCreator::createPlugin(const char* name, const nv
         }
     }
     nvinfer1::Weights weights{nvinfer1::DataType::kFLOAT, weightValues.data(), (int64_t)weightValues.size()};
-    return new PreluPlugin(&weights,nbWeights);
+    return new PReLUPlugin(&weights,nbWeights);
 }
 
 // deserialization plugin implementation
-nvinfer1::IPluginV2* PreluPluginCreator::deserializePlugin(const char *layerName, const void *serialData, size_t serialLength) {
-    spdlog::error("deserializePlugin");
-    return new PreluPlugin(serialData, serialLength);
+nvinfer1::IPluginV2* PReLUPluginCreator::deserializePlugin(const char *layerName, const void *serialData, size_t serialLength) {
+    return new PReLUPlugin(serialData, serialLength);
 }
 
-const char* PreluPluginCreator::getPluginNamespace() const {
-    spdlog::error("getPluginNamespace");
+const char* PReLUPluginCreator::getPluginNamespace() const {
     return G_PLUGIN_NAMESPACE;
 }
 
-REGISTER_TENSORRT_PLUGIN(PreluPluginCreator);
+REGISTER_TENSORRT_PLUGIN(PReLUPluginCreator);

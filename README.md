@@ -2,7 +2,7 @@
  * @Description: In User Settings Edit
  * @Author: zerollzeng
  * @Date: 2019-08-23 09:16:35
- * @LastEditTime: 2019-12-09 12:46:58
+ * @LastEditTime: 2019-12-10 17:39:34
  * @LastEditors: zerollzeng
  -->
 
@@ -49,7 +49,7 @@ git clone --recurse-submodules -j8 https://github.com/zerollzeng/tiny-tensorrt.g
 
 cd tiny-tensorrt
 
-mkdir build && cd build && cmake .. && make
+mkdir build && cd build && cmake -D PYTHON_API ON .. && make
 ```
 then you can intergrate it into your own project with libtinytrt.so and Trt.h, for python module, you get pytrt.so
 

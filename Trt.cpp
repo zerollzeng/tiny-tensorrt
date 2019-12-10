@@ -2,7 +2,7 @@
  * @Description: In User Settings Edit
  * @Author: your name
  * @Date: 2019-08-21 14:06:38
- * @LastEditTime: 2019-12-10 11:02:42
+ * @LastEditTime: 2019-12-10 16:55:06
  * @LastEditors: zerollzeng
  */
 #include "Trt.h"
@@ -230,14 +230,10 @@ bool Trt::DeserializeEngine(const std::string& engineFile) {
         in.seekg(start_pos);
         std::unique_ptr<char[]> engineBuf(new char[bufCount]);
         in.read(engineBuf.get(), bufCount);
-        spdlog::error("debug 1");
         initLibNvInferPlugins(&mLogger, "");
-        spdlog::error("debug 2");
         mRuntime = nvinfer1::createInferRuntime(mLogger);
-        spdlog::error("debug 3");
         mEngine = mRuntime->deserializeCudaEngine((void*)engineBuf.get(), bufCount, nullptr);
         assert(mEngine != nullptr);
-        spdlog::error("debug 4");
         mBatchSize = mEngine->getMaxBatchSize();
         spdlog::info("max batch size of deserialized engine: {}",mEngine->getMaxBatchSize());
         mRuntime->destroy();

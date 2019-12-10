@@ -36,7 +36,7 @@ git clone --recurse-submodules -j8 https://github.com/zerollzeng/tiny-tensorrt.g
 
 cd tiny-tensorrt
 
-mkdir build && cd build && cmake .. && make
+mkdir build && cd build && cmake -D PYTHON_API ON .. && make
 ```
 then you can intergrate it into your own project with libtinytrt.so and Trt.h, for python module, you get pytrt.so
 然后你就可以将它集成进你自己的项目里面,只需要libtinytrt.so和Trt.h, 如果要用python api, 使用pytrt.so

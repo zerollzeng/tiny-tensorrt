@@ -11,7 +11,7 @@ find_package(CUDA REQUIRED)
 set(
     CUDA_NVCC_FLAGS
     ${CUDA_NVCC_FLAGS};
-    -O2
+    # -O2
     # -arch=sm_75
     # -gencode=arch=compute_50,code=sm_50 
     # -gencode=arch=compute_52,code=sm_52 
@@ -43,18 +43,19 @@ file(GLOB_RECURSE trt_source
      )
 cuda_add_library(tinytrt SHARED ${trt_source})
 target_compile_options(tinytrt PUBLIC -std=c++11 -Wall -Wfloat-conversion)
-target_include_directories(tinytrt PUBLIC plugin)
 set_target_properties(tinytrt PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-
-# set(Python3_ROOT_DIR /root/miniconda3/bin)
-# find_package(Python3 REQUIRED)
-include_directories(${PYTHON_INCLUDE_DIRS})
-add_subdirectory(pybind11)
-pybind11_add_module(pytrt SHARED PyTrt.cpp)
-target_link_libraries(pytrt PRIVATE tinytrt)
-target_link_libraries(pytrt PRIVATE nvinfer)
-target_link_libraries(pytrt PRIVATE nvinfer_plugin)
-target_link_libraries(pytrt PRIVATE nvparsers)
-target_link_libraries(pytrt PRIVATE nvonnxparser)
-target_link_libraries(pytrt PRIVATE nvcaffe_parser)
+option(PYTHON_API "compile python api" OFF)
+if(PYTHON_API)
+  # set(Python3_ROOT_DIR /root/miniconda3/bin)
+  # find_package(Python3 REQUIRED)
+  include_directories(${PYTHON_INCLUDE_DIRS})
+  add_subdirectory(pybind11)
+  pybind11_add_module(pytrt SHARED PyTrt.cpp)
+  target_link_libraries(pytrt PRIVATE tinytrt)
+  target_link_libraries(pytrt PRIVATE nvinfer)
+  target_link_libraries(pytrt PRIVATE nvinfer_plugin)
+  target_link_libraries(pytrt PRIVATE nvparsers)
+  target_link_libraries(pytrt PRIVATE nvonnxparser)
+  target_link_libraries(pytrt PRIVATE nvcaffe_parser)
+endif()
