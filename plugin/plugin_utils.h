@@ -3,7 +3,7 @@
  * @Author: zerollzeng
  * @Date: 2019-12-04 14:26:15
  * @LastEditors: zerollzeng
- * @LastEditTime: 2019-12-09 11:12:30
+ * @LastEditTime: 2019-12-10 11:40:16
  */
 #ifndef PLUGIN_COMMOM_H
 #define PLUGIN_COMMOM_H
@@ -20,7 +20,7 @@
 {                                                                                                                  \
     if (!(assertion))                                                                                              \
     {                                                                                                              \
-        std::cerr << "#assertion" << __FILE__ << "," << __LINE__ << std::endl;                                     \
+        std::cerr << "#assertion fail " << __FILE__ << " line " << __LINE__ << std::endl;                                     \
         abort();                                                                                                   \
     }                                                                                                              \
 }

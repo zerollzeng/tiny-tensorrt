@@ -3,10 +3,10 @@
  * @Author: zerollzeng
  * @Date: 2019-12-02 16:31:56
  * @LastEditors: zerollzeng
- * @LastEditTime: 2019-12-06 19:01:01
+ * @LastEditTime: 2019-12-10 14:08:05
  */
-#ifndef PLUGIN_SAMPLE_H // modidy to your file name
-#define PLUGIN_SAMPLE_H // 改成你自己的文件名
+#ifndef PRELU_PLUGIN_H // modidy to your file name
+#define PRELU_PLUGIN_H // 改成你自己的文件名
 
 /**
  * @description: this is a plugin sample code with detailed explaination,

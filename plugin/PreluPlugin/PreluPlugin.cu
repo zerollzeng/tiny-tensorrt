@@ -9,6 +9,8 @@
 #include "plugin_utils.h"
 #include "PreluPlugin.h"
 
+#include "spdlog/spdlog.h"
+
 static const char* G_PRELU_TYPE = "Prelu";
 
 // CUDA: use 512 threads per block
@@ -27,14 +29,19 @@ inline int CAFFE_GET_BLOCKS(const int N) {
 
 // /******** PReLU CUDA function ********/
 // CUDA kernele for forward
+template <typename Ftype>
 __global__ void PReLUForward(const int n, const int channels, const int dim,
-    const float* slope_data,
-    const float* in, float* out,
-    const float zero,
+    const Ftype* slope_data,
+    const Ftype* in, Ftype* out,
+    const Ftype zero,
     const int div_factor) {
     CUDA_KERNEL_LOOP(index, n) {
         int c = (index / dim) % channels / div_factor;
-        out[index] = in[index] > 0 ? in[index] : in[index] * slope_data[c];
+        if(in[index] > zero) {
+            out[index] = in[index];
+        } else {
+            out[index] = in[index] * slope_data[c];
+        }
     }
 }
 
@@ -64,10 +71,10 @@ PreluPlugin::PreluPlugin(const void *data, size_t length) {
     read<int>(d, mNbInputWidth);
     read<nvinfer1::DataType>(d, mDataType);
     read<int64_t>(d, mWeights.count);
+    read<nvinfer1::DataType>(d, mWeights.type);
     mWeights.values = nullptr;
     mWeights.values = malloc(mWeights.count * type2size(mWeights.type));
     memcpy(const_cast<void *>(mWeights.values), d, mWeights.count * type2size(mWeights.type));
-    deserializeToDevice(d, mDeviceKernel, mWeights.count * type2size(mWeights.type));
     ASSERT(d == a + length);
 }
 
@@ -100,7 +107,7 @@ nvinfer1::Dims PreluPlugin::getOutputDimensions(int index, const nvinfer1::Dims*
 }
 
 bool PreluPlugin::supportsFormat(nvinfer1::DataType type, nvinfer1::PluginFormat format) const {
-    return (type == nvinfer1::DataType::kFLOAT) 
+    return (type == nvinfer1::DataType::kFLOAT | type == nvinfer1::DataType::kHALF) 
             && format == nvinfer1::PluginFormat::kNCHW;
 }
 
@@ -108,7 +115,7 @@ void PreluPlugin::configureWithFormat(const nvinfer1::Dims* inputDims, int nbInp
                                       const nvinfer1::Dims* outputDims, int nbOutputs,
                                       nvinfer1::DataType type, nvinfer1::PluginFormat format, 
                                       int maxBatchSize) {
-    ASSERT((type == nvinfer1::DataType::kFLOAT) 
+    ASSERT((type == nvinfer1::DataType::kFLOAT | type == nvinfer1::DataType::kHALF)
             && format == nvinfer1::PluginFormat::kNCHW);
     mNbInputChannels = inputDims[0].d[0]; 
     mNbInputHeight = inputDims[0].d[1];
@@ -117,8 +124,7 @@ void PreluPlugin::configureWithFormat(const nvinfer1::Dims* inputDims, int nbInp
 }
 
 int PreluPlugin::initialize() {
-    cudaMalloc(&mDeviceKernel, mWeights.count * type2size(mDataType));
-    cudaMemcpy(mDeviceKernel, mWeights.values, mWeights.count * type2size(mDataType), cudaMemcpyHostToDevice);
+    convertAndCopyToDeivce(mDeviceKernel, mWeights, mDataType);
     return 0;
 }
 
@@ -157,7 +163,14 @@ int PreluPlugin::enqueue(int batchSize, const void *const *inputs, void **output
                             div_factor,
                             stream));
     } else {
-        ASSERT(false);
+        const __half zeroh = __half(0.0f);
+        CUDA_CHECK(Forward_gpu(count, channels, dim,
+                            reinterpret_cast<const __half *>(mDeviceKernel),
+                            reinterpret_cast<const __half *>(inputs[0]),
+                            reinterpret_cast<__half *>(outputs[0]),
+                            zeroh,
+                            div_factor,
+                            stream));
     }
 
     return 0;
@@ -165,7 +178,7 @@ int PreluPlugin::enqueue(int batchSize, const void *const *inputs, void **output
 
 size_t PreluPlugin::getSerializationSize() const {
     return sizeof(mNbInputChannels) + sizeof(mNbInputWidth) + sizeof(mNbInputHeight) + sizeof(mDataType) + 
-           sizeof(mWeights.count) + mWeights.count * type2size(mDataType);
+           sizeof(mWeights.count) + sizeof(mDataType) + mWeights.count * type2size(mDataType);
 }
 
 void PreluPlugin::serialize(void *buffer) const {
@@ -175,6 +188,7 @@ void PreluPlugin::serialize(void *buffer) const {
     write(d, mNbInputWidth);
     write(d, mDataType);
     write(d, mWeights.count);
+    write(d, mDataType);
     convertAndCopyToBuffer(d, mWeights, mDataType);
     ASSERT(d == a + getSerializationSize());
 }
@@ -200,6 +214,7 @@ const char* PreluPlugin::getPluginNamespace() const {
 }
 
 PreluPluginCreator::PreluPluginCreator()  {
+    spdlog::error("PreluPluginCreator()");
     mPluginAttributes.emplace_back(nvinfer1::PluginField("weights", nullptr, nvinfer1::PluginFieldType::kFLOAT32, 1));
     mPluginAttributes.emplace_back(nvinfer1::PluginField("nbWeight", nullptr, nvinfer1::PluginFieldType::kINT32, 1));
     mFC.nbFields = mPluginAttributes.size();
@@ -208,20 +223,24 @@ PreluPluginCreator::PreluPluginCreator()  {
 
 // return PRELU_PLUGIN_TYPE + PRELU_PLUGIN_NAMESPACE
 const char* PreluPluginCreator::getPluginName() const {
+    spdlog::error("getPluginName()");
     std::string plugin_type{G_PRELU_TYPE};
     std::string plugin_namespace{G_PLUGIN_NAMESPACE};
     return (plugin_type+plugin_namespace).c_str();
 }
 
 const char* PreluPluginCreator::getPluginVersion() const {
+    spdlog::error("getPluginVersion");
     return G_PLUGIN_VERSION;
 }
 
 const nvinfer1::PluginFieldCollection* PreluPluginCreator::getFieldNames() {
+    spdlog::error("getFieldNames");
     return &mFC;
 }
 
 nvinfer1::IPluginV2* PreluPluginCreator::createPlugin(const char* name, const nvinfer1::PluginFieldCollection* fc) {
+    spdlog::error("createPlugin");
     int nbWeights;
     std::vector<float> weightValues;
     const nvinfer1::PluginField* fields = fc->fields;
@@ -248,10 +267,12 @@ nvinfer1::IPluginV2* PreluPluginCreator::createPlugin(const char* name, const nv
 
 // deserialization plugin implementation
 nvinfer1::IPluginV2* PreluPluginCreator::deserializePlugin(const char *layerName, const void *serialData, size_t serialLength) {
+    spdlog::error("deserializePlugin");
     return new PreluPlugin(serialData, serialLength);
 }
 
 const char* PreluPluginCreator::getPluginNamespace() const {
+    spdlog::error("getPluginNamespace");
     return G_PLUGIN_NAMESPACE;
 }
 
