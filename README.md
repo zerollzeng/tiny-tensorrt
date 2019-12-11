@@ -2,22 +2,17 @@
  * @Description: In User Settings Edit
  * @Author: zerollzeng
  * @Date: 2019-08-23 09:16:35
- * @LastEditTime: 2019-12-10 17:39:34
+ * @LastEditTime: 2019-12-11 15:09:39
  * @LastEditors: zerollzeng
  -->
 
-English | [中文简体](https://github.com/zerollzeng/tiny-tensorrt/blob/master/README-CN.md)
+English | [中文简体](https://github.com/zerollzeng/tiny-tensorrt/blob/master/docs/README-CN.md)
 
 # tiny-tensorrt
 a simple, efficient, easy-to-use nvidia TensorRT wrapper for cnn with c++ and python api,support caffe, uff and onnx format models.
 
-# Note
-TensorRT release it's 6.x version, I upgrade tiny-tensorrt with it, so the old 5.x version was in trt-5.1.5.0 branch. 
-
-I won't add features to 5.x version. keep with new version is better
-
-# Roadmap
-- [x] custom plugin tutorial and well_commented sample!, will finish in this week :fire::fire::fire:
+# Features
+- [x] custom plugin tutorial and well_commented sample! ---2019-12-11 :fire::fire::fire:
 - [x] tensorflow pb support 
 - [x] custom onnx model output node  ---2019.10.18
 - [x] upgrade with TensorRT 6.0.1.5 --- 2019.9.29
@@ -29,7 +24,6 @@ I won't add features to 5.x version. keep with new version is better
 - [x] caffe model int8 support
 - [x] onnx support
 - [x] python api support
-- [x] test in nvidia p4
 - [x] set device
 
 # System Requirements
@@ -97,6 +91,10 @@ output_numpy_array = trt.GetOutput(outputIndex)
 ```
 
 also see [tensorrt-zoo](https://github.com/zerollzeng/tensorrt-zoo), it implement some common computer vision model with tiny tensor_rt, it has serveral good samples
+
+# Docs
+
+[Custom Plugin Tutorial](https://github.com/zerollzeng/tiny-tensorrt/blob/master/docs/CustomPlugin.md)
 
 # Extra Support layer
 - upsample with custom scale, under test with yolov3.

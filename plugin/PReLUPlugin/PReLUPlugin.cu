@@ -12,7 +12,7 @@
 #include "spdlog/spdlog.h"
 
 static const char* G_PRELU_TYPE = "PReLU";
-static const char* G_PRELU_NAME = "PReLU_TRT";
+static const char* G_PRELU_NAME = "PReLU_TRT"; //plugin_name = plugin_type + plugin_namespace
 
 // CUDA: use 512 threads per block
 static const int CUDA_NUM_THREADS = 512;
@@ -272,4 +272,5 @@ const char* PReLUPluginCreator::getPluginNamespace() const {
     return G_PLUGIN_NAMESPACE;
 }
 
-REGISTER_TENSORRT_PLUGIN(PReLUPluginCreator);
+REGISTER_TENSORRT_PLUGIN(PReLUPluginCreator); // DO NOT FORGET THIS
+                                              // 别忘了这个

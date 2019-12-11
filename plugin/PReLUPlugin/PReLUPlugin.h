@@ -3,15 +3,19 @@
  * @Author: zerollzeng
  * @Date: 2019-12-02 16:31:56
  * @LastEditors: zerollzeng
- * @LastEditTime: 2019-12-10 18:01:35
+ * @LastEditTime: 2019-12-11 14:38:17
  */
 #ifndef PRELU_PLUGIN_H // modidy to your file name
 #define PRELU_PLUGIN_H // 改成你自己的文件名
 
 /**
  * @description: this is a plugin sample code with detailed explaination,
- *               you can copy and modify base on this file.
- * @描述: 这是一份示例代码,你可以直接复制,然后在上面根据你自己的插件修改
+ *               you can copy and modify base on this file. when reading
+ *               this header file, please also read the PReLUPlugin.cpp,
+ *               if something is unclear to you, feel free to bring me an
+ *               issue:)
+ * @描述: 这是一份示例代码,你可以直接复制,然后在上面根据你自己的插件修改,你应该结合
+ *       PReLUPlugin.cpp来理解注释,如果有不清晰的地方,欢迎给我提issue
  * @warning: before you write your own layer, make sure you are very familiar 
  *           to the detialed implementation of custom layer, how it compute,
  *           how many weights does it have.
@@ -58,8 +62,25 @@ public:
      */
     PReLUPlugin(const void* data, size_t length);
 
+    /**
+     * @description:return how many space when serialize your custom plugin, include
+     *              weights and necessary member variable. because when restore
+     *              engine from serilized engine file, it won't call configureWithPlugin
+     *              method.
+     * @描述: 返回在序列化你的自定义插件的时候,需要占用到多少空间,其实就是你的权重和一些必要的成员变量.
+     *       因为在使用序列化引擎的时候,不会调用configureWithPlugin函数,第一次配置好的信息需要
+     *       你自己保存到序列化文件.
+     */
     virtual size_t getSerializationSize() const override;
 
+    /**
+     * @description: serialize you custom plugin to buffer, include weights and
+     *               necessary member variable, for this you can mimic my implementation,
+     *               noted that the order of write is the same with read. see
+     *               PReLUPlugin(const void* data, size_t length);
+     * @描述: 序列化你的自定义插件到buffer,你可以直接模仿我的实现,只需要保证write的顺序和read的顺序是
+     *       一样的,不然在反序列化的时候就会得到错误的值,参考PReLUPlugin(const void* data, size_t length);
+     */
     virtual void serialize(void* buffer) const override;
 
     /**
@@ -106,26 +127,69 @@ public:
                                      int nbOutputs, nvinfer1::DataType type, nvinfer1::PluginFormat format,
                                      int maxBatchSize) override;
 
+    /**
+     * @description: initialize your plugin for execution, for simplicity, you need
+     *               to prepare data in gpu in this function, for example convert
+     *               and copy your weights to gpu.because after this method, enqueue
+     *               will be call.
+     * @描述: 初始化你的插件,其实就是初始化好gpu context, 将你的权重从内存拷贝到gpu上,如果
+     *        设定了fp16,当然也要先做转化在拷贝到gpu.
+     * @return: 
+     */
     virtual int initialize() override;
 
+    /**
+     * @description: free memory, include cpu and gpu, see cpp file.
+     * @描述: 释放内存和显存, 见cpp
+     */
     virtual void terminate() override;
 
+    /**
+     * @description: hard to explain, just return 0;
+     * @描述: 很难解释, 直接返回0即可.
+     */
     virtual size_t getWorkspaceSize(int maxBatchSize) const override;
 
+    /**
+     * @description: see cpp
+     * @描述: 见cpp
+     */
     virtual const char* getPluginType() const override;
 
+    /**
+     * @description: see cpp
+     * @描述: 见cpp
+     */
     virtual const char* getPluginVersion() const override;
 
+    /**
+     * @description: the same as ~PReLUPlugin(),just copy my implementation.
+     * @描述: 调用这个接口来析构,参考我的代码即可.
+     */
     virtual void destroy();
 
+    /**
+     * @description: see cpp
+     * @描述: 见cpp
+     */
     virtual nvinfer1::IPluginV2* clone() const override;
 
-    virtual void setPluginNamespace(const char* pluginNamespace) override {
-        spdlog::error("setPluginNamespace: {}", pluginNamespace);
-    }
+    /**
+     * @description: DO NOT IMPLEMENT THIS FUNCTION
+     * @描述: 不要实现这个方法,留空即可
+     */
+    virtual void setPluginNamespace(const char* pluginNamespace) override {}
 
+    /**
+     * @description: see cpp
+     * @描述: 见cpp
+     */
     virtual const char* getPluginNamespace() const override;
-
+    
+    /**
+     * @description: see cpp
+     * @描述: 见cpp
+     */
     virtual int enqueue(int batchSize, const void*const * inputs, void** outputs,
                         void* workspace, cudaStream_t stream) override;
 
@@ -136,6 +200,10 @@ private:
     void* mDeviceKernel{nullptr};
 };
 
+/**
+ * @description: see cpp and mimic my implementation
+ * @描述: 直接参见cpp并且直接模仿我的实现即可.
+ */
 class PReLUPluginCreator : public nvinfer1::IPluginCreator {
 public:
     PReLUPluginCreator();
@@ -157,9 +225,7 @@ public:
     virtual nvinfer1::IPluginV2* deserializePlugin(const char* name, const void* serialData, size_t serialLenth) override;
 
     // Set the namespace of the plugin creator based on the plugin library it belongs to. This can be set while registering the plugin creator
-    virtual void setPluginNamespace(const char* pluginNamespace) override {
-        spdlog::error("setPluginNamespace {}",pluginNamespace);
-    }
+    virtual void setPluginNamespace(const char* pluginNamespace) override {}
 
     // Return the namespace of the plugin creator object.
     virtual const char* getPluginNamespace() const override;

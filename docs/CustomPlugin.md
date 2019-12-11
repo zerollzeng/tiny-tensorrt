@@ -2,9 +2,13 @@
 
 ## 概述
 
-TensorRT已经只支持了许多常见的神经网络层,比如卷积, 池化, BN等等. 但是依然还有很多操作和算子是不支持的,所以TensorRT提供了接口让我们可以编写插件来实现自己的自定义层. 这个接口有c++ 和 python版本,但是因为这个项目自己用pybind11实现了python绑定c++, 所以下面只以c++版本为基础进行介绍.
+TensorRT已经只支持了许多常见的神经网络层,比如卷积, 池化, BN等等. 但是依然还有很多操作和算子是不支持的,所以TensorRT提供了接口让我们可以编写插件来实现自己的自定义层. 这个接口有c++ 和 python版本,但是因为这个项目自己用pybind11实现了python绑定c++, 所以下面只以c++版本为基础进行介绍. 要编写你的自定义插件,可以使用plugin/PReLUPlugin内文件作为模板,他们都有非常详细的注释.只需要按照我的注释去实现即可.
 
 ## 实现自定义插件需要的类
+
+-----
+
+## nvinfer1::IPluginV2/IPluginV2Ext/IPluginV2IOExt/IPluginV2DynamicExt
 
 如果你查阅TensorRT的官方文档的话, 你会发现有IPlugin和IPluginV2两个插件的基础类, IPluginV2是5.0版本新加的升级版,所以IPlugin这个接口在未来会被移除. 如果要编写自定义插件的话, 还是使用IPluginV2,本文的介绍都是针对IPluginV2的.
 
@@ -22,7 +26,7 @@ IPluginV2是一个基类, 还有一些派生类,它们可以提供更加丰富�
 
 
 这是一个最基础的继承自IPluginV2的自定义插件的头文件,所有自定义插件都至少需要实现下面所有的virtual方法,如果继承了具备更多特性的库,那么还需要实现其他需要要求的方法.你可以先浏览一下下面的函数名,接下来我会介绍这些函数的调用工作流.
-```
+```c++
 class CustomPlugin : public nvinfer1::IPluginV2
 {
 public:
@@ -66,7 +70,7 @@ public:
 };
 ```
 
-### workflow
+### Workflow of an IPluginV2 plugin
 
 #### parse phase/ parse阶段
 
@@ -89,7 +93,55 @@ engine构建阶段会再次通过CustomPlugin(const Weights *weights, int nbWeig
 在使用引擎文件进行推理的过程中,从序列化文件恢复权重和参数,所以会先调用SamplePlugins(const void *data, size_t length)读取自定义层的相关信息,然后调用initialize() 进行初始化.在推理的过程中调用enqueue()进行推理.推理结束后如果在调用engine的destroy方法的时候会调用terminate()函数,释放
 掉initialize()申请的资源.
 
-### 示例文件
+-----
+
+## nvinfer1::IPluginCreator
+
+IPluginCreator主要用于将编写好的IPlugin插件注册到Plugin Registry, 在解析uff(tensorflow 模型)的时候就可以调用到自定义层的IPluginV2实现,以及在反序列化engine文件的时候也会通过IPluginCreator来获取自定义层.这里是IPluginCreator的函数的方法.更具体的参见示例文件即可.
+```c++
+class CustomPluginCreator : public nvinfer1::IPluginCreator {
+public:
+    CustomPluginCreator();
+
+    // ------------------inherit from IPluginCreator-------------------
+    // return the plugin type + plugin namesapce
+    virtual const char* getPluginName() const override;
+
+    // return the plugin version
+    virtual const char* getPluginVersion() const override;
+
+    // return a list of fields that needs to be passed to createPlugin
+    virtual const nvinfer1::PluginFieldCollection* getFieldNames() override;
+
+    // return nullptr in case of error
+    virtual nvinfer1::IPluginV2* createPlugin(const char* name, const nvinfer1::PluginFieldCollection *fc) override;
+
+    // Called during deserialization of plugin layer. Return a plugin object.
+    virtual nvinfer1::IPluginV2* deserializePlugin(const char* name, const void* serialData, size_t serialLenth) override;
+
+    // Set the namespace of the plugin creator based on the plugin library it belongs to. This can be set while registering the plugin creator
+    virtual void setPluginNamespace(const char* pluginNamespace) override {}
+
+    // Return the namespace of the plugin creator object.
+    virtual const char* getPluginNamespace() const override;
+};
+
+```
+
+这里主要要介绍的就是如果要编写uff的自定义插件,IPluginCreator会通过getFieldNames() 和 createPlugin(const char* name, const nvinfer1::PluginFieldCollection *fc) 来获取自定义插件的实例,所以如果你只需要caffe模型的自定义插件,这两个函数不实现返回nullptr即可.但是 caffe模型的自定义插件需要实现下一节的nvcaffeparser1::IPluginFactoryV2接口. deserializePlugin(const char* name, const void* serialData, size_t serialLenth) 是在反序列engine的时候调用的,所以这个函数必须要实现.具体参见示例文件.
+
+最后在cpp文件的最后,不要忘记加上REGISTER_TENSORRT_PLUGIN(pluginCreator)这个宏来注册你的自定义插件
+
+-----
+
+## nvcaffeparser1::IPluginFactoryV2
+
+这个类是caffe模型专用的,主要通过这个类来创建caffe的自定义插件.请直接参见plugin/PluginFactory.h和plugin/PluginFactory.cpp,只需要模仿我的实现在对应的函数内把你的自定义插件的相关信息添加进去即可.
+
+这个类的用途跟IPluginCreator非常相似,区别就是每一个plugin都需要实现一个自己的IPluginCreator,而PluginFactory只需要一个(所以叫做工厂哈哈).
+
+
+## 示例文件
 
 请参见plugin/PreluPlugin内文件和plugin/plugin_utils.h以及plugin/plugin_utils.cpp,他们都有非常详细的注视,只需要按照模板实现即可~
 
