@@ -2,7 +2,7 @@
  * @Description: In User Settings Edit
  * @Author: zerollzeng
  * @Date: 2019-08-23 09:16:35
- * @LastEditTime: 2019-12-11 15:09:39
+ * @LastEditTime: 2019-12-12 14:08:26
  * @LastEditors: zerollzeng
  -->
 
@@ -12,19 +12,16 @@ English | [中文简体](https://github.com/zerollzeng/tiny-tensorrt/blob/master
 a simple, efficient, easy-to-use nvidia TensorRT wrapper for cnn with c++ and python api,support caffe, uff and onnx format models.
 
 # Features
-- [x] custom plugin tutorial and well_commented sample! ---2019-12-11 :fire::fire::fire:
-- [x] tensorflow pb support 
-- [x] custom onnx model output node  ---2019.10.18
-- [x] upgrade with TensorRT 6.0.1.5 --- 2019.9.29
-- [ ] support more model and layer --working on
-- [x] caffe model support
-- [x] PRELU support
-- [x] upsample support
-- [x] engine serialization
-- [x] caffe model int8 support
-- [x] onnx support
-- [x] python api support
-- [x] set device
+- [x] Custom plugin tutorial and well_commented sample! ---2019-12-11 :fire::fire::fire:
+- [x] Custom onnx model output node  ---2019.10.18
+- [x] Upgrade with TensorRT 6.0.1.5 --- 2019.9.29
+- [x] Support onnx,caffe and tensorflow model
+- [ ] Support more model and layer --working on
+- [x] PReLU and up-sample plugin
+- [x] Engine serialization and deserialization
+- [x] INT8 support for caffe model
+- [x] Python api support
+- [x] Set device
 
 # System Requirements
 cuda 10.0+
@@ -36,14 +33,14 @@ for python api, python 2.x/3.x and numpy in needed
 this project is fully test in ubuntu 16.04. I tested it with 1060ti, 1050ti, 1080ti, 1660ti, 2080, 2080ti and p4.
 
 # Installation
-Make sure you had install dependencies list above, if you are familiar with docker, you can use [offcial docker](https://ngc.nvidia.com/catalog/containers/nvidia:tensorrt)
+Make sure you had install dependencies list above, if you are familiar with docker, you can use [official docker](https://ngc.nvidia.com/catalog/containers/nvidia:tensorrt)
 ```bash
 # clone project and submodule
 git clone --recurse-submodules -j8 https://github.com/zerollzeng/tiny-tensorrt.git
 
 cd tiny-tensorrt
 
-mkdir build && cd build && cmake -D PYTHON_API ON .. && make
+mkdir build && cd build && cmake .. && make
 ```
 then you can intergrate it into your own project with libtinytrt.so and Trt.h, for python module, you get pytrt.so
 
@@ -100,14 +97,6 @@ also see [tensorrt-zoo](https://github.com/zerollzeng/tensorrt-zoo), it implemen
 - upsample with custom scale, under test with yolov3.
 - yolo-det, last layer of yolov3 which sum three scales output and generate final result for nms. under test with yolov3.
 - PRELU, under test with openpose and mtcnn.
-
-
-# Acknowledgement
-this project is originally motivated by [lewes6369/tensorRTWrapper](https://github.com/lewes6369/tensorRTWrapper) and [lewes6369/TensorRT-Yolov3](https://github.com/lewes6369/TensorRT-Yolov3), I make use of his upsample and yolo-det plugin with slightly optimization.
-
-and I use [spdlog](https://github.com/gabime/spdlog) for some fancy log output, it's very lightweight for intergrate. 
-
-I use pybind11 for python api binding.
 
 # About License
 For the 3rd-party module and TensorRT, maybe you need to follow their license

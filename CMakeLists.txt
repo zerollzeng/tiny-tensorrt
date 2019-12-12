@@ -6,22 +6,42 @@ project(tinytrt)
 set(CMAKE_CXX_FLAGS "-std=c++11")
 
 # set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib CACHE PATH "")
+option(PYTHON_API "compile python api" ON)
 
-find_package(CUDA REQUIRED)
-set(
-    CUDA_NVCC_FLAGS
-    ${CUDA_NVCC_FLAGS};
-    # -O2
-    # -arch=sm_75
-    # -gencode=arch=compute_50,code=sm_50 
-    # -gencode=arch=compute_52,code=sm_52 
-    # -gencode=arch=compute_60,code=sm_60 
-    # -gencode=arch=compute_61,code=sm_61 
-    # -gencode=arch=compute_70,code=sm_70 
-    -gencode=arch=compute_75,code=sm_75
-    -gencode=arch=compute_75,code=compute_75 
-)
-MESSAGE(STATUS "Found cuda version ${CUDA_VERSION_STRING}")
+# Discover what architectures does nvcc support
+include(cmake/CUDA_utils.cmake)
+CUDA_find_supported_arch_values(CUDA_supported_archs ${CUDA_known_archs})
+message(STATUS "CUDA supported archs: ${CUDA_supported_archs}")
+
+set(CUDA_TARGET_ARCHS_SORTED ${CUDA_TARGET_ARCHS})
+list(SORT CUDA_TARGET_ARCHS_SORTED)
+CUDA_find_supported_arch_values(CUDA_targeted_archs ${CUDA_TARGET_ARCHS_SORTED})
+message(STATUS "CUDA targeted archs: ${CUDA_targeted_archs}")
+if (NOT CUDA_targeted_archs)
+  message(FATAL_ERROR "None of the provided CUDA architectures ({${CUDA_TARGET_ARCHS}}) is supported by nvcc, use one or more of: ${CUDA_supported_archs}")
+endif()
+
+CUDA_get_gencode_args(CUDA_gencode_flags ${CUDA_targeted_archs})
+message(STATUS "Generated gencode flags: ${CUDA_gencode_flags}")
+
+# Add ptx & bin flags for cuda
+set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} ${CUDA_gencode_flags}")
+
+# find_package(CUDA REQUIRED)
+# set(
+#     CUDA_NVCC_FLAGS
+#     ${CUDA_NVCC_FLAGS};
+#     # -O2
+#     # -arch=sm_75
+#     # -gencode=arch=compute_50,code=sm_50 
+#     # -gencode=arch=compute_52,code=sm_52 
+#     # -gencode=arch=compute_60,code=sm_60 
+#     # -gencode=arch=compute_61,code=sm_61 
+#     # -gencode=arch=compute_70,code=sm_70 
+#     -gencode=arch=compute_75,code=sm_75
+#     -gencode=arch=compute_75,code=compute_75 
+# )
+# MESSAGE(STATUS "Found cuda version ${CUDA_VERSION_STRING}")
 
 include_directories(spdlog)
 include_directories(pybind11/include)
@@ -45,7 +65,6 @@ cuda_add_library(tinytrt SHARED ${trt_source})
 target_compile_options(tinytrt PUBLIC -std=c++11 -Wall -Wfloat-conversion)
 set_target_properties(tinytrt PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-option(PYTHON_API "compile python api" OFF)
 if(PYTHON_API)
   # set(Python3_ROOT_DIR /root/miniconda3/bin)
   # find_package(Python3 REQUIRED)

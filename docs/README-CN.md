@@ -4,15 +4,13 @@
 
 # 功能
 - [x] 自定义插件教程和非常详细的示例代码! ---2019-12-11 :fire::fire::fire:
-- [x] tensorflow模型支持
 - [x] 自定义onnx模型输出节点 ---2019.10.18
 - [x] 升级到TensorRT 6.0.1.5 --- 2019.9.29
+- [x] 支持onnx, caffe, tensorflow模型
 - [ ] 实现更多的层(有需要请给我提issue阿喂,但是我希望是通用的层) --working on
-- [x] caffe模型支持
-- [x] PRELU支持
-- [x] upsample支持
-- [x] 引擎序列化
-- [x] caffe model int8支持
+- [x] PRELU和upsample自定义层
+- [x] 引擎序列化及反序列化
+- [x] caffe int8支持
 - [x] onnx支持
 - [x] python api支持
 - [x] 自定义使用显卡
@@ -30,7 +28,7 @@ git clone --recurse-submodules -j8 https://github.com/zerollzeng/tiny-tensorrt.g
 
 cd tiny-tensorrt
 
-mkdir build && cd build && cmake -D PYTHON_API ON .. && make
+mkdir build && cd build && cmake .. && make
 ```
 then you can intergrate it into your own project with libtinytrt.so and Trt.h, for python module, you get pytrt.so
 然后你就可以将它集成进你自己的项目里面,只需要libtinytrt.so和Trt.h, 如果要用python api, 使用pytrt.so
@@ -88,13 +86,6 @@ also see [tensorrt-zoo](https://github.com/zerollzeng/tensorrt-zoo), it implemen
 - 自定义尺度upsample,在yolov3上测试
 - yolo-det, 就是yolov3的最后一层,将三个尺度的输出集合起来产生检测结果
 - PRELU, 在openpose和mtcnn上做了测试
-
-# 致谢
-这个项目最初是因为看到了[lewes6369/tensorRTWrapper](https://github.com/lewes6369/tensorRTWrapper) 和 [lewes6369/TensorRT-Yolov3](https://github.com/lewes6369/TensorRT-Yolov3),所以打算做一个更好的.
-
-然后我使用了[spdlog](https://github.com/gabime/spdlog),可以有比较好看的log信息,看起来更清晰一点
-
-使用了pybind11来做python api
 
 # 版权
 这个项目包含了一些第三方模块,对于它们需要遵守他们的版权要求
