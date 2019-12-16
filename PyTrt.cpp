@@ -2,7 +2,7 @@
  * @Author: zerollzeng
  * @Date: 2019-08-29 15:45:15
  * @LastEditors: zerollzeng
- * @LastEditTime: 2019-10-18 16:10:31
+ * @LastEditTime: 2019-12-16 13:45:57
  */
 #include "pybind11/pybind11.h"
 #include "pybind11/numpy.h"
@@ -37,6 +37,12 @@ PYBIND11_MODULE(pytrt, m) {
                                             const std::string&,
                                             const std::vector<std::string>&,
                                             int)) &Trt::CreateEngine, "create engine with onnx model")
+        .def("CreateEngine", (void (Trt::*)(const std::string&,
+                                            const std::string&,
+                                            const std::vector<std::string>&,
+                                            const std::vector<std::vector<int>>&,
+                                            const std::vector<std::string>&,
+                                            int)) &Trt::CreateEngine, "create engine with tensorflow model")
         .def("DoInference", [](Trt& self, py::array_t<float, py::array::c_style | py::array::forcecast> array) {
             std::vector<float> input;
             input.resize(array.size());
