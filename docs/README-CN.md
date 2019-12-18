@@ -3,7 +3,17 @@
 ![image](https://user-images.githubusercontent.com/38289304/70904144-96992680-203b-11ea-9d41-221af2fe3d5b.png)
 
 # tiny-tensorrt
-一个非常高效易用的nvidia TensorRT封装,支持c++,python调用,支持caffe,onnx,tensorflow模型.
+一个非常高效易用的nvidia TensorRT封装,支持c++,python调用,支持caffe,onnx,tensorflow模型.只需要几行代码,就可以完成模型的推理部署
+```c++
+// 创建引擎
+trt.CreateEngine(prototxt,caffemodel,engingefile,outputBlob,calibratorData,maxBatchSize,runMode);
+// 将模型输入传输到显卡
+trt.DataTransfer(input,0,True);
+// 松手刹,挂挡,松离合,踩油门!
+trt.Forward();
+// 获取网络输出
+trt.DataTransfer(output, outputIndex, False) // you can get outputIndex in CreateEngine phase
+```
 
 # 功能
 - [x] 自定义插件教程和非常详细的示例代码! ---2019-12-11 :fire::fire::fire:
@@ -22,64 +32,6 @@
 TensorRT 6.x 版本和 cuda 10.0+
 
 如果要使用python api, 那么还需要安装python2/3 和 numpy
-
-# 安装
-首先确保你已经安装了上述依赖, 如果你熟悉docker的话,也可以用[官方docker镜像](https://ngc.nvidia.com/catalog/containers/nvidia:tensorrt)
-```bash
-# clone project and submodule
-git clone --recurse-submodules -j8 https://github.com/zerollzeng/tiny-tensorrt.git
-
-cd tiny-tensorrt
-
-mkdir build && cd build && cmake .. && make
-```
-then you can intergrate it into your own project with libtinytrt.so and Trt.h, for python module, you get pytrt.so
-然后你就可以将它集成进你自己的项目里面,只需要libtinytrt.so和Trt.h, 如果要用python api, 使用pytrt.so
-
-# 使用方法
-c++
-```c++
-#include "Trt.h"
-
-Trt trt;
-// create engine and running context, note that engine file is device specific, so don't copy engine file to new device, it may cause crash
-trt.CreateEngine("path/to/sample.prototxt",
-                 "path/to/sample.caffemodel",
-                 "path/to/engineFile", // since build engine is time consuming,so save we can serialize engine to file, it's much more faster
-                 "outputblob",
-                 calibratorData,
-                 maxBatchSize,
-                 runMode);
-// trt.CreateEngine(onnxModel,engineFile,maxBatchSize); // for onnx model
-
-// you might need to do some pre-processing in input such as normalization, it depends on your model.
-trt.DataTransfer(input,0,True); // 0 for input index, you can get it from CreateEngine phase log output, True for copy input date to gpu
-
-//run model, it will read your input and run inference. and generate output.
-trt.Forward();
-
-//  get output.
-trt.DataTransfer(output, outputIndex, False) // you can get outputIndex in CreateEngine phase
-// them you can do post processing in output
-```
-
-python
-```python
-import sys
-sys.path.append("path/to/where_pytrt.so_located/")
-import pytrt
-
-trt = pytrt.Trt()
-trt.CreateEngine(prototxt, caffemodel, engineFile, outputBlobName, calibratorData, maxBatchSize, mode)
-# trt.CreateEngine(onnxModel, engineFile, maxBatchSize)
-# see c++ CreateEngine
-
-trt.DoInference(input_numpy_array) # slightly different from c++
-output_numpy_array = trt.GetOutput(outputIndex)
-# post processing
-```
-
-also see [tensorrt-zoo](https://github.com/zerollzeng/tensorrt-zoo), it implement some common computer vision model with tiny tensor_rt, it has serveral good samples
 
 # 文档
 

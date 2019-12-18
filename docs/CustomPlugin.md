@@ -1,3 +1,5 @@
+English | [中文简体](https://github.com/zerollzeng/tiny-tensorrt/blob/master/docs/CustomPlugin-CN.md)
+
 # How to write your custom plugin
 
 ## Overview

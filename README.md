@@ -11,7 +11,17 @@ English | [中文简体](https://github.com/zerollzeng/tiny-tensorrt/blob/master
 ![image](https://user-images.githubusercontent.com/38289304/70904144-96992680-203b-11ea-9d41-221af2fe3d5b.png)
 
 # tiny-tensorrt
-a simple, efficient, easy-to-use nvidia TensorRT wrapper for cnn with c++ and python api,support caffe, uff and onnx format models.
+a simple, efficient, easy-to-use nvidia TensorRT wrapper for cnn with c++ and python api,support caffe, uff and onnx format models. you will be able use tiny-tensorrt deploy your model with few lines of code!
+```c++
+// create engine
+trt.CreateEngine(prototxt,caffemodel,engingefile,outputBlob,calibratorData,maxBatchSize,runMode);
+// transfer you input data to tensorrt engine
+trt.DataTransfer(input,0,True);
+// inference!!!
+trt.Forward();
+//  retrieve network output
+trt.DataTransfer(output, outputIndex, False) // you can get outputIndex in CreateEngine phase
+```
 
 # Features
 - [x] Custom plugin tutorial and well_commented sample! ---2019-12-11 :fire::fire::fire:

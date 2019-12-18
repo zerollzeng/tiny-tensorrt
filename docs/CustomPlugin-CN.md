@@ -1,3 +1,5 @@
+[English](https://github.com/zerollzeng/tiny-tensorrt/blob/master/docs/CustomPlugin.md) | 中文简体
+
 # 如何编写自定义插件
 
 ## 概述
