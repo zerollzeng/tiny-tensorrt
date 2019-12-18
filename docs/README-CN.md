@@ -83,7 +83,9 @@ also see [tensorrt-zoo](https://github.com/zerollzeng/tensorrt-zoo), it implemen
 
 # 文档
 
-[自定义层编写教程](https://github.com/zerollzeng/tiny-tensorrt/blob/master/docs/CustomPlugin.md)
+[UserGuide](https://github.com/zerollzeng/tiny-tensorrt/blob/master/docs/UserGuide.md)
+
+[自定义层编写教程](https://github.com/zerollzeng/tiny-tensorrt/blob/master/docs/CustomPlugin-CN.md) (En-Ch)
 
 # 支持的额外层
 - 自定义尺度upsample,在yolov3上测试

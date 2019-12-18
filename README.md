@@ -2,8 +2,8 @@
  * @Description: In User Settings Edit
  * @Author: zerollzeng
  * @Date: 2019-08-23 09:16:35
- * @LastEditTime: 2019-12-16 19:38:35
- * @LastEditors: zerollzeng
+ * @LastEditTime : 2019-12-18 15:05:43
+ * @LastEditors  : zerollzeng
  -->
 
 English | [中文简体](https://github.com/zerollzeng/tiny-tensorrt/blob/master/docs/README-CN.md)
@@ -38,7 +38,7 @@ this project is fully test in ubuntu 16.04. I tested it with 1060ti, 1050ti, 108
 
 [User Guide](https://github.com/zerollzeng/tiny-tensorrt/blob/master/docs/UserGuide.md)
 
-[Custom Plugin Tutorial](https://github.com/zerollzeng/tiny-tensorrt/blob/master/docs/CustomPlugin.md)
+[Custom Plugin Tutorial](https://github.com/zerollzeng/tiny-tensorrt/blob/master/docs/CustomPlugin.md) (En-Ch)
 
 # Extra Support layer
 - upsample with custom scale, under test with yolov3.
