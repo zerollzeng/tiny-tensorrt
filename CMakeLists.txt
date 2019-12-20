@@ -8,6 +8,7 @@ set(CMAKE_CXX_FLAGS "-std=c++11")
 # set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib CACHE PATH "")
 option(BUILD_PYTHON "compile python api" ON)
 
+find_package(CUDA REQUIRED)
 # Discover what architectures does nvcc support
 include(cmake/CUDA_utils.cmake)
 CUDA_find_supported_arch_values(CUDA_supported_archs ${CUDA_known_archs})
