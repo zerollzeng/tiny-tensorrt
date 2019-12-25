@@ -24,6 +24,7 @@ trt.DataTransfer(output, outputIndex, False) // you can get outputIndex in Creat
 ```
 
 # Features
+- [x] Support TensorRT 7 now --- 2019-12-25 :christmas_tree::christmas_tree::christmas_tree:
 - [x] Custom plugin tutorial and well_commented sample! ---2019-12-11 :fire::fire::fire:
 - [x] Custom onnx model output node  ---2019.10.18
 - [x] Upgrade with TensorRT 6.0.1.5 --- 2019.9.29
@@ -38,7 +39,7 @@ trt.DataTransfer(output, outputIndex, False) // you can get outputIndex in Creat
 # System Requirements
 cuda 10.0+
 
-TensorRT 6.x
+TensorRT 6 or 7
 
 for python api, python 2.x/3.x and numpy in needed
 

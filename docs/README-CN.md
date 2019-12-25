@@ -16,6 +16,7 @@ trt.DataTransfer(output, outputIndex, False) // you can get outputIndex in Creat
 ```
 
 # 功能
+- [x] 现在已经可以支持TensorRT 7 --- 2019-12-25 :christmas_tree::christmas_tree::christmas_tree:
 - [x] 自定义插件教程和非常详细的示例代码! ---2019-12-11 :fire::fire::fire:
 - [x] 自定义onnx模型输出节点 ---2019.10.18
 - [x] 升级到TensorRT 6.0.1.5 --- 2019.9.29
@@ -29,7 +30,7 @@ trt.DataTransfer(output, outputIndex, False) // you can get outputIndex in Creat
 - [x] 自定义使用显卡
 
 # 系统需求
-TensorRT 6.x 版本和 cuda 10.0+
+TensorRT 6或7 和 cuda 10.0+
 
 如果要使用python api, 那么还需要安装python2/3 和 numpy
 
