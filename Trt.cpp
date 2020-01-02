@@ -2,8 +2,8 @@
  * @Description: In User Settings Edit
  * @Author: your name
  * @Date: 2019-08-21 14:06:38
- * @LastEditTime: 2019-12-10 16:55:06
- * @LastEditors: zerollzeng
+ * @LastEditTime : 2020-01-02 18:39:26
+ * @LastEditors  : zerollzeng
  */
 #include "Trt.h"
 #include "utils.h"
@@ -367,7 +367,8 @@ bool Trt::BuildEngine(const std::string& onnxModel,
     nvinfer1::IBuilder* builder = nvinfer1::createInferBuilder(mLogger);
     assert(builder != nullptr);
     // NetworkDefinitionCreationFlag::kEXPLICIT_BATCH 
-    nvinfer1::INetworkDefinition* network = builder->createNetworkV2(0);
+    const auto explicitBatch = 1U << static_cast<uint32_t>(NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
+    nvinfer1::INetworkDefinition* network = builder->createNetworkV2(explicitBatch);
     assert(network != nullptr);
     nvonnxparser::IParser* parser = nvonnxparser::createParser(*network, mLogger);
     if(!parser->parseFromFile(onnxModel.c_str(), static_cast<int>(ILogger::Severity::kWARNING))) {
