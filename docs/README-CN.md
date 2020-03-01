@@ -40,6 +40,8 @@ TensorRT 6或7 和 cuda 10.0+
 
 [自定义层编写教程](https://github.com/zerollzeng/tiny-tensorrt/blob/master/docs/CustomPlugin-CN.md) (En-Ch)
 
+如果需要一些tiny-tensorrt的使用示例,可以参考[tensorrt-zoo](https://github.com/zerollzeng/tensorrt-zoo)
+
 # 支持的额外层
 - 自定义尺度upsample,在yolov3上测试
 - yolo-det, 就是yolov3的最后一层,将三个尺度的输出集合起来产生检测结果
