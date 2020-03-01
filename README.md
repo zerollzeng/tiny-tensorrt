@@ -51,6 +51,8 @@ this project is fully test in ubuntu 16.04. I tested it with 1060ti, 1050ti, 108
 
 [Custom Plugin Tutorial](https://github.com/zerollzeng/tiny-tensorrt/blob/master/docs/CustomPlugin.md) (En-Ch)
 
+if you want some examples with tiny-tensorrt, you can refer to [tensorrt-zoo](https://github.com/zerollzeng/tensorrt-zoo)
+
 # Extra Support layer
 - upsample with custom scale, under test with yolov3.
 - yolo-det, last layer of yolov3 which sum three scales output and generate final result for nms. under test with yolov3.
