@@ -23,7 +23,7 @@ A clear and concise description of what you expected to happen.
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
-**Desktop (please complete the following information):**
+**System environment (please complete the following information):**
  - OS: 
  - TensorRT version: 
  - Others:
