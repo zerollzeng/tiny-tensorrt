@@ -2,7 +2,7 @@
  * @Author: zerollzeng
  * @Date: 2019-08-29 15:45:15
  * @LastEditors: zerollzeng
- * @LastEditTime: 2019-12-16 13:45:57
+ * @LastEditTime: 2020-03-02 15:09:53
  */
 #include "pybind11/pybind11.h"
 #include "pybind11/numpy.h"
@@ -26,23 +26,33 @@ PYBIND11_MODULE(pytrt, m) {
         .def(py::init([](TrtPluginParams params) { 
             return std::unique_ptr<Trt>(new Trt(params));
         }))
-        .def("CreateEngine", (void (Trt::*)(const std::string&,
-                                            const std::string&,
-                                            const std::string&,
-                                            const std::vector<std::string>&,
-                                            const std::vector<std::vector<float>>&,
-                                            int,
-                                            int)) &Trt::CreateEngine, "create engine with caffe model")
-        .def("CreateEngine", (void (Trt::*)(const std::string&,
-                                            const std::string&,
-                                            const std::vector<std::string>&,
-                                            int)) &Trt::CreateEngine, "create engine with onnx model")
-        .def("CreateEngine", (void (Trt::*)(const std::string&,
-                                            const std::string&,
-                                            const std::vector<std::string>&,
-                                            const std::vector<std::vector<int>>&,
-                                            const std::vector<std::string>&,
-                                            int)) &Trt::CreateEngine, "create engine with tensorflow model")
+        .def("CreateEngine", (void (Trt::*)(
+            const std::string&,
+            const std::string&,
+            const std::string&,
+            const std::vector<std::string>&,
+            int,
+            int,
+            const std::vector<std::vector<float>>&
+            )) &Trt::CreateEngine, "create engine with caffe model")
+        .def("CreateEngine", (void (Trt::*)(
+            const std::string&,
+            const std::string&,
+            const std::vector<std::string>&,
+            int,
+            int,
+            const std::vector<std::vector<float>>&
+            )) &Trt::CreateEngine, "create engine with onnx model")
+        .def("CreateEngine", (void (Trt::*)(
+            const std::string&,
+            const std::string&,
+            const std::vector<std::string>&,
+            const std::vector<std::vector<int>>&,
+            const std::vector<std::string>&,
+            int,
+            int,
+            const std::vector<std::vector<float>>&
+            )) &Trt::CreateEngine, "create engine with tensorflow model")
         .def("DoInference", [](Trt& self, py::array_t<float, py::array::c_style | py::array::forcecast> array) {
             std::vector<float> input;
             input.resize(array.size());

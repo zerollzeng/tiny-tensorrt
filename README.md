@@ -2,8 +2,8 @@
  * @Description: In User Settings Edit
  * @Author: zerollzeng
  * @Date: 2019-08-23 09:16:35
- * @LastEditTime : 2019-12-18 15:05:43
- * @LastEditors  : zerollzeng
+ * @LastEditTime: 2020-03-06 17:12:14
+ * @LastEditors: zerollzeng
  -->
 
 English | [中文简体](https://github.com/zerollzeng/tiny-tensorrt/blob/master/docs/README-CN.md)
@@ -14,7 +14,7 @@ English | [中文简体](https://github.com/zerollzeng/tiny-tensorrt/blob/master
 a simple, efficient, easy-to-use nvidia TensorRT wrapper for cnn with c++ and python api,support caffe, uff and onnx format models. you will be able use tiny-tensorrt deploy your model with few lines of code!
 ```c++
 // create engine
-trt.CreateEngine(prototxt,caffemodel,engingefile,outputBlob,calibratorData,maxBatchSize,runMode);
+trt.CreateEngine(onnxModelpath, engineFile, customOutput, maxBatchSize, mode, calibratorData);
 // transfer you input data to tensorrt engine
 trt.DataTransfer(input,0,True);
 // inference!!!
@@ -43,7 +43,17 @@ TensorRT 6 or 7
 
 for python api, python 2.x/3.x and numpy in needed
 
-this project is fully test in ubuntu 16.04. I tested it with 1060ti, 1050ti, 1080ti, 1660ti, 2080, 2080ti and p4.
+# Installation
+Make sure you had install dependencies list above, if you are familiar with docker, you can use [official docker](https://ngc.nvidia.com/catalog/containers/nvidia:tensorrt)
+```bash
+# clone project and submodule
+git clone --recurse-submodules -j8 https://github.com/zerollzeng/tiny-tensorrt.git
+
+cd tiny-tensorrt
+
+mkdir build && cd build && cmake .. && make
+```
+then you can intergrate it into your own project with libtinytrt.so and Trt.h, for python module, you get pytrt.so
 
 # Docs
 

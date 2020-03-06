@@ -2,8 +2,8 @@
  * @Description: In User Settings Edit
  * @Author: your name
  * @Date: 2019-08-21 14:06:38
- * @LastEditTime : 2020-01-02 18:39:26
- * @LastEditors  : zerollzeng
+ * @LastEditTime: 2020-03-02 15:05:43
+ * @LastEditors: zerollzeng
  */
 #include "Trt.h"
 #include "utils.h"
@@ -51,13 +51,14 @@ Trt::~Trt() {
     }
 }
 
-void Trt::CreateEngine(const std::string& prototxt, 
-                       const std::string& caffeModel,
-                       const std::string& engineFile,
-                       const std::vector<std::string>& outputBlobName,
-                       const std::vector<std::vector<float>>& calibratorData,
-                       int maxBatchSize,
-                       int mode) {
+void Trt::CreateEngine(
+        const std::string& prototxt, 
+        const std::string& caffeModel,
+        const std::string& engineFile,
+        const std::vector<std::string>& outputBlobName,
+        int maxBatchSize,
+        int mode,
+        const std::vector<std::vector<float>>& calibratorData) {
     mRunMode = mode;
     spdlog::info("prototxt: {}",prototxt);
     spdlog::info("caffeModel: {}",caffeModel);
@@ -68,7 +69,7 @@ void Trt::CreateEngine(const std::string& prototxt,
     }
     std::cout << std::endl;
     if(!DeserializeEngine(engineFile)) {
-        if(!BuildEngine(prototxt,caffeModel,engineFile,outputBlobName,calibratorData,maxBatchSize)) {
+        if(!BuildEngineWithCaffe(prototxt,caffeModel,engineFile,outputBlobName,calibratorData,maxBatchSize)) {
             spdlog::error("error: could not deserialize or build engine");
             return;
         }
@@ -79,12 +80,15 @@ void Trt::CreateEngine(const std::string& prototxt,
     //mContext->setProfiler(mProfiler);
 }
 
-void Trt::CreateEngine(const std::string& onnxModel,
-                       const std::string& engineFile,
-                       const std::vector<std::string>& customOutput,
-                       int maxBatchSize) {
+void Trt::CreateEngine(
+        const std::string& onnxModel,
+        const std::string& engineFile,
+        const std::vector<std::string>& customOutput,
+        int maxBatchSize,
+        int mode,
+        const std::vector<std::vector<float>>& calibratorData) {
     if(!DeserializeEngine(engineFile)) {
-        if(!BuildEngine(onnxModel,engineFile,customOutput,maxBatchSize)) {
+        if(!BuildEngineWithOnnx(onnxModel,engineFile,customOutput,calibratorData,maxBatchSize)) {
             spdlog::error("error: could not deserialize or build engine");
             return;
         }
@@ -93,14 +97,17 @@ void Trt::CreateEngine(const std::string& onnxModel,
     InitEngine();
 }
 
-void Trt::CreateEngine(const std::string& uffModel,
-                       const std::string& engineFile,
-                       const std::vector<std::string>& inputTensorNames,
-                       const std::vector<std::vector<int>>& inputDims,
-                       const std::vector<std::string>& outputTensorNames,
-                       int maxBatchSize) {
+void Trt::CreateEngine(
+        const std::string& uffModel,
+        const std::string& engineFile,
+        const std::vector<std::string>& inputTensorNames,
+        const std::vector<std::vector<int>>& inputDims,
+        const std::vector<std::string>& outputTensorNames,
+        int maxBatchSize,
+        int mode,
+        const std::vector<std::vector<float>>& calibratorData) {
     if(!DeserializeEngine(engineFile)) {
-        if(!BuildEngine(uffModel,engineFile,inputTensorNames,inputDims, outputTensorNames,maxBatchSize)) {
+        if(!BuildEngineWithUff(uffModel,engineFile,inputTensorNames,inputDims, outputTensorNames,calibratorData, maxBatchSize)) {
             spdlog::error("error: could not deserialize or build engine");
             return;
         }
@@ -242,124 +249,131 @@ bool Trt::DeserializeEngine(const std::string& engineFile) {
     return false;
 }
 
-bool Trt::BuildEngine(const std::string& prototxt, 
+void Trt::BuildEngine(nvinfer1::IBuilder* builder,
+                      nvinfer1::INetworkDefinition* network,
+                      const std::vector<std::vector<float>>& calibratorData,
+                      int maxBatchSize,
+                      int mode) {
+    nvinfer1::IBuilderConfig* config = builder->createBuilderConfig();
+
+    Int8EntropyCalibrator* calibrator = nullptr;
+    if (mRunMode == 2)
+    {
+        spdlog::info("set int8 inference mode");
+        if (!builder->platformHasFastInt8()) {
+            spdlog::warn("Warning: current platform doesn't support int8 inference");
+        }
+        if (calibratorData.size() > 0 ){
+            std::string calibratorName = "calibrator";
+            std::cout << "create calibrator,Named:" << calibratorName << std::endl;
+            calibrator = new Int8EntropyCalibrator(maxBatchSize,calibratorData,calibratorName,false);
+        }
+        // enum class BuilderFlag : int
+        // {
+        //     kFP16 = 0,         //!< Enable FP16 layer selection.
+        //     kINT8 = 1,         //!< Enable Int8 layer selection.
+        //     kDEBUG = 2,        //!< Enable debugging of layers via synchronizing after every layer.
+        //     kGPU_FALLBACK = 3, //!< Enable layers marked to execute on GPU if layer cannot execute on DLA.
+        //     kSTRICT_TYPES = 4, //!< Enables strict type constraints.
+        //     kREFIT = 5,        //!< Enable building a refittable engine.
+        // };
+        config->setFlag(nvinfer1::BuilderFlag::kINT8);
+        config->setInt8Calibrator(calibrator);
+    }
+    
+    if (mRunMode == 1)
+    {
+        spdlog::info("setFp16Mode");
+        if (!builder->platformHasFastFp16()) {
+            spdlog::warn("the platform do not has fast for fp16");
+        }
+        config->setFlag(nvinfer1::BuilderFlag::kFP16);
+    }
+    builder->setMaxBatchSize(mBatchSize);
+    // set the maximum GPU temporary memory which the engine can use at execution time.
+    config->setMaxWorkspaceSize(10 << 20);
+    
+    spdlog::info("fp16 support: {}",builder->platformHasFastFp16 ());
+    spdlog::info("int8 support: {}",builder->platformHasFastInt8 ());
+    spdlog::info("Max batchsize: {}",builder->getMaxBatchSize());
+    spdlog::info("Max workspace size: {}",config->getMaxWorkspaceSize());
+    spdlog::info("Number of DLA core: {}",builder->getNbDLACores());
+    spdlog::info("Max DLA batchsize: {}",builder->getMaxDLABatchSize());
+    spdlog::info("Current use DLA core: {}",config->getDLACore()); // TODO: set DLA core
+    spdlog::info("build engine...");
+    mEngine = builder -> buildEngineWithConfig(*network, *config);
+    assert(mEngine != nullptr);
+
+    config->destroy();
+    if(calibrator){
+        delete calibrator;
+        calibrator = nullptr;
+    }
+}
+
+bool Trt::BuildEngineWithCaffe(const std::string& prototxt, 
                         const std::string& caffeModel,
                         const std::string& engineFile,
                         const std::vector<std::string>& outputBlobName,
                         const std::vector<std::vector<float>>& calibratorData,
                         int maxBatchSize) {
-        mBatchSize = maxBatchSize;
-        spdlog::info("build caffe engine with {} and {}", prototxt, caffeModel);
-        nvinfer1::IBuilder* builder = nvinfer1::createInferBuilder(mLogger);
-        assert(builder != nullptr);
-        // NetworkDefinitionCreationFlag::kEXPLICIT_BATCH 
-        nvinfer1::INetworkDefinition* network = builder->createNetworkV2(0);
-        assert(network != nullptr);
-        nvcaffeparser1::ICaffeParser* parser = nvcaffeparser1::createCaffeParser();
-        if(mPluginFactory != nullptr) {
-            parser->setPluginFactoryV2(mPluginFactory);
+    mBatchSize = maxBatchSize;
+    spdlog::info("build caffe engine with {} and {}", prototxt, caffeModel);
+    nvinfer1::IBuilder* builder = nvinfer1::createInferBuilder(mLogger);
+    assert(builder != nullptr);
+    // NetworkDefinitionCreationFlag::kEXPLICIT_BATCH 
+    nvinfer1::INetworkDefinition* network = builder->createNetworkV2(0);
+    assert(network != nullptr);
+    nvcaffeparser1::ICaffeParser* parser = nvcaffeparser1::createCaffeParser();
+    if(mPluginFactory != nullptr) {
+        parser->setPluginFactoryV2(mPluginFactory);
+    }
+    // Notice: change here to costom data type
+    nvinfer1::DataType type = mRunMode==1 ? nvinfer1::DataType::kHALF : nvinfer1::DataType::kFLOAT;
+    const nvcaffeparser1::IBlobNameToTensor* blobNameToTensor = parser->parse(prototxt.c_str(),caffeModel.c_str(),
+                                                                            *network,type);
+    
+    for(auto& s : outputBlobName) {
+        network->markOutput(*blobNameToTensor->find(s.c_str()));
+    }
+    spdlog::info("Number of network layers: {}",network->getNbLayers());
+    spdlog::info("Number of input: ", network->getNbInputs());
+    std::cout << "Input layer: " << std::endl;
+    for(int i = 0; i < network->getNbInputs(); i++) {
+        std::cout << network->getInput(i)->getName() << " : ";
+        Dims dims = network->getInput(i)->getDimensions();
+        for(int j = 0; j < dims.nbDims; j++) {
+            std::cout << dims.d[j] << "x"; 
         }
-        // Notice: change here to costom data type
-        nvinfer1::DataType type = mRunMode==1 ? nvinfer1::DataType::kHALF : nvinfer1::DataType::kFLOAT;
-        const nvcaffeparser1::IBlobNameToTensor* blobNameToTensor = parser->parse(prototxt.c_str(),caffeModel.c_str(),
-                                                                                *network,type);
-        
-        for(auto& s : outputBlobName) {
-            network->markOutput(*blobNameToTensor->find(s.c_str()));
+        std::cout << "\b "  << std::endl;
+    }
+    spdlog::info("Number of output: {}",network->getNbOutputs());
+    std::cout << "Output layer: " << std::endl;
+    for(int i = 0; i < network->getNbOutputs(); i++) {
+        std::cout << network->getOutput(i)->getName() << " : ";
+        Dims dims = network->getOutput(i)->getDimensions();
+        for(int j = 0; j < dims.nbDims; j++) {
+            std::cout << dims.d[j] << "x"; 
         }
-        spdlog::info("Number of network layers: {}",network->getNbLayers());
-        spdlog::info("Number of input: ", network->getNbInputs());
-        std::cout << "Input layer: " << std::endl;
-        for(int i = 0; i < network->getNbInputs(); i++) {
-            std::cout << network->getInput(i)->getName() << " : ";
-            Dims dims = network->getInput(i)->getDimensions();
-            for(int j = 0; j < dims.nbDims; j++) {
-                std::cout << dims.d[j] << "x"; 
-            }
-            std::cout << "\b "  << std::endl;
-        }
-        spdlog::info("Number of output: {}",network->getNbOutputs());
-        std::cout << "Output layer: " << std::endl;
-        for(int i = 0; i < network->getNbOutputs(); i++) {
-            std::cout << network->getOutput(i)->getName() << " : ";
-            Dims dims = network->getOutput(i)->getDimensions();
-            for(int j = 0; j < dims.nbDims; j++) {
-                std::cout << dims.d[j] << "x"; 
-            }
-            std::cout << "\b " << std::endl;
-        }
-        spdlog::info("parse network done");
-        nvinfer1::IBuilderConfig* config = builder->createBuilderConfig();
+        std::cout << "\b " << std::endl;
+    }
+    spdlog::info("parse network done");
 
-        Int8EntropyCalibrator* calibrator = nullptr;
-        if (mRunMode == 2)
-        {
-            spdlog::info("set int8 inference mode");
-            if (!builder->platformHasFastInt8()) {
-                spdlog::warn("Warning: current platform doesn't support int8 inference");
-            }
-            if (calibratorData.size() > 0 ){
-                auto endPos= prototxt.find_last_of(".");
-                auto beginPos= prototxt.find_last_of('/') + 1;
-                if(prototxt.find("/") == std::string::npos) {
-                    beginPos = 0;
-                }
-                std::string calibratorName = prototxt.substr(beginPos,endPos - beginPos);
-                std::cout << "create calibrator,Named:" << calibratorName << std::endl;
-                calibrator = new Int8EntropyCalibrator(maxBatchSize,calibratorData,calibratorName,false);
-            }
-            // enum class BuilderFlag : int
-            // {
-            //     kFP16 = 0,         //!< Enable FP16 layer selection.
-            //     kINT8 = 1,         //!< Enable Int8 layer selection.
-            //     kDEBUG = 2,        //!< Enable debugging of layers via synchronizing after every layer.
-            //     kGPU_FALLBACK = 3, //!< Enable layers marked to execute on GPU if layer cannot execute on DLA.
-            //     kSTRICT_TYPES = 4, //!< Enables strict type constraints.
-            //     kREFIT = 5,        //!< Enable building a refittable engine.
-            // };
-            config->setFlag(nvinfer1::BuilderFlag::kINT8);
-            config->setInt8Calibrator(calibrator);
-        }
-        
-        if (mRunMode == 1)
-        {
-            spdlog::info("setFp16Mode");
-            if (!builder->platformHasFastFp16()) {
-                spdlog::warn("the platform do not has fast for fp16");
-            }
-            config->setFlag(nvinfer1::BuilderFlag::kFP16);
-        }
-        builder->setMaxBatchSize(mBatchSize);
-        // set the maximum GPU temporary memory which the engine can use at execution time.
-        config->setMaxWorkspaceSize(10 << 20);
-        
-        spdlog::info("fp16 support: {}",builder->platformHasFastFp16 ());
-        spdlog::info("int8 support: {}",builder->platformHasFastInt8 ());
-        spdlog::info("Max batchsize: {}",builder->getMaxBatchSize());
-        spdlog::info("Max workspace size: {}",config->getMaxWorkspaceSize());
-        spdlog::info("Number of DLA core: {}",builder->getNbDLACores());
-        spdlog::info("Max DLA batchsize: {}",builder->getMaxDLABatchSize());
-        spdlog::info("Current use DLA core: {}",config->getDLACore()); // TODO: set DLA core
-        spdlog::info("build engine...");
-        mEngine = builder -> buildEngineWithConfig(*network, *config);
-        assert(mEngine != nullptr);
-        spdlog::info("serialize engine to {}", engineFile);
-        SaveEngine(engineFile);
-        
-        builder->destroy();
-        config->destroy();
-        network->destroy();
-        parser->destroy();
-        if(calibrator){
-            delete calibrator;
-            calibrator = nullptr;
-        }
-        return true;
+    BuildEngine(builder, network, calibratorData, maxBatchSize, mRunMode);
+
+    spdlog::info("serialize engine to {}", engineFile);
+    SaveEngine(engineFile);
+    
+    builder->destroy();
+    network->destroy();
+    parser->destroy();
+    return true;
 }
 
-bool Trt::BuildEngine(const std::string& onnxModel,
+bool Trt::BuildEngineWithOnnx(const std::string& onnxModel,
                       const std::string& engineFile,
                       const std::vector<std::string>& customOutput,
+                      const std::vector<std::vector<float>>& calibratorData,
                       int maxBatchSize) {
     spdlog::warn("The ONNX Parser shipped with TensorRT 5.1.x+ supports ONNX IR (Intermediate Representation) version 0.0.3, opset version 9");
     mBatchSize = maxBatchSize;
@@ -407,11 +421,8 @@ bool Trt::BuildEngine(const std::string& onnxModel,
             }
         }    
     }
-    nvinfer1::IBuilderConfig* config = builder->createBuilderConfig();
-    builder->setMaxBatchSize(mBatchSize);
-    config->setMaxWorkspaceSize(10 << 20);
-    mEngine = builder -> buildEngineWithConfig(*network, *config);
-    assert(mEngine != nullptr);
+    BuildEngine(builder, network, calibratorData, maxBatchSize, mRunMode);
+
     spdlog::info("serialize engine to {}", engineFile);
     SaveEngine(engineFile);
 
@@ -421,11 +432,12 @@ bool Trt::BuildEngine(const std::string& onnxModel,
     return true;
 }
 
-bool Trt::BuildEngine(const std::string& uffModel,
+bool Trt::BuildEngineWithUff(const std::string& uffModel,
                       const std::string& engineFile,
                       const std::vector<std::string>& inputTensorNames,
                       const std::vector<std::vector<int>>& inputDims,
                       const std::vector<std::string>& outputTensorNames,
+                      const std::vector<std::vector<float>>& calibratorData,
                       int maxBatchSize) {
     mBatchSize = maxBatchSize;
     spdlog::info("build uff engine with {}...", uffModel);
@@ -453,14 +465,10 @@ bool Trt::BuildEngine(const std::string& uffModel,
     if(!parser->parse(uffModel.c_str(), *network, nvinfer1::DataType::kFLOAT)) {
         spdlog::error("error: parse model failed");
     }
-    nvinfer1::IBuilderConfig* config = builder->createBuilderConfig();
-    config->setMaxWorkspaceSize(10 << 20);
-    builder->setMaxBatchSize(mBatchSize);
-    mEngine = builder -> buildEngineWithConfig(*network, *config);
-    assert(mEngine != nullptr);
+    BuildEngine(builder, network, calibratorData, maxBatchSize, mRunMode);
     spdlog::info("serialize engine to {}", engineFile);
     SaveEngine(engineFile);
-
+    
     builder->destroy();
     network->destroy();
     parser->destroy();

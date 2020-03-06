@@ -1,7 +1,7 @@
 /*
  * @Date: 2019-08-29 09:48:01
  * @LastEditors: zerollzeng
- * @LastEditTime: 2019-12-09 16:24:02
+ * @LastEditTime: 2020-03-02 14:58:37
  */
 
 #ifndef TRT_HPP
@@ -66,13 +66,14 @@ public:
      *                size in your model
      * @mode: engine run mode, 0 for float32, 1 for float16, 2 for int8
      */
-    void CreateEngine(const std::string& prototxt, 
-                        const std::string& caffeModel,
-                        const std::string& engineFile,
-                        const std::vector<std::string>& outputBlobName,
-                        const std::vector<std::vector<float>>& calibratorData,
-                        int maxBatchSize,
-                        int mode);
+    void CreateEngine(
+        const std::string& prototxt, 
+        const std::string& caffeModel,
+        const std::string& engineFile,
+        const std::vector<std::string>& outputBlobName,
+        int maxBatchSize,
+        int mode,
+        const std::vector<std::vector<float>>& calibratorData);
     
     /**
      * @description: create engine from onnx model
@@ -82,10 +83,13 @@ public:
      * @maxBatchSize: max batch size for inference.
      * @return: 
      */
-    void CreateEngine(const std::string& onnxModel,
-                      const std::string& engineFile,
-                      const std::vector<std::string>& customOutput,
-                      int maxBatchSize);
+    void CreateEngine(
+        const std::string& onnxModel,
+        const std::string& engineFile,
+        const std::vector<std::string>& customOutput,
+        int maxBatchSize,
+        int mode,
+        const std::vector<std::vector<float>>& calibratorData);
 
     /**
      * @description: create engine from uff model
@@ -97,12 +101,15 @@ public:
      * @maxBatchSize: max batch size for inference.
      * @return: 
      */
-    void CreateEngine(const std::string& uffModel,
-                      const std::string& engineFile,
-                      const std::vector<std::string>& inputTensorName,
-                      const std::vector<std::vector<int>>& inputDims,
-                      const std::vector<std::string>& outputTensorName,
-                      int maxBatchSize);
+    void CreateEngine(
+        const std::string& uffModel,
+        const std::string& engineFile,
+        const std::vector<std::string>& inputTensorName,
+        const std::vector<std::vector<int>>& inputDims,
+        const std::vector<std::string>& outputTensorName,
+        int maxBatchSize,
+        int mode,
+        const std::vector<std::vector<float>>& calibratorData);
 
     /**
      * @description: do inference on engine context, make sure you already copy your data to device memory,
@@ -184,26 +191,32 @@ protected:
 
     bool DeserializeEngine(const std::string& engineFile);
 
-    bool BuildEngine(const std::string& prototxt, 
+    void BuildEngine(nvinfer1::IBuilder* builder,
+                      nvinfer1::INetworkDefinition* network,
+                      const std::vector<std::vector<float>>& calibratorData,
+                      int maxBatchSize,
+                      int mode);
+
+    bool BuildEngineWithCaffe(const std::string& prototxt, 
                     const std::string& caffeModel,
                     const std::string& engineFile,
                     const std::vector<std::string>& outputBlobName,
                     const std::vector<std::vector<float>>& calibratorData,
                     int maxBatchSize);
 
-    bool BuildEngine(const std::string& onnxModel,
+    bool BuildEngineWithOnnx(const std::string& onnxModel,
                      const std::string& engineFile,
                      const std::vector<std::string>& customOutput,
+                     const std::vector<std::vector<float>>& calibratorData,
                      int maxBatchSize);
 
-    bool BuildEngine(const std::string& uffModel,
+    bool BuildEngineWithUff(const std::string& uffModel,
                       const std::string& engineFile,
                       const std::vector<std::string>& inputTensorName,
                       const std::vector<std::vector<int>>& inputDims,
                       const std::vector<std::string>& outputTensorName,
+                      const std::vector<std::vector<float>>& calibratorData,
                       int maxBatchSize);
-
-    // void ParseUff(const std::string& uffModel);
                      
     /**
      * description: Init resource such as device memory

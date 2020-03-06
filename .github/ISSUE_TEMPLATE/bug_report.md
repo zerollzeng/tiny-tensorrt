@@ -25,7 +25,8 @@ If applicable, add screenshots to help explain your problem.
 
 **System environment (please complete the following information):**
  - OS: 
- - TensorRT version: 
+ - TensorRT version:
+ - Graphic card:
  - Others:
 
 **Additional context**
