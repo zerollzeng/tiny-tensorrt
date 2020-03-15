@@ -375,7 +375,6 @@ bool Trt::BuildEngineWithOnnx(const std::string& onnxModel,
                       const std::vector<std::string>& customOutput,
                       const std::vector<std::vector<float>>& calibratorData,
                       int maxBatchSize) {
-    spdlog::warn("The ONNX Parser shipped with TensorRT 5.1.x+ supports ONNX IR (Intermediate Representation) version 0.0.3, opset version 9");
     mBatchSize = maxBatchSize;
     spdlog::info("build onnx engine from {}...",onnxModel);
     nvinfer1::IBuilder* builder = nvinfer1::createInferBuilder(mLogger);
