@@ -409,6 +409,9 @@ bool Trt::BuildEngine(const std::string& onnxModel,
     nvinfer1::IBuilderConfig* config = builder->createBuilderConfig();
     builder->setMaxBatchSize(mBatchSize);
     config->setMaxWorkspaceSize(10 << 20);
+    // Set int8 percision by default
+    config->setFlag(nvinfer1::BuilderFlag::kINT8);
+    
     mEngine = builder -> buildEngineWithConfig(*network, *config);
     assert(mEngine != nullptr);
     spdlog::info("serialize engine to {}", engineFile);
