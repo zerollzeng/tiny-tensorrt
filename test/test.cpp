@@ -3,12 +3,13 @@
  * @Author: zerollzeng
  * @Date: 2020-03-02 15:16:08
  * @LastEditors: zerollzeng
- * @LastEditTime: 2020-03-06 17:02:37
+ * @LastEditTime: 2020-04-15 10:17:12
  */
 
 #include "Trt.h"
 
 #include <string>
+#include <vector>
 
 void test_caffe(
         const std::string& prototxt, 
@@ -49,11 +50,11 @@ void test_uff(const std::string& uffModelpath) {
 }
 
 int main() {
-    // test_onnx("../models/model.onnx");
+    test_onnx("../models/retinaface.onnx");
 
     // std::vector<std::string> outputBlobName{"prob"};
     // test_caffe("../models/lenet.prototxt","../models/lenet_iter_10000.caffemodel",outputBlobName);
-    
+
     // test_uff("../models/frozen_inference_graph.uff");
     
     return 0;

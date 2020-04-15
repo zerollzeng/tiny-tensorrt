@@ -7,7 +7,7 @@ set(CMAKE_CXX_FLAGS "-std=c++11")
 
 # set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib CACHE PATH "")
 option(BUILD_PYTHON "compile python api" ON)
-option(BUILD_TEST "compile test" ON)
+option(BUILD_TEST "compile test" OFF)
 
 find_package(CUDA REQUIRED)
 # Discover what architectures does nvcc support
@@ -67,18 +67,18 @@ if(BUILD_PYTHON)
 endif()
 
 ## custom test
-# if(BUILD_TEST)
-# message(STATUS "Build test")
-#   file(GLOB test_source
-#       test/test.cpp
-#       )
-#   add_executable(unit_test ${test_source})
-#   target_compile_options(unit_test PUBLIC -std=c++11 -Wall -Wfloat-conversion)
-#   target_link_libraries(unit_test tinytrt)
-#   target_link_libraries(unit_test nvinfer)
-#   target_link_libraries(unit_test nvinfer_plugin)
-#   target_link_libraries(unit_test nvparsers)
-#   target_link_libraries(unit_test nvonnxparser)
-#   target_link_libraries(unit_test nvcaffe_parser)
-#   target_link_libraries(unit_test ${CUDART})
-# endif()
+if(BUILD_TEST)
+message(STATUS "Build test")
+  file(GLOB test_source
+      test/test.cpp
+      )
+  add_executable(unit_test ${test_source})
+  target_compile_options(unit_test PUBLIC -std=c++11 -Wall -Wfloat-conversion)
+  target_link_libraries(unit_test tinytrt)
+  target_link_libraries(unit_test nvinfer)
+  target_link_libraries(unit_test nvinfer_plugin)
+  target_link_libraries(unit_test nvparsers)
+  target_link_libraries(unit_test nvonnxparser)
+  target_link_libraries(unit_test nvcaffe_parser)
+  target_link_libraries(unit_test ${CUDART})
+endif()
