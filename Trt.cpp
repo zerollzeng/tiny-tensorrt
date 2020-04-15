@@ -135,7 +135,7 @@ void Trt::ForwardAsync(const cudaStream_t& stream) {
 
 void Trt::DataTransfer(std::vector<float>& data, int bindIndex, bool isHostToDevice) {
     if(isHostToDevice) {
-        assert(data.size()*sizeof(float) <= mBindingSize[bindIndex]);
+        assert(data.size()*sizeof(float) == mBindingSize[bindIndex]);
         CUDA_CHECK(cudaMemcpy(mBinding[bindIndex], data.data(), mBindingSize[bindIndex], cudaMemcpyHostToDevice));
     } else {
         data.resize(mBindingSize[bindIndex]/sizeof(float));
@@ -145,7 +145,7 @@ void Trt::DataTransfer(std::vector<float>& data, int bindIndex, bool isHostToDev
 
 void Trt::DataTransferAsync(std::vector<float>& data, int bindIndex, bool isHostToDevice, cudaStream_t& stream) {
     if(isHostToDevice) {
-        assert(data.size()*sizeof(float) <= mBindingSize[bindIndex]);
+        assert(data.size()*sizeof(float) == mBindingSize[bindIndex]);
         CUDA_CHECK(cudaMemcpyAsync(mBinding[bindIndex], data.data(), mBindingSize[bindIndex], cudaMemcpyHostToDevice, stream));
     } else {
         data.resize(mBindingSize[bindIndex]/sizeof(float));
