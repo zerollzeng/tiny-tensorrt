@@ -3,7 +3,7 @@
  * @Author: zerollzeng
  * @Date: 2020-03-02 15:16:08
  * @LastEditors: zerollzeng
- * @LastEditTime: 2020-04-15 10:17:12
+ * @LastEditTime: 2020-05-22 11:49:13
  */
 
 #include "Trt.h"
@@ -49,11 +49,43 @@ void test_uff(const std::string& uffModelpath) {
     uff_net->Forward();
 }
 
-int main() {
-    test_onnx("../models/retinaface.onnx");
+class InputParser{                                                              
+    public:                                                                     
+        InputParser (int &argc, char **argv){                                   
+            for (int i=1; i < argc; ++i)                                        
+                this->tokens.push_back(std::string(argv[i]));                   
+        }                                                                       
+        /// @author iain                                                                                                                                                                     
+        const std::string& getCmdOption(const std::string &option) const{       
+            std::vector<std::string>::const_iterator itr;                       
+            itr =  std::find(this->tokens.begin(), this->tokens.end(), option); 
+            if (itr != this->tokens.end() && ++itr != this->tokens.end()){      
+                return *itr;                                                    
+            }                                                                   
+            static const std::string empty_string("");                          
+            return empty_string;                                                
+        }                                                                       
+        /// @author iain                                                        
+        bool cmdOptionExists(const std::string &option) const{                  
+            return std::find(this->tokens.begin(), this->tokens.end(), option)  
+                   != this->tokens.end();                                       
+        }                                                                       
+    private:                                                                    
+        std::vector <std::string> tokens;                                       
+};  
 
-    // std::vector<std::string> outputBlobName{"prob"};
-    // test_caffe("../models/lenet.prototxt","../models/lenet_iter_10000.caffemodel",outputBlobName);
+int main(int argc, char** argv) {
+    InputParser cmdparams(argc, argv);
+
+    // const std::string& onnx_path = cmdparams.getCmdOption("--onnx_path");
+    // test_onnx(onnx_path);
+
+    const std::string& prototxt = cmdparams.getCmdOption("--prototxt");         
+    const std::string& caffemodel = cmdparams.getCmdOption("--caffemodel");     
+    const std::string& output_blob = cmdparams.getCmdOption("--output_blob");   
+    std::vector<std::string> outputBlobName;
+    outputBlobName.push_back(output_blob);
+    test_caffe(prototxt,caffemodel,outputBlobName);
 
     // test_uff("../models/frozen_inference_graph.uff");
     
