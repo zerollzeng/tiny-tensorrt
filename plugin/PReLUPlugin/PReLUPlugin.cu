@@ -126,7 +126,7 @@ nvinfer1::Dims PReLUPlugin::getOutputDimensions(int index, const nvinfer1::Dims*
 }
 
 bool PReLUPlugin::supportsFormat(nvinfer1::DataType type, nvinfer1::PluginFormat format) const {
-    return (type == nvinfer1::DataType::kFLOAT | type == nvinfer1::DataType::kHALF) 
+    return (type == nvinfer1::DataType::kFLOAT || type == nvinfer1::DataType::kHALF) 
             && format == nvinfer1::PluginFormat::kNCHW;
 }
 
@@ -134,7 +134,7 @@ void PReLUPlugin::configureWithFormat(const nvinfer1::Dims* inputDims, int nbInp
                                       const nvinfer1::Dims* outputDims, int nbOutputs,
                                       nvinfer1::DataType type, nvinfer1::PluginFormat format, 
                                       int maxBatchSize) {
-    ASSERT((type == nvinfer1::DataType::kFLOAT | type == nvinfer1::DataType::kHALF)
+    ASSERT((type == nvinfer1::DataType::kFLOAT || type == nvinfer1::DataType::kHALF)
             && format == nvinfer1::PluginFormat::kNCHW);
     mNbInputChannels = inputDims[0].d[0]; 
     mNbInputHeight = inputDims[0].d[1];
