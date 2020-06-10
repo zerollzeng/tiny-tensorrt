@@ -2,7 +2,7 @@
  * @Description: In User Settings Edit
  * @Author: your name
  * @Date: 2019-08-21 14:06:38
- * @LastEditTime: 2020-04-15 10:12:51
+ * @LastEditTime: 2020-06-10 11:51:09
  * @LastEditors: zerollzeng
  */
 #include "Trt.h"
@@ -175,10 +175,10 @@ void Trt::SetDevice(int device) {
 }
 
 int Trt::GetDevice() const { 
-    int* device = nullptr; //NOTE: memory leaks here
-    CUDA_CHECK(cudaGetDevice(device));
-    if(device != nullptr) {
-        return device[0];
+    int device = -1;
+    CUDA_CHECK(cudaGetDevice(&device));
+    if(device != -1) {
+        return device;
     } else {
         spdlog::error("Get Device Error");
         return -1;
