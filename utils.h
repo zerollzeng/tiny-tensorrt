@@ -13,6 +13,7 @@
 #include <numeric>
 #include "cuda_runtime.h"
 #include <NvInfer.h>
+#include <string>
 
 #define UNUSED(unusedVariable) (void)(unusedVariable)
 // suppress compiler warning: unused parameter

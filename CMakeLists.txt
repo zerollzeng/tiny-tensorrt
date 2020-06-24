@@ -10,18 +10,11 @@ option(BUILD_PYTHON "compile python api" ON)
 option(BUILD_TEST "compile test" OFF)
 
 find_package(CUDA REQUIRED)
+include_directories(${CUDA_INCLUDE_DIRS})
+
 # Discover what architectures does nvcc support
 include(cmake/CUDA_utils.cmake)
-CUDA_find_supported_arch_values(CUDA_supported_archs ${CUDA_known_archs})
-message(STATUS "CUDA supported archs: ${CUDA_supported_archs}")
-
-set(CUDA_TARGET_ARCHS_SORTED ${CUDA_TARGET_ARCHS})
-list(SORT CUDA_TARGET_ARCHS_SORTED)
-CUDA_find_supported_arch_values(CUDA_targeted_archs ${CUDA_TARGET_ARCHS_SORTED})
-message(STATUS "CUDA targeted archs: ${CUDA_targeted_archs}")
-if (NOT CUDA_targeted_archs)
-  message(FATAL_ERROR "None of the provided CUDA architectures ({${CUDA_TARGET_ARCHS}}) is supported by nvcc, use one or more of: ${CUDA_supported_archs}")
-endif()
+set(CUDA_targeted_archs "60;61;70;75")
 
 CUDA_get_gencode_args(CUDA_gencode_flags ${CUDA_targeted_archs})
 message(STATUS "Generated gencode flags: ${CUDA_gencode_flags}")

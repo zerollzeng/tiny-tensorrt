@@ -7,6 +7,14 @@
 #ifndef TRT_HPP
 #define TRT_HPP
 
+#ifdef WIN64
+#ifdef tinytrt_EXPORTS
+#define TRT_API __declspec(dllexport)
+#else
+#define TRT_API __declspec(dllimport)
+#endif
+#endif
+
 #include <string>
 #include <vector>
 #include <iostream>
@@ -37,7 +45,11 @@ struct TrtPluginParams {
 
 class PluginFactory;
 
+#ifdef WIN64
+class TRT_API Trt {
+#else
 class Trt {
+#endif
 public:
     /**
      * @description: default constructor, will initialize plugin factory with default parameters.
@@ -71,9 +83,9 @@ public:
         const std::string& caffeModel,
         const std::string& engineFile,
         const std::vector<std::string>& outputBlobName,
+        const std::vector<std::vector<float>>& calibratorData,
         int maxBatchSize,
-        int mode,
-        const std::vector<std::vector<float>>& calibratorData);
+        int mode); // param order modified for compatibling tensorrt-zoo
     
     /**
      * @description: create engine from onnx model

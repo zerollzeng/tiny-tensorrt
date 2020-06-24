@@ -56,9 +56,9 @@ void Trt::CreateEngine(
         const std::string& caffeModel,
         const std::string& engineFile,
         const std::vector<std::string>& outputBlobName,
+        const std::vector<std::vector<float>>& calibratorData,
         int maxBatchSize,
-        int mode,
-        const std::vector<std::vector<float>>& calibratorData) {
+        int mode) {
     mRunMode = mode;
     spdlog::info("prototxt: {}",prototxt);
     spdlog::info("caffeModel: {}",caffeModel);

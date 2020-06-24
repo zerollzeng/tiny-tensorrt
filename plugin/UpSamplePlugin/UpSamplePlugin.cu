@@ -7,6 +7,7 @@
 
 #include <cassert>
 
+typedef unsigned char u_int8_t;
 const int NUM_THREADS = 512;
 
 const char* UPSAMPLE_PLUGIN_VERSION = "01";

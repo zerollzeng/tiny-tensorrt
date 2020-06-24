@@ -3,6 +3,11 @@
 ![image](https://user-images.githubusercontent.com/38289304/71065174-aafc3100-21ab-11ea-9bcb-665d38181e74.png)
 
 # tiny-tensorrt
+此版本为Win10版本，测试编译环境：
+VS2019（fmt5.3编译的时候要求支持C++14变量模板新特性） + CMake3.18（编译的时候选64位） + CUDA10.1 + cudnn7.6.3
+硬件： RTX2060
+CMakeList中的CUDA_targeted_archs 按需修改
+
 一个非常高效易用的nvidia TensorRT封装,支持c++,python调用,支持caffe,onnx,tensorflow模型.只需要几行代码,就可以完成模型的推理部署
 ```c++
 // 创建引擎
