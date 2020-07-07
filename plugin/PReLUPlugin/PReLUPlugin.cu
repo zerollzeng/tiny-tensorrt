@@ -181,7 +181,10 @@ int PReLUPlugin::enqueue(int batchSize, const void *const *inputs, void **output
                             zerof,
                             div_factor,
                             stream));
-    } else {
+    }
+#ifdef FP16_PRELU
+    else 
+    {
         const __half zeroh = __half(0.0f);
         CUDA_CHECK(Forward_gpu(count, channels, dim,
                             reinterpret_cast<const __half *>(mDeviceKernel),
@@ -191,7 +194,13 @@ int PReLUPlugin::enqueue(int batchSize, const void *const *inputs, void **output
                             div_factor,
                             stream));
     }
-
+#else
+    else
+    {
+        spdlog::error("fp16 prelu is unsupported");
+        ASSERT(false);
+    }
+#endif
     return 0;
 }
 
