@@ -63,6 +63,8 @@ then you can intergrate it into your own project with libtinytrt.so and Trt.h, f
 
 if you want some examples with tiny-tensorrt, you can refer to [tensorrt-zoo](https://github.com/zerollzeng/tensorrt-zoo)
 
+for the windows port of tiny-tensorrt, you can refer to @Devincool's [repo](https://github.com/Devincool/tiny-tensorrt)
+
 # Extra Support layer
 - upsample with custom scale, under test with yolov3.
 - yolo-det, last layer of yolov3 which sum three scales output and generate final result for nms. under test with yolov3.
