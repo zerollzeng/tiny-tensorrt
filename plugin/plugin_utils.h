@@ -22,11 +22,6 @@
  * @描述: 这是实现自定义插件的时候非常常用的一些函数,我将它们抽离出来,你可以直接调用即可
  */
 
-// for consistency all plugin have same namesapce and version
-// 为了一致性,所有的插件都有着相同的namespace和version
-static const char* G_PLUGIN_NAMESPACE = "_TRT";
-static const char* G_PLUGIN_VERSION = "1";
-
 // this is for debug, and you can find a lot assert in plugin implementation,
 // it will reduce the time you spend on debug
 // 为了方便debug, 你也可以在插件的实现里面看到我大量使用了assert, 这个可以大大减少花在

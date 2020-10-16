@@ -53,8 +53,8 @@ message(STATUS "
 ")
 
 cmake_minimum_required(VERSION 3.0)
-set(CMAKE_CXX_FLAGS "-std=c++11")
 project(tinytrt)
+set(CMAKE_CXX_FLAGS "-std=c++11")
 
 # set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib CACHE PATH "")
 option(BUILD_PYTHON "compile python api" ON)

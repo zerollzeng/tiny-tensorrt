@@ -11,8 +11,13 @@
 
 #include "spdlog/spdlog.h"
 
-static const char* G_PRELU_TYPE = "PReLU";
-static const char* G_PRELU_NAME = "PReLU_TRT"; //plugin_name = plugin_type + plugin_namespace
+// for consistency I recommend all plugin have same namesapce and version
+// 为了一致性,所有的插件都建议使用相同的namespace和version
+const char* G_PLUGIN_NAMESPACE = "_TRT";
+const char* G_PLUGIN_VERSION = "1";
+
+const char* G_PRELU_TYPE = "PReLU";
+const char* G_PRELU_NAME = "PReLU_TRT"; //plugin_name = plugin_type + plugin_namespace
 
 // CUDA: use 512 threads per block
 static const int CUDA_NUM_THREADS = 512;

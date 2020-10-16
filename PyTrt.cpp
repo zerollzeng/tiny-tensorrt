@@ -32,16 +32,14 @@ PYBIND11_MODULE(pytrt, m) {
             const std::string&,
             const std::vector<std::string>&,
             int,
-            int,
-            const std::vector<std::vector<float>>&
+            int
             )) &Trt::CreateEngine, "create engine with caffe model")
         .def("CreateEngine", (void (Trt::*)(
             const std::string&,
             const std::string&,
             const std::vector<std::string>&,
             int,
-            int,
-            const std::vector<std::vector<float>>&
+            int
             )) &Trt::CreateEngine, "create engine with onnx model")
         .def("CreateEngine", (void (Trt::*)(
             const std::string&,
@@ -50,14 +48,13 @@ PYBIND11_MODULE(pytrt, m) {
             const std::vector<std::vector<int>>&,
             const std::vector<std::string>&,
             int,
-            int,
-            const std::vector<std::vector<float>>&
+            int
             )) &Trt::CreateEngine, "create engine with tensorflow model")
         .def("DoInference", [](Trt& self, py::array_t<float, py::array::c_style | py::array::forcecast> array) {
             std::vector<float> input;
             input.resize(array.size());
             std::memcpy(input.data(), array.data(), array.size()*sizeof(float));
-            self.DataTransfer(input, 0, 1);
+            self.CopyFromHostToDevice(input, 0);
             self.Forward();
         })
         .def("GetOutput", [](Trt& self, std::string& bindName) {
@@ -70,7 +67,7 @@ PYBIND11_MODULE(pytrt, m) {
                 return py::array();
             }
             std::vector<float> output;
-            self.DataTransfer(output, outputIndex, 0);
+            self.CopyFromDeviceToHost(output, outputIndex);
             nvinfer1::Dims dims = self.GetBindingDims(outputIndex);
             ssize_t nbDims= dims.nbDims;
             std::vector<ssize_t> shape;

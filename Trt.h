@@ -59,9 +59,6 @@ public:
      *             prototxt and caffe model, which take about 1 minites, otherwise will
      *             deserialize enfine from engine file, which is very fast.
      * @outputBlobName: specify which layer is network output, find it in caffe prototxt
-     * @calibratorData: use for int8 mode, calabrator data is a batch of sample input, 
-     *                  for classification task you need around 500 sample input. and this
-     *                  is for int8 mode
      * @maxBatchSize: max batch size while inference, make sure it do not exceed max batch
      *                size in your model
      * @mode: engine run mode, 0 for float32, 1 for float16, 2 for int8
@@ -72,8 +69,7 @@ public:
         const std::string& engineFile,
         const std::vector<std::string>& outputBlobName,
         int maxBatchSize,
-        int mode,
-        const std::vector<std::vector<float>>& calibratorData);
+        int mode);
     
     /**
      * @description: create engine from onnx model
@@ -88,8 +84,7 @@ public:
         const std::string& engineFile,
         const std::vector<std::string>& customOutput,
         int maxBatchSize,
-        int mode,
-        const std::vector<std::vector<float>>& calibratorData);
+        int mode);
 
     /**
      * @description: create engine from uff model
@@ -108,8 +103,7 @@ public:
         const std::vector<std::vector<int>>& inputDims,
         const std::vector<std::string>& outputTensorName,
         int maxBatchSize,
-        int mode,
-        const std::vector<std::vector<float>>& calibratorData);
+        int mode);
 
     /**
      * @description: do inference on engine context, make sure you already copy your data to device memory,
@@ -123,23 +117,13 @@ public:
      */
     void ForwardAsync(const cudaStream_t& stream);
 
+    void SetBindingDimensions(std::vector<int>& inputDims, int bindIndex);
     /**
      * @description: data transfer between host and device, for example befor Forward, you need
      *               copy input data from host to device, and after Forward, you need to transfer
      *               output result from device to host.
-     * @data data for read and write.
      * @bindIndex binding data index, you can see this in CreateEngine log output.
-     * @isHostToDevice 0 for device to host, 1 for host to device (host: cpu memory, device: gpu memory)
      */
-    void DataTransfer(std::vector<float>& data, int bindIndex, bool isHostToDevice);
-
-    /**
-     * @description: async data tranfer between host and device, see above.
-     * @stream cuda stream for async interface and data transfer.
-     * @return: 
-     */
-    void DataTransferAsync(std::vector<float>& data, int bindIndex, bool isHostToDevice, cudaStream_t& stream);
-
     void CopyFromHostToDevice(const std::vector<float>& input, int bindIndex);
 
     void CopyFromDeviceToHost(std::vector<float>& output, int bindIndex);
@@ -151,6 +135,29 @@ public:
     void SetDevice(int device);
 
     int GetDevice() const;
+     
+    /**
+     * @description: setting a int8 calibrator.To run INT8 calibration for a network with dynamic shapes, calibration optimization profile must be set. Calibration is performed using kOPT values of the profile. Calibration input data size must match this profile.
+     * @calibratorData: use for int8 mode, calabrator data is a batch of sample input, 
+     *                  for classification task you need around 500 sample input. and this
+     *                  is for int8 mode
+     * @calibratorType: there are four calibrator types now.
+     *                  EntropyCalibratorV2: This is the recommended calibrator and is required for DLA. Calibration happens before Layer fusion by default. This is recommended for CNN based networks.
+     *                  MinMaxCalibrator:This is the preferred calibrator for NLP tasks for all backends. Calibration happens before Layer fusion by default. This is recommended for BERT like networks.
+     *                  EntropyCalibrator:This is the legacy entropy calibrator.This is less complicated than a legacy calibrator and produces better results. Calibration happens after Layer fusion by default. See kCALIBRATION_BEFORE_FUSION for enabling calibration before fusion.
+     *                  LegacyCalibrator:This calibrator is for compatibility with TensorRT 2.0 EA. This calibrator requires user parameterization, and is provided as a fallback option if the other calibrators yield poor results. Calibration happens after Layer fusion by default. See kCALIBRATION_BEFORE_FUSION for enabling calibration before fusion. Users can customize this calibrator to implement percentile max, like 99.99% percentile max is proved to have best accuracy for BERT. For more information, refer to the Integer Quantization for Deep Learning Inference: Principles and Empirical Evaluation paper.
+     */
+    void SetInt8Calibrator(const std::string& calibratorType, const std::vector<std::vector<float>>& calibratorData);
+
+    /**
+     * @description: async data tranfer between host and device, see above.
+     * @stream cuda stream for async interface and data transfer.
+     * @return: 
+     */
+    void AddDynamicShapeProfile(const std::string& inputName,
+                                const std::vector<int>& minDimVec,
+                                const std::vector<int>& optDimVec,
+                                const std::vector<int>& maxDimVec);
 
     /**
      * @description: get max batch size of build engine.
@@ -191,32 +198,22 @@ protected:
 
     bool DeserializeEngine(const std::string& engineFile);
 
-    void BuildEngine(nvinfer1::IBuilder* builder,
-                      nvinfer1::INetworkDefinition* network,
-                      const std::vector<std::vector<float>>& calibratorData,
-                      int maxBatchSize,
-                      int mode);
+    void BuildEngine();
 
     bool BuildEngineWithCaffe(const std::string& prototxt, 
                     const std::string& caffeModel,
                     const std::string& engineFile,
-                    const std::vector<std::string>& outputBlobName,
-                    const std::vector<std::vector<float>>& calibratorData,
-                    int maxBatchSize);
+                    const std::vector<std::string>& outputBlobName);
 
     bool BuildEngineWithOnnx(const std::string& onnxModel,
                      const std::string& engineFile,
-                     const std::vector<std::string>& customOutput,
-                     const std::vector<std::vector<float>>& calibratorData,
-                     int maxBatchSize);
-
+                     const std::vector<std::string>& customOutput);
+    
     bool BuildEngineWithUff(const std::string& uffModel,
                       const std::string& engineFile,
                       const std::vector<std::string>& inputTensorName,
                       const std::vector<std::vector<int>>& inputDims,
-                      const std::vector<std::string>& outputTensorName,
-                      const std::vector<std::vector<float>>& calibratorData,
-                      int maxBatchSize);
+                      const std::vector<std::string>& outputTensorName);
                      
     /**
      * description: Init resource such as device memory
@@ -233,6 +230,15 @@ protected:
 
     // tensorrt run mode 0:fp32 1:fp16 2:int8
     int mRunMode;
+
+    // batch size
+    int mBatchSize;
+
+    nvinfer1::IBuilderConfig* mConfig = nullptr;
+
+    nvinfer1::IBuilder* mBuilder = nullptr;
+
+    nvinfer1::INetworkDefinition* mNetwork = nullptr;
 
     nvinfer1::ICudaEngine* mEngine = nullptr;
 
@@ -251,9 +257,6 @@ protected:
     std::vector<nvinfer1::DataType> mBindingDataType;
 
     int mInputSize = 0;
-
-    // batch size
-    int mBatchSize; 
 };
 
 #endif
