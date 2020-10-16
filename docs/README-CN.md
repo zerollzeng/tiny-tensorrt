@@ -6,7 +6,7 @@
 一个非常高效易用的nvidia TensorRT封装,支持c++,python调用,支持caffe,onnx,tensorflow模型.只需要几行代码,就可以完成模型的推理部署
 ```c++
 // 创建引擎
-trt.CreateEngine(prototxt,caffemodel,engingefile,outputBlob,calibratorData,maxBatchSize,runMode);
+trt.CreateEngine(prototxt,caffemodel,engingefile,outputBlob,maxBatchSize,runMode);
 // 将模型输入传输到显卡
 trt.DataTransfer(input,0,True);
 // 松手刹,挂挡,松离合,踩油门!

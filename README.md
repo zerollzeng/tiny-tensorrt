@@ -14,27 +14,26 @@ English | [中文简体](https://github.com/zerollzeng/tiny-tensorrt/blob/master
 a simple, efficient, easy-to-use nvidia TensorRT wrapper for cnn with c++ and python api,support caffe, uff and onnx format models. you will be able use tiny-tensorrt deploy your model with few lines of code!
 ```c++
 // create engine
-trt.CreateEngine(onnxModelpath, engineFile, customOutput, maxBatchSize, mode, calibratorData);
+trt.CreateEngine(onnxModelpath, engineFile, customOutput, maxBatchSize, mode);
 // transfer you input data to tensorrt engine
-trt.DataTransfer(input,0,True);
+trt.CopyFromHostToDevice(input,inputIndex);
 // inference!!!
 trt.Forward();
 //  retrieve network output
-trt.DataTransfer(output, outputIndex, False) // you can get outputIndex in CreateEngine phase
+trt.CopyFromHostToDevice(output, outputIndex) // you can get outputIndex in CreateEngine phase
 ```
 
 # Features
-- [x] Support TensorRT 7 now --- 2019-12-25 :christmas_tree::christmas_tree::christmas_tree:
-- [x] Custom plugin tutorial and well_commented sample! ---2019-12-11 :fire::fire::fire:
-- [x] Custom onnx model output node  ---2019.10.18
-- [x] Upgrade with TensorRT 6.0.1.5 --- 2019.9.29
-- [x] Support onnx,caffe and tensorflow model
-- [ ] Support more model and layer --working on
+- [x] Support TensorRT 7
+- [x] Custom plugin tutorial and well_commented sample!
+- [x] Custom onnx model output node
+- [x] Support onnx,caffe and tensorflow model(caffe and uff support will be removed at next major version)
 - [x] PReLU and up-sample plugin
 - [x] Engine serialization and deserialization
-- [x] INT8 support for caffe model
+- [x] INT8 support
 - [x] Python api support
 - [x] Set device
+- [x] Dynamic shape suppport for onnx
 
 # System Requirements
 cuda 10.0+
