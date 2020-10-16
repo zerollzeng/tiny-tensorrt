@@ -7,6 +7,15 @@ assignees: zerollzeng
 
 ---
 
+---
+name: Issue Template
+about: Create a report to help us improve
+title: ''
+labels: ''
+assignees: ''
+
+---
+
 please descript your problem in **English** if possible. it will to helpful to more people
 **Describe the bug**
 A clear and concise description of what the bug is.
@@ -16,18 +25,17 @@ Steps to reproduce the behavior:
 1. 
 2. 
 
-
-**Expected behavior**
-A clear and concise description of what you expected to happen.
-
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
 **System environment (please complete the following information):**
- - OS: 
+ - Device:
+ - OS:
+ - Driver version:
+ - CUDA version:
  - TensorRT version:
- - Graphic card:
  - Others:
 
-**Additional context**
-Add any other context about the problem here.
+**Cmake output**
+
+**Running output**
