@@ -128,16 +128,18 @@ void Trt::CreateEngine(
 }
 
 void Trt::Forward() {
-    cudaEvent_t start,stop;
-    float elapsedTime;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-    cudaEventRecord(start, 0);
+    // cudaEvent_t start,stop;
+    // float elapsedTime;
+    // cudaEventCreate(&start);
+    // cudaEventCreate(&stop);
+    // cudaEventRecord(start, 0);
     mContext->execute(mBatchSize, &mBinding[0]);
-    cudaEventRecord(stop, 0);
-	cudaEventSynchronize(stop);
-	cudaEventElapsedTime(&elapsedTime, start, stop);
-    spdlog::info("net forward takes {} ms", elapsedTime);
+    // cudaEventRecord(stop, 0);
+	// cudaEventSynchronize(stop);
+	// cudaEventElapsedTime(&elapsedTime, start, stop);
+    // cudaEventDestroy(start);
+    // cudaEventDestroy(stop);
+    // spdlog::info("net forward takes {} ms", elapsedTime);
 }
 
 void Trt::ForwardAsync(const cudaStream_t& stream) {

@@ -10,18 +10,24 @@
 
 #include <string>
 #include <vector>
+#include "time.h"
 
 void test_caffe(
         const std::string& prototxt, 
         const std::string& caffeModel,
+        const std::string& engineFile,
         const std::vector<std::string>& outputBlobName) {
-    std::string engineFile = "";
-    std::vector<std::vector<float>> calibratorData;
     int maxBatchSize = 1;
     int mode = 0;
     Trt* caffe_net = new Trt();
     caffe_net->CreateEngine(prototxt, caffeModel, engineFile, outputBlobName, maxBatchSize, mode);
-    caffe_net->Forward();
+    while(1) {
+        clock_t start = clock();
+        caffe_net->Forward();
+        clock_t end = clock();
+        std::cout << "inference Time : " <<((double)(end - start) / CLOCKS_PER_SEC)*1000 << " ms" << std::endl;
+    }
+    
 }
 
 void test_onnx(const std::string& onnxModelpath) {
@@ -84,15 +90,16 @@ class InputParser{
 int main(int argc, char** argv) {
     InputParser cmdparams(argc, argv);
 
-    const std::string& onnx_path = cmdparams.getCmdOption("--onnx_path");
-    test_onnx(onnx_path);
+    // const std::string& onnx_path = cmdparams.getCmdOption("--onnx_path");
+    // test_onnx(onnx_path);
 
-    // const std::string& prototxt = cmdparams.getCmdOption("--prototxt");         
-    // const std::string& caffemodel = cmdparams.getCmdOption("--caffemodel");     
-    // const std::string& output_blob = cmdparams.getCmdOption("--output_blob");   
-    // std::vector<std::string> outputBlobName;
-    // outputBlobName.push_back(output_blob);
-    // test_caffe(prototxt,caffemodel,outputBlobName);
+    const std::string& prototxt = cmdparams.getCmdOption("--prototxt");         
+    const std::string& caffemodel = cmdparams.getCmdOption("--caffemodel");
+    const std::string& save_engine = cmdparams.getCmdOption("--save_engine");    
+    const std::string& output_blob = cmdparams.getCmdOption("--output_blob");  
+    std::vector<std::string> outputBlobName;
+    outputBlobName.push_back(output_blob);
+    test_caffe(prototxt,caffemodel,save_engine,outputBlobName);
 
     // test_uff("../models/frozen_inference_graph.uff");
     
