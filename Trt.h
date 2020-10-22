@@ -154,7 +154,8 @@ public:
      * @stream cuda stream for async interface and data transfer.
      * @return: 
      */
-    void AddDynamicShapeProfile(const std::string& inputName,
+    void AddDynamicShapeProfile(int batchSize,
+                                const std::string& inputName,
                                 const std::vector<int>& minDimVec,
                                 const std::vector<int>& optDimVec,
                                 const std::vector<int>& maxDimVec);

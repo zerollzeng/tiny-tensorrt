@@ -8,16 +8,17 @@
 
 import sys
 sys.path.append("../build")
+model_path = str(sys.argv[1])
 import pytrt
 import numpy as np
 def test_onnx():
     trt = pytrt.Trt()
-    onnxModel = "../../models/mobilenetv2-7.onnx"
+    onnxModel = model_path
     engineFile = ""
     customOutput = []
     maxBatchSize = 1
     # calibratorData = [np.ones(28*28)]
-    mode = 2
+    mode = 0
     trt.CreateEngine( onnxModel, engineFile,customOutput,maxBatchSize,mode)
     input_numpy_array = np.zeros(3*224*224)
     trt.CopyFromHostToDevice(input_numpy_array, 0) # slightly different from c++
