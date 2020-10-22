@@ -9,7 +9,7 @@
 ![image](https://user-images.githubusercontent.com/38289304/71065174-aafc3100-21ab-11ea-9bcb-665d38181e74.png)
 
 # tiny-tensorrt
-a simple, efficient, easy-to-use nvidia TensorRT wrapper for cnn with c++ and python api,support caffe, uff and onnx format models. you will be able to deploy your model with tiny-tensorrt in few lines of code!
+A simple, efficient, easy-to-use nvidia TensorRT wrapper for cnn with c++ and python api,support caffe, uff and onnx format models. you will be able to deploy your model with tiny-tensorrt in few lines of code!
 ```c++
 // create engine
 trt.CreateEngine(onnxModelpath, engineFile, customOutput, maxBatchSize, mode);
@@ -38,7 +38,7 @@ cuda 10.0+
 
 TensorRT 6 or 7
 
-for python api, python 2.x/3.x and numpy in needed
+For python api, python 2.x/3.x and numpy in needed
 
 # Installation
 Make sure you had install dependencies list above, if you are familiar with docker, you can use [official docker](https://ngc.nvidia.com/catalog/containers/nvidia:tensorrt)
@@ -50,7 +50,7 @@ cd tiny-tensorrt
 
 mkdir build && cd build && cmake .. && make
 ```
-then you can intergrate it into your own project with libtinytrt.so and Trt.h, for python module, you get pytrt.so
+Then you can intergrate it into your own project with libtinytrt.so and Trt.h, for python module, you get pytrt.so
 
 # Docs
 
@@ -58,9 +58,9 @@ then you can intergrate it into your own project with libtinytrt.so and Trt.h, f
 
 [Custom Plugin Tutorial](https://github.com/zerollzeng/tiny-tensorrt/blob/master/docs/CustomPlugin.md) (En-Ch)
 
-if you want some examples with tiny-tensorrt, you can refer to [tensorrt-zoo](https://github.com/zerollzeng/tensorrt-zoo)
+If you want some examples with tiny-tensorrt, you can refer to [tensorrt-zoo](https://github.com/zerollzeng/tensorrt-zoo)
 
-for the windows port of tiny-tensorrt, you can refer to @Devincool's [repo](https://github.com/Devincool/tiny-tensorrt)
+For the windows port of tiny-tensorrt, you can refer to @Devincool's [repo](https://github.com/Devincool/tiny-tensorrt)
 
 # Extra Support layer
 - upsample with custom scale, under test with yolov3.
