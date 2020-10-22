@@ -234,6 +234,8 @@ protected:
     // batch size
     int mBatchSize;
 
+    nvinfer1::NetworkDefinitionCreationFlags mFlags = 0;
+
     nvinfer1::IBuilderConfig* mConfig = nullptr;
 
     nvinfer1::IBuilder* mBuilder = nullptr;

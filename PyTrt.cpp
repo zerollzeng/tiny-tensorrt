@@ -50,22 +50,14 @@ PYBIND11_MODULE(pytrt, m) {
             int,
             int
             )) &Trt::CreateEngine, "create engine with tensorflow model")
-        .def("DoInference", [](Trt& self, py::array_t<float, py::array::c_style | py::array::forcecast> array) {
+        .def("Forward", (void (Trt::*)()) &Trt::Forward, "inference")
+        .def("CopyFromHostToDevice", [](Trt& self, py::array_t<float, py::array::c_style | py::array::forcecast> array, int index) {
             std::vector<float> input;
             input.resize(array.size());
             std::memcpy(input.data(), array.data(), array.size()*sizeof(float));
-            self.CopyFromHostToDevice(input, 0);
-            self.Forward();
+            self.CopyFromHostToDevice(input, index);
         })
-        .def("GetOutput", [](Trt& self, std::string& bindName) {
-            std::vector<std::string>::iterator it = std::find(self.mBindingName.begin(), self.mBindingName.end(), bindName);
-            int outputIndex;
-            if(it != self.mBindingName.end()) {
-                outputIndex = std::distance(self.mBindingName.begin(), it);
-            } else {
-                spdlog::error("invalid output binding name: {}", bindName);
-                return py::array();
-            }
+        .def("CopyFromDeviceToHost", [](Trt& self, int outputIndex) {
             std::vector<float> output;
             self.CopyFromDeviceToHost(output, outputIndex);
             nvinfer1::Dims dims = self.GetBindingDims(outputIndex);

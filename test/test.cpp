@@ -34,18 +34,22 @@ void test_onnx(const std::string& onnxModelpath) {
     std::string engineFile = "";
     const std::vector<std::string> customOutput;
     std::vector<std::vector<float>> calibratorData;
-    int maxBatchSize = 1;
+    int maxBatchSize = 4;
     int mode = 0;
     Trt* onnx_net = new Trt();
-    std::string inputName = "data";
-    std::vector<int> minDimVec{3, 100, 100};
-    std::vector<int> optDimVec{3, 224, 224};
-    std::vector<int> maxDimVec{3, 300, 300};
-    onnx_net->AddDynamicShapeProfile(inputName,minDimVec,optDimVec,maxDimVec);
+    // std::string inputName = "data";
+    // std::vector<int> minDimVec{3, 100, 100};
+    // std::vector<int> optDimVec{3, 224, 224};
+    // std::vector<int> maxDimVec{3, 300, 300};
+    // onnx_net->AddDynamicShapeProfile(inputName,minDimVec,optDimVec,maxDimVec);
     onnx_net->CreateEngine(onnxModelpath, engineFile, customOutput, maxBatchSize, mode);
-    std::vector<int> inputDims{3, 150, 200};
-    onnx_net->SetBindingDimensions(inputDims, 0);
+    // std::vector<int> inputDims{3, 150, 200};
+    // onnx_net->SetBindingDimensions(inputDims, 0);
+    std::vector<float> input(3*224*224, 0.5);
+    onnx_net->CopyFromHostToDevice(input, 0);
     onnx_net->Forward();
+    std::vector<float> output;
+    onnx_net->CopyFromDeviceToHost(output, 1);
 }
 
 void test_uff(const std::string& uffModelpath) {
@@ -90,16 +94,16 @@ class InputParser{
 int main(int argc, char** argv) {
     InputParser cmdparams(argc, argv);
 
-    // const std::string& onnx_path = cmdparams.getCmdOption("--onnx_path");
-    // test_onnx(onnx_path);
+    const std::string& onnx_path = cmdparams.getCmdOption("--onnx_path");
+    test_onnx(onnx_path);
 
-    const std::string& prototxt = cmdparams.getCmdOption("--prototxt");         
-    const std::string& caffemodel = cmdparams.getCmdOption("--caffemodel");
-    const std::string& save_engine = cmdparams.getCmdOption("--save_engine");    
-    const std::string& output_blob = cmdparams.getCmdOption("--output_blob");  
-    std::vector<std::string> outputBlobName;
-    outputBlobName.push_back(output_blob);
-    test_caffe(prototxt,caffemodel,save_engine,outputBlobName);
+    // const std::string& prototxt = cmdparams.getCmdOption("--prototxt");         
+    // const std::string& caffemodel = cmdparams.getCmdOption("--caffemodel");
+    // const std::string& save_engine = cmdparams.getCmdOption("--save_engine");    
+    // const std::string& output_blob = cmdparams.getCmdOption("--output_blob");  
+    // std::vector<std::string> outputBlobName;
+    // outputBlobName.push_back(output_blob);
+    // test_caffe(prototxt,caffemodel,save_engine,outputBlobName);
 
     // test_uff("../models/frozen_inference_graph.uff");
     

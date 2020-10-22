@@ -12,16 +12,17 @@ import pytrt
 import numpy as np
 def test_onnx():
     trt = pytrt.Trt()
-    onnxModel = "../models/model.onnx"
+    onnxModel = "../../models/mobilenetv2-7.onnx"
     engineFile = ""
     customOutput = []
     maxBatchSize = 1
-    calibratorData = [np.ones(28*28)]
+    # calibratorData = [np.ones(28*28)]
     mode = 2
-    trt.CreateEngine( onnxModel, engineFile,customOutput,maxBatchSize,mode,calibratorData)
-    input_numpy_array = np.zeros(28*28)
-    trt.DoInference(input_numpy_array) # slightly different from c++
-    output_numpy_array = trt.GetOutput("Plus214_Output_0")
+    trt.CreateEngine( onnxModel, engineFile,customOutput,maxBatchSize,mode)
+    input_numpy_array = np.zeros(3*224*224)
+    trt.CopyFromHostToDevice(input_numpy_array, 0) # slightly different from c++
+    trt.Forward()
+    output_numpy_array = trt.CopyFromDeviceToHost(1)
 
 if __name__ == "__main__":
     test_onnx()

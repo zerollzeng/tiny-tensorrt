@@ -128,11 +128,19 @@ void Trt::CreateEngine(
 }
 
 void Trt::Forward() {
-    mContext->execute(mBatchSize, &mBinding[0]);
+    if(mFlags == 1U << static_cast<uint32_t>(NetworkDefinitionCreationFlag::kEXPLICIT_BATCH)) {
+        mContext->executeV2(&mBinding[0]);
+    } else {
+        mContext->execute(mBatchSize, &mBinding[0]);
+    }
 }
 
 void Trt::ForwardAsync(const cudaStream_t& stream) {
-    mContext->enqueue(mBatchSize, &mBinding[0], stream, nullptr);
+    if(mFlags == 1U << static_cast<uint32_t>(NetworkDefinitionCreationFlag::kEXPLICIT_BATCH)) {
+        mContext->enqueueV2(&mBinding[0], stream, nullptr);
+    } else {
+        mContext->enqueue(mBatchSize, &mBinding[0], stream, nullptr);
+    }
 }
 
 void Trt::SetBindingDimensions(std::vector<int>& inputDims, int bindIndex) {
@@ -141,18 +149,22 @@ void Trt::SetBindingDimensions(std::vector<int>& inputDims, int bindIndex) {
 }
 
 void Trt::CopyFromHostToDevice(const std::vector<float>& input, int bindIndex) {
+    assert(input.size()*sizeof(float) <= mBindingSize[bindIndex]);
     CUDA_CHECK(cudaMemcpy(mBinding[bindIndex], input.data(), mBindingSize[bindIndex], cudaMemcpyHostToDevice));
 }
 
 void Trt::CopyFromHostToDevice(const std::vector<float>& input, int bindIndex, const cudaStream_t& stream) {
+    assert(input.size()*sizeof(float) <= mBindingSize[bindIndex]);
     CUDA_CHECK(cudaMemcpyAsync(mBinding[bindIndex], input.data(), mBindingSize[bindIndex], cudaMemcpyHostToDevice, stream));
 }
 
 void Trt::CopyFromDeviceToHost(std::vector<float>& output, int bindIndex) {
+    output.resize(mBindingSize[bindIndex]/sizeof(float));
     CUDA_CHECK(cudaMemcpy(output.data(), mBinding[bindIndex], mBindingSize[bindIndex], cudaMemcpyDeviceToHost));
 }
 
 void Trt::CopyFromDeviceToHost(std::vector<float>& output, int bindIndex, const cudaStream_t& stream) {
+    output.resize(mBindingSize[bindIndex]/sizeof(float));
     CUDA_CHECK(cudaMemcpyAsync(output.data(), mBinding[bindIndex], mBindingSize[bindIndex], cudaMemcpyDeviceToHost, stream));
 }
 
@@ -314,7 +326,7 @@ bool Trt::BuildEngineWithCaffe(const std::string& prototxt,
                         const std::vector<std::string>& outputBlobName) {
     spdlog::info("build caffe engine with {} and {}", prototxt, caffeModel);
     assert(mBuilder != nullptr);
-    mNetwork = mBuilder->createNetworkV2(0);
+    mNetwork = mBuilder->createNetworkV2(mFlags);
     assert(mNetwork != nullptr);
     nvcaffeparser1::ICaffeParser* parser = nvcaffeparser1::createCaffeParser();
     if(mPluginFactory != nullptr) {
@@ -367,8 +379,8 @@ bool Trt::BuildEngineWithOnnx(const std::string& onnxModel,
                       const std::vector<std::string>& customOutput) {
     spdlog::info("build onnx engine from {}...",onnxModel);
     assert(mBuilder != nullptr);
-    const auto explicitBatch = 1U << static_cast<uint32_t>(NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
-    mNetwork = mBuilder->createNetworkV2(explicitBatch);
+    mFlags = 1U << static_cast<uint32_t>(NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
+    mNetwork = mBuilder->createNetworkV2(mFlags);
     assert(mNetwork != nullptr);
     nvonnxparser::IParser* parser = nvonnxparser::createParser(*mNetwork, mLogger);
     if(!parser->parseFromFile(onnxModel.c_str(), static_cast<int>(ILogger::Severity::kWARNING))) {
@@ -425,7 +437,7 @@ bool Trt::BuildEngineWithUff(const std::string& uffModel,
                       const std::vector<std::string>& outputTensorNames) {
     spdlog::info("build uff engine with {}...", uffModel);
     assert(mBuilder != nullptr);
-    mNetwork = mBuilder->createNetworkV2(0);
+    mNetwork = mBuilder->createNetworkV2(mFlags);
     assert(mNetwork != nullptr);
     nvuffparser::IUffParser* parser = nvuffparser::createUffParser();
     assert(parser != nullptr);
