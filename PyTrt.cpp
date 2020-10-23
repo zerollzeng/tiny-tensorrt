@@ -51,6 +51,9 @@ PYBIND11_MODULE(pytrt, m) {
             int
             )) &Trt::CreateEngine, "create engine with tensorflow model")
         .def("Forward", (void (Trt::*)()) &Trt::Forward, "inference")
+        .def("SetDevice", (void (Trt::*)(
+            int
+            )) &Trt::SetDevice, "set building and inference device")
         .def("CopyFromHostToDevice", [](Trt& self, py::array_t<float, py::array::c_style | py::array::forcecast> array, int index) {
             std::vector<float> input;
             input.resize(array.size());

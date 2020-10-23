@@ -5,6 +5,7 @@ Take a look at test/test.cpp or test/test.py
 
 # C++ API
 ```c++
+// for detailed usage, please refer to Trt.h, it's pretty well commented.
 #include "Trt.h"
 
 Trt trt;
@@ -29,14 +30,16 @@ trt.CopyFromDeviceToHost(output, outputIndex) // you can get outputIndex in Crea
 import sys
 sys.path.append("path/to/where_pytrt.so_located/")
 import pytrt
+# for detailed usage, try uncomment next line
+# help(pytrt)
 
 trt = pytrt.Trt()
 trt.CreateEngine(prototxt, caffemodel, engineFile, outputBlobName, maxBatchSize, mode)
 # trt.CreateEngine(onnxModel, engineFile,customOutput,maxBatchSize,mode)
 # trt.CreateEngine(uffModel, engineFile, inputTensorName, inputDims, outputTensorName,maxBatchSize,mode)
-
-trt.DoInference(input_numpy_array) # slightly different from c++
-output_numpy_array = trt.GetOutput(outputIndex)
+trt.CopyFromHostToDevice(input_numpy_array, 0)
+trt.Forward()
+output_numpy_array = trt.CopyFromDeviceToHost(1)
 # post processing
 ```
 

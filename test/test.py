@@ -10,6 +10,7 @@ import sys
 sys.path.append("../build")
 model_path = str(sys.argv[1])
 import pytrt
+print(help(pytrt))
 import numpy as np
 def test_onnx():
     trt = pytrt.Trt()
@@ -21,7 +22,7 @@ def test_onnx():
     mode = 0
     trt.CreateEngine( onnxModel, engineFile,customOutput,maxBatchSize,mode)
     input_numpy_array = np.zeros(3*224*224)
-    trt.CopyFromHostToDevice(input_numpy_array, 0) # slightly different from c++
+    trt.CopyFromHostToDevice(input_numpy_array, 0)
     trt.Forward()
     output_numpy_array = trt.CopyFromDeviceToHost(1)
 
