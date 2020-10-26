@@ -34,8 +34,9 @@ message(WARNING "
 
   Ampere (CUDA 11 and later)
   SM80 or SM_80, compute_80 – Tesla A100 (GA100), NVIDIA DGX-A100, RTX Ampere – RTX 3080
+  SM86 or SM_86, compute_86 – (from CUDA 11.1 onwards) Tesla GA10x cards, RTX Ampere – RTX 3080, GA102 – RTX 3090, RTX A6000, RTX A40
 
-  Hopper – currently unknown.
+  Hopper – NVIDIA H100 (GH100)
   ======================================================
 ")
 
