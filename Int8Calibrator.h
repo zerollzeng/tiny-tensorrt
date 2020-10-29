@@ -14,12 +14,17 @@
 #include "NvInfer.h"
 #include "utils.h"
 
+nvinfer1::IInt8Calibrator* GetInt8Calibrator(const std::string& calibratorType, 
+											 int BatchSize,
+											 const std::vector<std::vector<float>>& data,
+											 const std::string& CalibDataName,
+											 bool readCache);
 
-class Int8EntropyCalibrator : public nvinfer1::IInt8EntropyCalibrator2 {
+class Int8EntropyCalibrator2 : public nvinfer1::IInt8EntropyCalibrator2 {
 public:
-	Int8EntropyCalibrator(int BatchSize,const std::vector<std::vector<float>>& data,const std::string& CalibDataName = "",bool readCache = true);
+	Int8EntropyCalibrator2(int BatchSize,const std::vector<std::vector<float>>& data,const std::string& CalibDataName = "",bool readCache = true);
 
-	virtual ~Int8EntropyCalibrator();
+	virtual ~Int8EntropyCalibrator2();
 
 	int getBatchSize() const override {
 		std::cout << "getbatchSize: " << mBatchSize << std::endl;
@@ -46,6 +51,5 @@ private:
 
 	std::vector<char> mCalibrationCache;
 };
-
 
 #endif //_ENTROY_CALIBRATOR_H

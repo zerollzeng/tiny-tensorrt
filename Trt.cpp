@@ -8,7 +8,7 @@
 #include "Trt.h"
 #include "utils.h"
 #include "spdlog/spdlog.h"
-#include "Int8EntropyCalibrator.h"
+#include "Int8Calibrator.h"
 #include "PluginFactory.h"
 // #include "tensorflow/graph.pb.h"
 
@@ -185,35 +185,24 @@ int Trt::GetDevice() const {
 }
 
 void Trt::SetInt8Calibrator(const std::string& calibratorType, const std::vector<std::vector<float>>& calibratorData) {
-    spdlog::warn("INT8 inference is available only on GPUs with compute capability 6.1 or 7.x.");
-    Int8EntropyCalibrator* calibrator = nullptr;
-    if (mRunMode == 2)
-    {
-        spdlog::info("set int8 inference mode");
-        if (!mBuilder->platformHasFastInt8()) {
-            spdlog::warn("Warning: current platform doesn't support int8 inference");
-        }
-        if (calibratorData.size() > 0 ){
-            std::string calibratorName = "calibrator";
-            std::cout << "create calibrator,Named:" << calibratorName << std::endl;
-            calibrator = new Int8EntropyCalibrator(mBatchSize,calibratorData,calibratorName,false);
-        }
-        // enum class BuilderFlag : int
-        // {
-        //     kFP16 = 0,         //!< Enable FP16 layer selection.
-        //     kINT8 = 1,         //!< Enable Int8 layer selection.
-        //     kDEBUG = 2,        //!< Enable debugging of layers via synchronizing after every layer.
-        //     kGPU_FALLBACK = 3, //!< Enable layers marked to execute on GPU if layer cannot execute on DLA.
-        //     kSTRICT_TYPES = 4, //!< Enables strict type constraints.
-        //     kREFIT = 5,        //!< Enable building a refittable engine.
-        // };
-        mConfig->setFlag(nvinfer1::BuilderFlag::kINT8);
-        mConfig->setInt8Calibrator(calibrator);
+    mRunMode = 2;
+    spdlog::warn("INT8 inference is available only on GPUs with compute capability equal or greater than 6.1");
+    nvinfer1::IInt8Calibrator* calibrator = GetInt8Calibrator(calibratorType, mBatchSize, calibratorData, "calibrator", false);
+    spdlog::info("set int8 inference mode");
+    if (!mBuilder->platformHasFastInt8()) {
+        spdlog::warn("Warning: current platform doesn't support int8 inference");
     }
-    // if(calibrator){
-    //     delete calibrator;
-    //     calibrator = nullptr;
-    // }
+    // enum class BuilderFlag : int
+    // {
+    //     kFP16 = 0,         //!< Enable FP16 layer selection.
+    //     kINT8 = 1,         //!< Enable Int8 layer selection.
+    //     kDEBUG = 2,        //!< Enable debugging of layers via synchronizing after every layer.
+    //     kGPU_FALLBACK = 3, //!< Enable layers marked to execute on GPU if layer cannot execute on DLA.
+    //     kSTRICT_TYPES = 4, //!< Enables strict type constraints.
+    //     kREFIT = 5,        //!< Enable building a refittable engine.
+    // };
+    mConfig->setFlag(nvinfer1::BuilderFlag::kINT8);
+    mConfig->setInt8Calibrator(calibrator);
 }
 
 void Trt::AddDynamicShapeProfile(int batchSize,

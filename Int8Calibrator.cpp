@@ -5,15 +5,27 @@
  * @LastEditTime: 2019-08-22 17:04:49
  * @LastEditors: Please set LastEditors
  */
-#include "Int8EntropyCalibrator.h"
+#include "Int8Calibrator.h"
 #include <fstream>
 #include <iterator>
 #include <cassert>
 #include <string.h>
 #include <algorithm>
 
+nvinfer1::IInt8Calibrator* GetInt8Calibrator(const std::string& calibratorType, 
+											 int BatchSize,
+											 const std::vector<std::vector<float>>& data,
+											 const std::string& CalibDataName,
+											 bool readCache) {
+    if(calibratorType == "Int8EntropyCalibrator2") {
+        return new Int8EntropyCalibrator2(BatchSize,data,CalibDataName,readCache);
+    } else {
+        std::cout << "unsupport calibrator type" << std::endl;
+        assert(false);
+    }
+}
 
-Int8EntropyCalibrator::Int8EntropyCalibrator(int BatchSize,const std::vector<std::vector<float>>& data,
+Int8EntropyCalibrator2::Int8EntropyCalibrator2(int BatchSize,const std::vector<std::vector<float>>& data,
                                         const std::string& CalibDataName /*= ""*/,bool readCache /*= true*/)
     : mCalibDataName(CalibDataName),mBatchSize(BatchSize),mReadCache(readCache)
 {     
@@ -27,7 +39,7 @@ Int8EntropyCalibrator::Int8EntropyCalibrator(int BatchSize,const std::vector<std
 }
 
 
-Int8EntropyCalibrator::~Int8EntropyCalibrator()
+Int8EntropyCalibrator2::~Int8EntropyCalibrator2()
 {
     CUDA_CHECK(cudaFree(mDeviceInput));
     if(mCurBatchData)
@@ -35,7 +47,7 @@ Int8EntropyCalibrator::~Int8EntropyCalibrator()
 }
 
 
-bool Int8EntropyCalibrator::getBatch(void* bindings[], const char* names[], int nbBindings)
+bool Int8EntropyCalibrator2::getBatch(void* bindings[], const char* names[], int nbBindings)
 {
     std::cout << "name: " << names[0] << "nbBindings: " << nbBindings << std::endl;
     if (mCurBatchIdx + mBatchSize > int(mDatas.size())) 
@@ -61,7 +73,7 @@ bool Int8EntropyCalibrator::getBatch(void* bindings[], const char* names[], int 
     return true;
 }
 
-const void* Int8EntropyCalibrator::readCalibrationCache(size_t& length)
+const void* Int8EntropyCalibrator2::readCalibrationCache(size_t& length)
 {
     mCalibrationCache.clear();
     std::ifstream input(mCalibDataName+".calib", std::ios::binary);
@@ -73,7 +85,7 @@ const void* Int8EntropyCalibrator::readCalibrationCache(size_t& length)
     return length ? &mCalibrationCache[0] : nullptr;
 }
 
-void Int8EntropyCalibrator::writeCalibrationCache(const void* cache, size_t length)
+void Int8EntropyCalibrator2::writeCalibrationCache(const void* cache, size_t length)
 {
     std::ofstream output(mCalibDataName+".calib", std::ios::binary);
     output.write(reinterpret_cast<const char*>(cache), length);

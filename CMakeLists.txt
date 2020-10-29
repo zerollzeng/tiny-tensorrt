@@ -114,7 +114,7 @@ ENABLE_PRELU_FP16 : ${ENABLE_PRELU_FP16}
 
 file(GLOB_RECURSE trt_source
      Trt.cpp
-     Int8EntropyCalibrator.cpp
+     Int8Calibrator.cpp
      plugin/*.cu
      plugin/*.cpp
      )
