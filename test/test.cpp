@@ -52,6 +52,16 @@ void test_onnx(const std::string& onnxModelpath) {
     onnx_net->CopyFromDeviceToHost(output, 1);
 }
 
+void test_onnx_forward(const std::string& onnxModelpath) {
+    int maxBatchSize = 4;
+    int mode = 0;
+    std::string engineFile = "";
+    const std::vector<std::string> customOutput;
+    Trt* onnx_net = new Trt();
+    onnx_net->CreateEngine(onnxModelpath, engineFile, customOutput, maxBatchSize, mode);
+    onnx_net->Forward();
+}
+
 void test_uff(const std::string& uffModelpath) {
     std::string engineFile = "";
     std::vector<std::vector<float>> calibratorData;
@@ -95,7 +105,7 @@ int main(int argc, char** argv) {
     InputParser cmdparams(argc, argv);
 
     const std::string& onnx_path = cmdparams.getCmdOption("--onnx_path");
-    test_onnx(onnx_path);
+    test_onnx_forward(onnx_path);
 
     // const std::string& prototxt = cmdparams.getCmdOption("--prototxt");         
     // const std::string& caffemodel = cmdparams.getCmdOption("--caffemodel");
