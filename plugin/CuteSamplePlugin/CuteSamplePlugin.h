@@ -12,8 +12,6 @@ class CuteSamplePlugin : public IPluginV2Ext
 public:
     CuteSamplePlugin(const std::string name);
 
-    CuteSamplePlugin(const std::string name, size_t copy_size);
-
     CuteSamplePlugin(const std::string name, const void* data, size_t length);
 
     CuteSamplePlugin() = delete;

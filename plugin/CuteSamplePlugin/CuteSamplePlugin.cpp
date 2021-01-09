@@ -17,29 +17,12 @@
 #define cutelog(...)
 #endif
 
-// Helper function for serializing plugin
-template <typename T>
-void writeToBuffer(char*& buffer, const T& val)
-{
-    *reinterpret_cast<T*>(buffer) = val;
-    buffer += sizeof(T);
-}
-
-// Helper function for deserializing plugin
-template <typename T>
-T readFromBuffer(const char*& buffer)
-{
-    T val = *reinterpret_cast<const T*>(buffer);
-    buffer += sizeof(T);
-    return val;
-}
-
 using namespace nvinfer1;
 using nvinfer1::plugin::CuteSamplePlugin;
 using nvinfer1::plugin::CuteSamplePluginCreator;
 
 static const char* CUTE_PLUGIN_VERSION{"1"};
-static const char* CUTE_PLUGIN_NAME{"HSigmoid"};
+static const char* CUTE_PLUGIN_NAME{"CuteSamplePlugin"};
 
 PluginFieldCollection CuteSamplePluginCreator::mFC{};
 
@@ -49,20 +32,10 @@ CuteSamplePlugin::CuteSamplePlugin(const std::string name)
     cutelog("wow I run to here now");
 }
 
-CuteSamplePlugin::CuteSamplePlugin(const std::string name, size_t copy_size)
-    : mLayerName(name)
-    , mCopySize(copy_size)
-{
-    cutelog("wow I run to here now");
-}
-
 CuteSamplePlugin::CuteSamplePlugin(const std::string name, const void* data, size_t length)
     : mLayerName(name)
 {
     cutelog("wow I run to here now");
-    const char *d = reinterpret_cast<const char*>(data), *a = d;
-    mCopySize = readFromBuffer<size_t>(d);
-    assert(d == a + length);
 }
 
 int CuteSamplePlugin::getNbOutputs() const
@@ -74,7 +47,7 @@ int CuteSamplePlugin::getNbOutputs() const
 Dims CuteSamplePlugin::getOutputDimensions(int index, const Dims* inputs, int nbInputDims)
 {
     cutelog("wow I run to here now");
-    return DimsCHW(inputs[1].d[1], inputs[1].d[2], inputs[1].d[3]);
+    return Dims3(inputs[1].d[1], inputs[1].d[2], inputs[1].d[3]);
 }
 
 int CuteSamplePlugin::initialize()
@@ -104,9 +77,6 @@ int CuteSamplePlugin::enqueue(int batchSize, const void* const* inputs, void** o
 void CuteSamplePlugin::serialize(void* buffer) const
 {
     cutelog("wow I run to here now");
-    char *d = reinterpret_cast<char*>(buffer), *a = d;
-    writeToBuffer<size_t>(d, mCopySize);
-    assert(d == a + getSerializationSize());
 }
 
 void CuteSamplePlugin::terminate() {
@@ -116,7 +86,7 @@ void CuteSamplePlugin::terminate() {
 size_t CuteSamplePlugin::getSerializationSize() const
 {
     cutelog("wow I run to here now");
-    return sizeof(size_t);
+    return 0;
 }
 
 bool CuteSamplePlugin::isOutputBroadcastAcrossBatch(int outputIndex, const bool* inputIsBroadcasted, int nbInputs) const
@@ -141,7 +111,7 @@ void CuteSamplePlugin::configurePlugin(const Dims* inputDims, int nbInputs, cons
 bool CuteSamplePlugin::supportsFormat(DataType type, PluginFormat format) const
 {
     cutelog("wow I run to here now");
-    return (type == DataType::kFLOAT && format == PluginFormat::kNCHW);
+    return true;
 }
 
 const char* CuteSamplePlugin::getPluginType() const
@@ -163,8 +133,7 @@ void CuteSamplePlugin::destroy()
 
 IPluginV2Ext* CuteSamplePlugin::clone() const
 {
-    cutelog("wow I run to here now");
-    auto* plugin = new CuteSamplePlugin(mLayerName, mCopySize);
+    auto* plugin = new CuteSamplePlugin(mLayerName);
     plugin->setPluginNamespace(mNamespace.c_str());
     return plugin;
 }
