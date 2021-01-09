@@ -21,6 +21,12 @@ trt.Forward();
 trt.CopyFromHostToDevice(output, outputIndex) // you can get outputIndex in CreateEngine phase
 ```
 
+# News
+
+Want to implement your own onnx plugin and don't know where to start?
+
+[onnx plugin template](https://github.com/zerollzeng/tiny-tensorrt/blob/master/plugin/CuteSamplePlugin)
+
 # Features
 - [x] Support TensorRT 7
 - [x] Custom plugin tutorial and well_commented sample!
