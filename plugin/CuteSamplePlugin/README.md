@@ -130,3 +130,7 @@ if you are new to Nvidia TensorRT or don't know how to implement a plugin from s
 offcial api documentation is very helpful
 
 [TensorRT C++ API](https://docs.nvidia.com/deeplearning/tensorrt/api/c_api/index.html)
+
+official plugin implementation is also helpful if you are confused about some member function implementation.
+
+[Official Plugin](https://github.com/NVIDIA/TensorRT/tree/master/plugin)
