@@ -377,6 +377,7 @@ bool Trt::BuildEngineWithOnnx(const std::string& onnxModel,
         spdlog::error("error: could not parse onnx engine");
         return false;
     }
+#ifdef DEBUG
     for(int i=0;i<mNetwork->getNbLayers();i++) {
         nvinfer1::ILayer* custom_output = mNetwork->getLayer(i);
         for(int j=0;j<custom_output->getNbInputs();j++) {
@@ -389,7 +390,8 @@ bool Trt::BuildEngineWithOnnx(const std::string& onnxModel,
             std::cout << output_tensor->getName() << " ";
         }
         std::cout << std::endl;
-    }  
+    }
+#endif
     if(customOutput.size() > 0) {
         spdlog::info("unmark original output...");
         for(int i=0;i<mNetwork->getNbOutputs();i++) {

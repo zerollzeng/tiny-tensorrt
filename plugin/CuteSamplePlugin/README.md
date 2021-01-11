@@ -1,4 +1,4 @@
-## Current this template still have some bugs, will fix it ASAP! if you have some advises, BRING ME AN ISSUE!
+Note: This template run succeessfully with TensorRT 7.2.2 and failed at some previous version.
 
 ## A Cute custom onnx plugin template
 
