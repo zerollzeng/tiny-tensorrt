@@ -12,7 +12,7 @@ Now check the name of your node that need to be register as a plugin, you can fi
 
 ![image](https://user-images.githubusercontent.com/38289304/104086586-41f2ca00-5294-11eb-8bb6-af2f127908b2.png)
 
-now I get the Plugin name is HSigmoid, open CuteSamplePlugin.cpp, find
+now I get the Plugin name(which is the type attribute of node) is HSigmoid, open CuteSamplePlugin.cpp, find
 
 ```c++
 static const char* CUTE_PLUGIN_VERSION{"1"};
