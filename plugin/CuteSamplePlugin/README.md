@@ -1,3 +1,5 @@
+## Current this template still have some bugs, will fix it ASAP! if you have some advises, BRING ME AN ISSUE!
+
 ## A Cute custom onnx plugin template
 
 Want to implement a custom plugin for your onnx model that deploy on onnx and don't know where to start? here is a simple template, let's go!
