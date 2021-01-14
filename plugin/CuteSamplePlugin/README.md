@@ -1,4 +1,4 @@
-Note: This template runs successfully with TensorRT 7.2.2 and failed at some previous versions. especially before 7.2.0.
+Note: This template runs successfully with TensorRT 7.2.2 and failed at some previous versions.
 
 ## A Cute custom onnx plugin template
 
