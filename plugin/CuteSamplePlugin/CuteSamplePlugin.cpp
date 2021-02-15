@@ -1,3 +1,9 @@
+/**
+ * For the usage of those member function, please refer to the
+ * offical api doc.
+ * https://docs.nvidia.com/deeplearning/tensorrt/api/c_api/classnvinfer1_1_1_i_plugin_v2_ext.html
+ */
+
 #include "CuteSamplePlugin.h"
 #include <cassert>
 #include <iostream>
@@ -114,11 +120,18 @@ bool CuteSamplePlugin::supportsFormat(DataType type, PluginFormat format) const
     return true;
 }
 
+/**
+ * NO NEED TO MODIFY
+ */
 const char* CuteSamplePlugin::getPluginType() const
 {
     cutelog("wow I run to here now");
     return CUTE_PLUGIN_NAME;
 }
+
+/**
+ * NO NEED TO MODIFY
+ */
 const char* CuteSamplePlugin::getPluginVersion() const
 {
     cutelog("wow I run to here now");
@@ -138,12 +151,18 @@ IPluginV2Ext* CuteSamplePlugin::clone() const
     return plugin;
 }
 
+/**
+ * NO NEED TO MODIFY
+ */
 void CuteSamplePlugin::setPluginNamespace(const char* libNamespace)
 {
     cutelog("wow I run to here now");
     mNamespace = libNamespace;
 }
 
+/**
+ * NO NEED TO MODIFY
+ */
 const char* CuteSamplePlugin::getPluginNamespace() const
 {
     cutelog("wow I run to here now");
@@ -157,18 +176,27 @@ CuteSamplePluginCreator::CuteSamplePluginCreator()
     mFC.fields = nullptr;
 }
 
+/**
+ * NO NEED TO MODIFY
+ */
 const char* CuteSamplePluginCreator::getPluginName() const
 {
     cutelog("wow I run to here now");
     return CUTE_PLUGIN_NAME;
 }
 
+/**
+ * NO NEED TO MODIFY
+ */
 const char* CuteSamplePluginCreator::getPluginVersion() const
 {
     cutelog("wow I run to here now");
     return CUTE_PLUGIN_VERSION;
 }
 
+/**
+ * NO NEED TO MODIFY
+ */
 const PluginFieldCollection* CuteSamplePluginCreator::getFieldNames()
 {
     cutelog("wow I run to here now");
