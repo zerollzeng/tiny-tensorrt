@@ -17,23 +17,10 @@ namespace py = pybind11;
 
 PYBIND11_MODULE(pytrt, m) {
     m.doc() = "python interface of tiny-tensorrt";
-    py::class_<TrtPluginParams>(m, "TrtPluginParams")
-        .def(py::init<>());
     py::class_<Trt>(m, "Trt")
         .def(py::init([]() {
             return std::unique_ptr<Trt>(new Trt());
         }))
-        .def(py::init([](TrtPluginParams params) { 
-            return std::unique_ptr<Trt>(new Trt(params));
-        }))
-        .def("CreateEngine", (void (Trt::*)(
-            const std::string&,
-            const std::string&,
-            const std::string&,
-            const std::vector<std::string>&,
-            int,
-            int
-            )) &Trt::CreateEngine, "create engine with caffe model")
         .def("CreateEngine", (void (Trt::*)(
             const std::string&,
             const std::string&,
@@ -41,15 +28,6 @@ PYBIND11_MODULE(pytrt, m) {
             int,
             int
             )) &Trt::CreateEngine, "create engine with onnx model")
-        .def("CreateEngine", (void (Trt::*)(
-            const std::string&,
-            const std::string&,
-            const std::vector<std::string>&,
-            const std::vector<std::vector<int>>&,
-            const std::vector<std::string>&,
-            int,
-            int
-            )) &Trt::CreateEngine, "create engine with tensorflow model")
         .def("Forward", (void (Trt::*)()) &Trt::Forward, "inference")
         .def("SetDevice", (void (Trt::*)(
             int

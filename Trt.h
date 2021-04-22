@@ -50,26 +50,6 @@ public:
     Trt(TrtPluginParams params);
 
     ~Trt();
-
-    /**
-     * description: create engine from caffe prototxt and caffe model
-     * @prototxt: caffe prototxt
-     * @caffemodel: caffe model contain network parameters
-     * @engineFile: serialzed engine file, if it does not exit, will build engine from
-     *             prototxt and caffe model, which take about 1 minites, otherwise will
-     *             deserialize enfine from engine file, which is very fast.
-     * @outputBlobName: specify which layer is network output, find it in caffe prototxt
-     * @maxBatchSize: max batch size while inference, make sure it do not exceed max batch
-     *                size in your model
-     * @mode: engine run mode, 0 for float32, 1 for float16, 2 for int8
-     */
-    void CreateEngine(
-        const std::string& prototxt, 
-        const std::string& caffeModel,
-        const std::string& engineFile,
-        const std::vector<std::string>& outputBlobName,
-        int maxBatchSize,
-        int mode);
     
     /**
      * @description: create engine from onnx model
@@ -83,25 +63,6 @@ public:
         const std::string& onnxModel,
         const std::string& engineFile,
         const std::vector<std::string>& customOutput,
-        int maxBatchSize,
-        int mode);
-
-    /**
-     * @description: create engine from uff model
-     * @uffModel: path to uff model
-     * @engineFile: path to saved engien file will be load or save, if it's empty them will not
-     *              save engine file
-     * @inputTensorName: input tensor
-     * @outputTensorName: output tensor
-     * @maxBatchSize: max batch size for inference.
-     * @return: 
-     */
-    void CreateEngine(
-        const std::string& uffModel,
-        const std::string& engineFile,
-        const std::vector<std::string>& inputTensorName,
-        const std::vector<std::vector<int>>& inputDims,
-        const std::vector<std::string>& outputTensorName,
         int maxBatchSize,
         int mode);
 
@@ -208,20 +169,9 @@ protected:
 
     void BuildEngine();
 
-    bool BuildEngineWithCaffe(const std::string& prototxt, 
-                    const std::string& caffeModel,
-                    const std::string& engineFile,
-                    const std::vector<std::string>& outputBlobName);
-
     bool BuildEngineWithOnnx(const std::string& onnxModel,
                      const std::string& engineFile,
                      const std::vector<std::string>& customOutput);
-    
-    bool BuildEngineWithUff(const std::string& uffModel,
-                      const std::string& engineFile,
-                      const std::vector<std::string>& inputTensorName,
-                      const std::vector<std::vector<int>>& inputDims,
-                      const std::vector<std::string>& outputTensorName);
                      
     /**
      * description: Init resource such as device memory

@@ -61,35 +61,6 @@ Trt::~Trt() {
 }
 
 void Trt::CreateEngine(
-        const std::string& prototxt,
-        const std::string& caffeModel,
-        const std::string& engineFile,
-        const std::vector<std::string>& outputBlobName,
-        int maxBatchSize,
-        int mode) {
-    mBatchSize = maxBatchSize;
-    mRunMode = mode;
-    spdlog::info("prototxt: {}",prototxt);
-    spdlog::info("caffeModel: {}",caffeModel);
-    spdlog::info("engineFile: {}",engineFile);
-    spdlog::info("outputBlobName: ");
-    for(size_t i=0;i<outputBlobName.size();i++) {
-        std::cout << outputBlobName[i] << " ";
-    }
-    std::cout << std::endl;
-    if(!DeserializeEngine(engineFile)) {
-        if(!BuildEngineWithCaffe(prototxt,caffeModel,engineFile,outputBlobName)) {
-            spdlog::error("error: could not deserialize or build engine");
-            return;
-        }
-    }
-    spdlog::info("create execute context and malloc device memory...");
-    InitEngine();
-    // Notice: close profiler
-    //mContext->setProfiler(mProfiler);
-}
-
-void Trt::CreateEngine(
         const std::string& onnxModel,
         const std::string& engineFile,
         const std::vector<std::string>& customOutput,
@@ -99,26 +70,6 @@ void Trt::CreateEngine(
     mRunMode = mode;
     if(!DeserializeEngine(engineFile)) {
         if(!BuildEngineWithOnnx(onnxModel,engineFile,customOutput)) {
-            spdlog::error("error: could not deserialize or build engine");
-            return;
-        }
-    }
-    spdlog::info("create execute context and malloc device memory...");
-    InitEngine();
-}
-
-void Trt::CreateEngine(
-        const std::string& uffModel,
-        const std::string& engineFile,
-        const std::vector<std::string>& inputTensorNames,
-        const std::vector<std::vector<int>>& inputDims,
-        const std::vector<std::string>& outputTensorNames,
-        int maxBatchSize,
-        int mode) {
-    mBatchSize = maxBatchSize;
-    mRunMode = mode;
-    if(!DeserializeEngine(engineFile)) {
-        if(!BuildEngineWithUff(uffModel,engineFile,inputTensorNames,inputDims, outputTensorNames)) {
             spdlog::error("error: could not deserialize or build engine");
             return;
         }
@@ -322,60 +273,6 @@ void Trt::BuildEngine() {
     assert(mEngine != nullptr);
 }
 
-bool Trt::BuildEngineWithCaffe(const std::string& prototxt, 
-                        const std::string& caffeModel,
-                        const std::string& engineFile,
-                        const std::vector<std::string>& outputBlobName) {
-    spdlog::info("build caffe engine with {} and {}", prototxt, caffeModel);
-    assert(mBuilder != nullptr);
-    mNetwork = mBuilder->createNetworkV2(mFlags);
-    assert(mNetwork != nullptr);
-    nvcaffeparser1::ICaffeParser* parser = nvcaffeparser1::createCaffeParser();
-    if(mPluginFactory != nullptr) {
-        parser->setPluginFactoryV2(mPluginFactory);
-    }
-    // Notice: change here to costom data type
-    nvinfer1::DataType type = mRunMode==1 ? nvinfer1::DataType::kHALF : nvinfer1::DataType::kFLOAT;
-    const nvcaffeparser1::IBlobNameToTensor* blobNameToTensor = parser->parse(prototxt.c_str(),caffeModel.c_str(),
-                                                                            *mNetwork,type);
-    
-    for(auto& s : outputBlobName) {
-        mNetwork->markOutput(*blobNameToTensor->find(s.c_str()));
-    }
-    spdlog::info("Number of mNetwork layers: {}",mNetwork->getNbLayers());
-    spdlog::info("Number of input: ", mNetwork->getNbInputs());
-    std::cout << "Input layer: " << std::endl;
-    for(int i = 0; i < mNetwork->getNbInputs(); i++) {
-        std::cout << mNetwork->getInput(i)->getName() << " : ";
-        Dims dims = mNetwork->getInput(i)->getDimensions();
-        for(int j = 0; j < dims.nbDims; j++) {
-            std::cout << dims.d[j] << "x"; 
-        }
-        std::cout << "\b "  << std::endl;
-    }
-    spdlog::info("Number of output: {}",mNetwork->getNbOutputs());
-    std::cout << "Output layer: " << std::endl;
-    for(int i = 0; i < mNetwork->getNbOutputs(); i++) {
-        std::cout << mNetwork->getOutput(i)->getName() << " : ";
-        Dims dims = mNetwork->getOutput(i)->getDimensions();
-        for(int j = 0; j < dims.nbDims; j++) {
-            std::cout << dims.d[j] << "x"; 
-        }
-        std::cout << "\b " << std::endl;
-    }
-    spdlog::info("parse mNetwork done");
-
-    BuildEngine();
-
-    spdlog::info("serialize engine to {}", engineFile);
-    SaveEngine(engineFile);
-    
-    mBuilder->destroy();
-    mNetwork->destroy();
-    parser->destroy();
-    return true;
-}
-
 bool Trt::BuildEngineWithOnnx(const std::string& onnxModel,
                       const std::string& engineFile,
                       const std::vector<std::string>& customOutput) {
@@ -431,44 +328,6 @@ bool Trt::BuildEngineWithOnnx(const std::string& onnxModel,
     spdlog::info("serialize engine to {}", engineFile);
     SaveEngine(engineFile);
 
-    mBuilder->destroy();
-    mNetwork->destroy();
-    parser->destroy();
-    return true;
-}
-
-bool Trt::BuildEngineWithUff(const std::string& uffModel,
-                      const std::string& engineFile,
-                      const std::vector<std::string>& inputTensorNames,
-                      const std::vector<std::vector<int>>& inputDims,
-                      const std::vector<std::string>& outputTensorNames) {
-    spdlog::info("build uff engine with {}...", uffModel);
-    assert(mBuilder != nullptr);
-    mNetwork = mBuilder->createNetworkV2(mFlags);
-    assert(mNetwork != nullptr);
-    nvuffparser::IUffParser* parser = nvuffparser::createUffParser();
-    assert(parser != nullptr);
-    assert(inputTensorNames.size() == inputDims.size());
-    //parse input
-    for(size_t i=0;i<inputTensorNames.size();i++) {
-        nvinfer1::Dims dim;
-        dim.nbDims = inputDims[i].size();
-        for(int j=0;j<dim.nbDims;j++) {
-            dim.d[j] = inputDims[i][j];
-        }
-        parser->registerInput(inputTensorNames[i].c_str(), dim, nvuffparser::UffInputOrder::kNCHW);
-    }
-    //parse output
-    for(size_t i=0;i<outputTensorNames.size();i++) {
-        parser->registerOutput(outputTensorNames[i].c_str());
-    }
-    if(!parser->parse(uffModel.c_str(), *mNetwork, nvinfer1::DataType::kFLOAT)) {
-        spdlog::error("error: parse model failed");
-    }
-    BuildEngine();
-    spdlog::info("serialize engine to {}", engineFile);
-    SaveEngine(engineFile);
-    
     mBuilder->destroy();
     mNetwork->destroy();
     parser->destroy();
