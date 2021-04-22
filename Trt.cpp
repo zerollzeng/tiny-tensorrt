@@ -241,6 +241,18 @@ nvinfer1::DataType Trt::GetBindingDataType(int bindIndex) const {
     return mBindingDataType[bindIndex];
 }
 
+std::string Trt::GetBindingName(int bindIndex) const{
+    return mBindingName[bindIndex];
+}
+
+int Trt::GetNbInputBindings() const {
+    return mNbInputBindings;
+}
+
+int Trt::GetNbOutputBindings() const {
+    return mNbOutputBindings;
+}
+
 void Trt::SaveEngine(const std::string& fileName) {
     if(fileName == "") {
         spdlog::warn("empty engine file name, skip save");
@@ -401,14 +413,17 @@ bool Trt::BuildEngineWithOnnx(const std::string& onnxModel,
         spdlog::info("mark custom output...");
         for(int i=0;i<mNetwork->getNbLayers();i++) {
             nvinfer1::ILayer* custom_output = mNetwork->getLayer(i);
-            nvinfer1::ITensor* output_tensor = custom_output->getOutput(0);
-            for(size_t j=0; j<customOutput.size();j++) {
-                std::string layer_name(output_tensor->getName());
-                if(layer_name == customOutput[j]) {
-                    mNetwork->markOutput(*output_tensor);
-                    break;
+            for(int j=0;j<custom_output->getNbOutputs();j++) {
+                nvinfer1::ITensor* output_tensor = custom_output->getOutput(j);
+                for(size_t k=0; k<customOutput.size();k++) {
+                    std::string layer_name(output_tensor->getName());
+                    if(layer_name == customOutput[k]) {
+                        mNetwork->markOutput(*output_tensor);
+                        break;
+                    }
                 }
             }
+
         }    
     }
     BuildEngine();
@@ -495,7 +510,9 @@ void Trt::InitEngine() {
         std::cout << "\b\b  "<< std::endl;
         mBinding[i] = safeCudaMalloc(totalSize);
         if(mEngine->bindingIsInput(i)) {
-            mInputSize++;
+            mNbInputBindings++;
+        } else {
+            mNbOutputBindings++;
         }
     }
 }

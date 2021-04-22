@@ -193,7 +193,14 @@ public:
      */
     nvinfer1::DataType GetBindingDataType(int bindIndex) const;
 
-    std::vector<std::string> mBindingName;
+    /**
+     * @description: get binding name
+     */
+    std::string GetBindingName(int bindIndex) const;
+
+    int GetNbInputBindings() const;
+
+    int GetNbOutputBindings() const;
 
 protected:
 
@@ -259,7 +266,11 @@ protected:
 
     std::vector<nvinfer1::DataType> mBindingDataType;
 
-    int mInputSize = 0;
+    std::vector<std::string> mBindingName;
+
+    int mNbInputBindings = 0;
+
+    int mNbOutputBindings = 0;
 };
 
 #endif

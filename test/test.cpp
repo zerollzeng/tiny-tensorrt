@@ -9,71 +9,19 @@
 #include "Trt.h"
 
 #include <string>
+#include <sstream>
 #include <vector>
 #include "time.h"
 
-void test_caffe(
-        const std::string& prototxt, 
-        const std::string& caffeModel,
-        const std::string& engineFile,
-        const std::vector<std::string>& outputBlobName) {
-    int maxBatchSize = 1;
-    int mode = 0;
-    Trt* caffe_net = new Trt();
-    caffe_net->CreateEngine(prototxt, caffeModel, engineFile, outputBlobName, maxBatchSize, mode);
-    while(1) {
-        clock_t start = clock();
-        caffe_net->Forward();
-        clock_t end = clock();
-        std::cout << "inference Time : " <<((double)(end - start) / CLOCKS_PER_SEC)*1000 << " ms" << std::endl;
-    }
-    
-}
-
-void test_onnx(const std::string& onnxModelpath) {
-    std::string engineFile = "";
-    const std::vector<std::string> customOutput;
-    std::vector<std::vector<float>> calibratorData;
-    int maxBatchSize = 4;
-    int mode = 0;
-    Trt* onnx_net = new Trt();
-    std::string inputName = "data_0";
-    std::vector<int> minDimVec{3, 100, 100};
-    std::vector<int> optDimVec{3, 224, 224};
-    std::vector<int> maxDimVec{3, 300, 300};
-    onnx_net->AddDynamicShapeProfile(maxBatchSize,inputName,minDimVec,optDimVec,maxDimVec);
-    onnx_net->CreateEngine(onnxModelpath, engineFile, customOutput, maxBatchSize, mode);
-    std::vector<int> inputDims{3, 150, 200};
-    onnx_net->SetBindingDimensions(inputDims, 0);
-    std::vector<float> input(3*224*224, 0.5);
-    onnx_net->CopyFromHostToDevice(input, 0);
-    onnx_net->Forward();
-    std::vector<float> output;
-    onnx_net->CopyFromDeviceToHost(output, 1);
-}
-
-void test_onnx_forward(const std::string& onnxModelpath) {
-    int maxBatchSize = 4;
-    int mode = 0;
-    std::string engineFile = "";
-    const std::vector<std::string> customOutput;
+void test_onnx_forward(
+    const std::string& onnxModelpath,
+    int maxBatchSize,
+    int mode,
+    std::string engineFile,
+    const std::vector<std::string> customOutput) {
     Trt* onnx_net = new Trt();
     onnx_net->CreateEngine(onnxModelpath, engineFile, customOutput, maxBatchSize, mode);
     onnx_net->Forward();
-}
-
-void test_uff(const std::string& uffModelpath) {
-    std::string engineFile = "";
-    std::vector<std::vector<float>> calibratorData;
-    std::vector<std::string> input{"normalized_input_image_tensor"};
-    std::vector<int> input_dims{1,320,320,3};
-    std::vector<std::vector<int>> inputDims{input_dims};
-    std::vector<std::string> output{"raw_outputs/class_predictions","raw_outputs/box_encodings"};
-    int maxBatchSize = 1;
-    int mode = 0;
-    Trt* uff_net = new Trt();
-    uff_net->CreateEngine(uffModelpath, engineFile, input, inputDims, output, maxBatchSize, mode);
-    uff_net->Forward();
 }
 
 class InputParser{                                                              
@@ -103,19 +51,34 @@ class InputParser{
 
 int main(int argc, char** argv) {
     InputParser cmdparams(argc, argv);
+    const std::string& onnx_path = cmdparams.getCmdOption("--onnx");
+    int batch_size = 1;
+    int run_mode = 0;
+    std::vector<std::string> custom_outputs;
 
-    const std::string& onnx_path = cmdparams.getCmdOption("--onnx_path");
-    test_onnx_forward(onnx_path);
-
-    // const std::string& prototxt = cmdparams.getCmdOption("--prototxt");         
-    // const std::string& caffemodel = cmdparams.getCmdOption("--caffemodel");
-    // const std::string& save_engine = cmdparams.getCmdOption("--save_engine");    
-    // const std::string& output_blob = cmdparams.getCmdOption("--output_blob");  
-    // std::vector<std::string> outputBlobName;
-    // outputBlobName.push_back(output_blob);
-    // test_caffe(prototxt,caffemodel,save_engine,outputBlobName);
-
-    // test_uff("../models/frozen_inference_graph.uff");
+    const std::string& custom_outputs_string = cmdparams.getCmdOption("--custom_outputs");
+    std::istringstream stream(custom_outputs_string);
+    if(custom_outputs_string != "") {
+        std::string s;
+        while (std::getline(stream, s, ',')) {
+            custom_outputs.push_back(s);
+        }
+    }
+    const std::string& run_mode_string = cmdparams.getCmdOption("--mode");
+    if(run_mode_string != "") {
+        run_mode = std::stoi(run_mode_string);
+    }
+    const std::string& engine_file = cmdparams.getCmdOption("--engine_file");
+    const std::string& batch_size_string = cmdparams.getCmdOption("--batch_size");
+    if(batch_size_string != "") {
+        batch_size = std::stoi(batch_size_string);
+    }
+    std::cout << "**********************custom outputs: " << std::endl;
+    for(int i=0;i<custom_outputs.size();i++) {
+        std::cout << custom_outputs[i] << " ";
+    }
+    std::cout << std::endl;
+    test_onnx_forward(onnx_path, batch_size, run_mode, engine_file, custom_outputs);
     
     return 0;
 }
