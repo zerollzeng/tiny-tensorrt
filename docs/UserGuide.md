@@ -35,12 +35,8 @@ import pytrt
 
 trt = pytrt.Trt()
 trt.CreateEngine(prototxt, caffemodel, engineFile, outputBlobName, maxBatchSize, mode)
-# trt.CreateEngine(onnxModel, engineFile,customOutput,maxBatchSize,mode)
-# trt.CreateEngine(uffModel, engineFile, inputTensorName, inputDims, outputTensorName,maxBatchSize,mode)
 trt.CopyFromHostToDevice(input_numpy_array, 0)
 trt.Forward()
 output_numpy_array = trt.CopyFromDeviceToHost(1)
 # post processing
 ```
-
-also see [tensorrt-zoo](https://github.com/zerollzeng/tensorrt-zoo) and, it implement some common computer vision model with tiny-tensorrt, it has serveral good samples

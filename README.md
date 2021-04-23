@@ -23,16 +23,16 @@ trt.CopyFromHostToDevice(output, outputIndex) // you can get outputIndex in Crea
 
 # News
 
-Want to implement your own onnx plugin and don't know where to start?
+Remove caffe and uff support, convert to onnx with tf2onnx or keras.onnx. - 2021-4-23
+
+Want to implement your own onnx plugin and don't know where to start? - 2021-1-29
 
 [onnx plugin template](https://github.com/zerollzeng/tiny-tensorrt/blob/master/plugin/CuteSamplePlugin)
 
 # Features
 - [x] Support TensorRT 7
-- [x] Custom plugin tutorial and well_commented sample!
+- [x] Custom plugin tutorial and well_commented sample
 - [x] Custom onnx model output node
-- [x] Support onnx,caffe and tensorflow model(caffe and uff support will be removed at next major version)
-- [x] PReLU and up-sample plugin
 - [x] Engine serialization and deserialization
 - [x] INT8 support
 - [x] Python api support
@@ -42,7 +42,7 @@ Want to implement your own onnx plugin and don't know where to start?
 # System Requirements
 cuda 10.0+
 
-TensorRT 6 or 7
+TensorRT 7
 
 For python api, python 2.x/3.x and numpy in needed
 
@@ -63,15 +63,6 @@ Then you can intergrate it into your own project with libtinytrt.so and Trt.h, f
 [User Guide](https://github.com/zerollzeng/tiny-tensorrt/blob/master/docs/UserGuide.md)
 
 [Custom Plugin Tutorial](https://github.com/zerollzeng/tiny-tensorrt/blob/master/docs/CustomPlugin.md) (En-Ch)
-
-If you want some examples with tiny-tensorrt, you can refer to [tensorrt-zoo](https://github.com/zerollzeng/tensorrt-zoo)
-
-For the windows port of tiny-tensorrt, you can refer to @Devincool's [repo](https://github.com/Devincool/tiny-tensorrt)
-
-# Extra Support layer
-- upsample with custom scale, under test with yolov3.
-- yolo-det, last layer of yolov3 which sum three scales output and generate final result for nms. under test with yolov3.
-- PRELU, under test with openpose and mtcnn.
 
 # About License
 For the 3rd-party module and TensorRT, maybe you need to follow their license
