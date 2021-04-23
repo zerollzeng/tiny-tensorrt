@@ -26,28 +26,12 @@ class TrtLogger : public nvinfer1::ILogger {
     }
 };
 
-struct TrtPluginParams {
-    // yolo-det layer
-    int yoloClassNum = 1; 
-    int yolo3NetSize = 416; // 416 or 608
-
-    // upsample layer
-    float upsampleScale = 2;
-};
-
-class PluginFactory;
-
 class Trt {
 public:
     /**
      * @description: default constructor, will initialize plugin factory with default parameters.
      */
     Trt();
-
-    /**
-     * @description: if you costomize some parameters, use this.
-     */
-    Trt(TrtPluginParams params);
 
     ~Trt();
     
@@ -203,8 +187,6 @@ protected:
     nvinfer1::ICudaEngine* mEngine = nullptr;
 
     nvinfer1::IExecutionContext* mContext = nullptr;
-
-    PluginFactory* mPluginFactory;
 
     nvinfer1::IRuntime* mRuntime = nullptr;
 

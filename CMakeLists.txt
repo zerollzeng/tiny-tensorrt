@@ -57,9 +57,11 @@ cmake_minimum_required(VERSION 3.0)
 project(tinytrt)
 set(CMAKE_CXX_FLAGS "-std=c++11")
 
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
+
 # set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib CACHE PATH "")
-option(BUILD_PYTHON "compile python api" ON)
-option(BUILD_TEST "compile test" OFF)
+option(BUILD_PYTHON "compile python api" OFF)
+option(BUILD_TEST "compile test" ON)
 
 find_package(CUDA REQUIRED)
 
@@ -87,11 +89,6 @@ endif()
 
 # Add ptx & bin flags for cuda
 set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} ${CUDA_gencode_flags}")
-
-option(ENABLE_PRELU_FP16 "" OFF)
-if(ENABLE_PRELU_FP16)
-  add_definitions(-DFP16_PRELU)
-endif()
 
 include_directories(spdlog)
 include_directories(pybind11/include)
@@ -133,9 +130,9 @@ if(BUILD_PYTHON)
   target_link_libraries(pytrt PRIVATE nvinfer_plugin)
   target_link_libraries(pytrt PRIVATE nvparsers)
   target_link_libraries(pytrt PRIVATE nvonnxparser)
-  target_link_libraries(pytrt PRIVATE nvcaffe_parser)
 endif()
 
+link_directories(lib/)
 ## custom test
 if(BUILD_TEST)
   file(GLOB test_source
@@ -148,6 +145,5 @@ if(BUILD_TEST)
   target_link_libraries(unit_test nvinfer_plugin)
   target_link_libraries(unit_test nvparsers)
   target_link_libraries(unit_test nvonnxparser)
-  target_link_libraries(unit_test nvcaffe_parser)
   target_link_libraries(unit_test ${CUDART})
 endif()

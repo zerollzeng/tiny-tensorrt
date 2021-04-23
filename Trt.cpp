@@ -9,8 +9,6 @@
 #include "utils.h"
 #include "spdlog/spdlog.h"
 #include "Int8Calibrator.h"
-#include "PluginFactory.h"
-// #include "tensorflow/graph.pb.h"
 
 #include <string>
 #include <vector>
@@ -21,28 +19,16 @@
 
 #include "NvInfer.h"
 #include "NvInferRuntime.h"
-#include "NvCaffeParser.h"
 #include "NvOnnxParser.h"
-#include "NvUffParser.h"
+#include "NvInferPlugin.h"
+
 
 Trt::Trt() {
-    TrtPluginParams params;
-    mPluginFactory = new PluginFactory(params);
-    mBuilder = nvinfer1::createInferBuilder(mLogger);
-    mConfig = mBuilder->createBuilderConfig();
-}
-
-Trt::Trt(TrtPluginParams params) {
-    mPluginFactory = new PluginFactory(params);
     mBuilder = nvinfer1::createInferBuilder(mLogger);
     mConfig = mBuilder->createBuilderConfig();
 }
 
 Trt::~Trt() {
-    if(mPluginFactory != nullptr) {
-        delete mPluginFactory;
-        mPluginFactory = nullptr;
-    }
     if(mContext != nullptr) {
         mContext->destroy();
         mContext = nullptr;
@@ -79,7 +65,7 @@ void Trt::CreateEngine(
 }
 
 void Trt::Forward() {
-    if(mFlags == 1U << static_cast<uint32_t>(NetworkDefinitionCreationFlag::kEXPLICIT_BATCH)) {
+    if(mFlags == 1U << static_cast<uint32_t>(nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH)) {
         mContext->executeV2(&mBinding[0]);
     } else {
         mContext->execute(mBatchSize, &mBinding[0]);
@@ -87,7 +73,7 @@ void Trt::Forward() {
 }
 
 void Trt::ForwardAsync(const cudaStream_t& stream) {
-    if(mFlags == 1U << static_cast<uint32_t>(NetworkDefinitionCreationFlag::kEXPLICIT_BATCH)) {
+    if(mFlags == 1U << static_cast<uint32_t>(nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH)) {
         mContext->enqueueV2(&mBinding[0], stream, nullptr);
     } else {
         mContext->enqueue(mBatchSize, &mBinding[0], stream, nullptr);
@@ -164,7 +150,7 @@ void Trt::AddDynamicShapeProfile(int batchSize,
     const nvinfer1::Dims4& minDim{batchSize, minDimVec[0],minDimVec[1],minDimVec[2]};
     const nvinfer1::Dims4& optDim{batchSize, optDimVec[0],optDimVec[1],optDimVec[2]};
     const nvinfer1::Dims4& maxDim{batchSize, maxDimVec[0],maxDimVec[1],maxDimVec[2]};
-    IOptimizationProfile* profile = mBuilder->createOptimizationProfile();
+    nvinfer1::IOptimizationProfile* profile = mBuilder->createOptimizationProfile();
     profile->setDimensions(inputName.c_str(), nvinfer1::OptProfileSelector::kMIN, minDim);
     profile->setDimensions(inputName.c_str(), nvinfer1::OptProfileSelector::kOPT, optDim);
     profile->setDimensions(inputName.c_str(), nvinfer1::OptProfileSelector::kMAX, maxDim);
@@ -278,11 +264,11 @@ bool Trt::BuildEngineWithOnnx(const std::string& onnxModel,
                       const std::vector<std::string>& customOutput) {
     spdlog::info("build onnx engine from {}...",onnxModel);
     assert(mBuilder != nullptr);
-    mFlags = 1U << static_cast<uint32_t>(NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
+    mFlags = 1U << static_cast<uint32_t>(nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
     mNetwork = mBuilder->createNetworkV2(mFlags);
     assert(mNetwork != nullptr);
     nvonnxparser::IParser* parser = nvonnxparser::createParser(*mNetwork, mLogger);
-    if(!parser->parseFromFile(onnxModel.c_str(), static_cast<int>(ILogger::Severity::kWARNING))) {
+    if(!parser->parseFromFile(onnxModel.c_str(), static_cast<int>(nvinfer1::ILogger::Severity::kWARNING))) {
         spdlog::error("error: could not parse onnx engine");
         return false;
     }
