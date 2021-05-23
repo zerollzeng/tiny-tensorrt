@@ -74,7 +74,7 @@ int main(int argc, char** argv) {
         batch_size = std::stoi(batch_size_string);
     }
     std::cout << "**********************custom outputs: " << std::endl;
-    for(int i=0;i<custom_outputs.size();i++) {
+    for(size_t i=0;i<custom_outputs.size();i++) {
         std::cout << custom_outputs[i] << " ";
     }
     std::cout << std::endl;

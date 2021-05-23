@@ -14,21 +14,18 @@
 #include "NvInfer.h"
 #include "utils.h"
 
-nvinfer1::IInt8Calibrator* GetInt8Calibrator(const std::string& calibratorType, 
-											 int BatchSize,
-											 const std::vector<std::vector<float>>& data,
-											 const std::string& CalibDataName,
-											 bool readCache);
+nvinfer1::IInt8Calibrator* GetInt8Calibrator(const std::string& calibratorType,
+                int batchSize,const std::string& dataPath);
 
 class Int8EntropyCalibrator2 : public nvinfer1::IInt8EntropyCalibrator2 {
 public:
-	Int8EntropyCalibrator2(int BatchSize,const std::vector<std::vector<float>>& data,const std::string& CalibDataName = "",bool readCache = true);
+	Int8EntropyCalibrator2(const int batchSize, const std::string& dataPath);
 
 	virtual ~Int8EntropyCalibrator2();
 
 	int getBatchSize() const override {
 		std::cout << "getbatchSize: " << mBatchSize << std::endl;
-		return mBatchSize; 
+		return mBatchSize;
 	}
 
 	bool getBatch(void* bindings[], const char* names[], int nbBindings) override;
@@ -38,17 +35,11 @@ public:
 	void writeCalibrationCache(const void* cache, size_t length) override;
 
 private:
-	std::string mCalibDataName;
-	std::vector<std::vector<float>> mDatas;
 	int mBatchSize;
-
-	int mCurBatchIdx;
-	float* mCurBatchData{ nullptr };
-	
-	size_t mInputCount;
-	bool mReadCache;
-	void* mDeviceInput{ nullptr };
-
+    std::vector<std::string> mFileList;
+	int mCurBatchIdx=0;
+	int mCount;
+	std::vector<void*> mDeviceBatchData;
 	std::vector<char> mCalibrationCache;
 };
 

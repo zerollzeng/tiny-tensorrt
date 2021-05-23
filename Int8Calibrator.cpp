@@ -6,80 +6,105 @@
  * @LastEditors: Please set LastEditors
  */
 #include "Int8Calibrator.h"
+#include "spdlog/spdlog.h"
+#include "cnpy.h"
+#include "utils.h"
+
 #include <fstream>
 #include <iterator>
 #include <cassert>
 #include <string.h>
 #include <algorithm>
 
-nvinfer1::IInt8Calibrator* GetInt8Calibrator(const std::string& calibratorType, 
-											 int BatchSize,
-											 const std::vector<std::vector<float>>& data,
-											 const std::string& CalibDataName,
-											 bool readCache) {
+#include <sys/types.h>
+#include <dirent.h>
+
+void read_directory(const std::string& name, std::vector<std::string>& v)
+{
+    DIR* dirp = opendir(name.c_str());
+    struct dirent * dp;
+    while ((dp = readdir(dirp)) != NULL) {
+        v.push_back(dp->d_name);
+    }
+    closedir(dirp);
+}
+
+nvinfer1::IInt8Calibrator* GetInt8Calibrator(const std::string& calibratorType,
+                int batchSize,const std::string& dataPath) {
     if(calibratorType == "Int8EntropyCalibrator2") {
-        return new Int8EntropyCalibrator2(BatchSize,data,CalibDataName,readCache);
+        return new Int8EntropyCalibrator2(batchSize,dataPath);
     } else {
-        std::cout << "unsupport calibrator type" << std::endl;
+        spdlog::error("unsupported calibrator type");
         assert(false);
     }
 }
 
-Int8EntropyCalibrator2::Int8EntropyCalibrator2(int BatchSize,const std::vector<std::vector<float>>& data,
-                                        const std::string& CalibDataName /*= ""*/,bool readCache /*= true*/)
-    : mCalibDataName(CalibDataName),mBatchSize(BatchSize),mReadCache(readCache)
-{     
-    mDatas.reserve(data.size());
-    mDatas = data;
 
-    mInputCount =  BatchSize * data[0].size();
-    mCurBatchData = new float[mInputCount];
-    mCurBatchIdx = 0;
-    CUDA_CHECK(cudaMalloc(&mDeviceInput, mInputCount * sizeof(float)));
+Int8EntropyCalibrator2::Int8EntropyCalibrator2(const int batchSize, const std::string& dataPath)
+{
+    mBatchSize = batchSize;
+    read_directory(dataPath, mFileList);
+    mCount = mFileList.size();
+
+    assert(mCount != 0);
+
+    cnpy::npz_t data = cnpy::npz_load(mFileList[0]);
+    mDeviceBatchData.resize(data.size());
+    int i=0;
+    for(cnpy::npz_t::iterator it = data.begin(); it != data.end(); ++it) {
+        cnpy::NpyArray np_array = it->second;
+        size_t num_bytes = np_array.num_bytes();
+        mDeviceBatchData[i] = safeCudaMalloc(num_bytes * mBatchSize);
+        i++;
+    }
+    
 }
 
 
 Int8EntropyCalibrator2::~Int8EntropyCalibrator2()
 {
-    CUDA_CHECK(cudaFree(mDeviceInput));
-    if(mCurBatchData)
-        delete[] mCurBatchData;
+    for(size_t i=0;i<mDeviceBatchData.size();i++) {
+        safeCudaFree(mDeviceBatchData[i]);
+    }
 }
 
 
 bool Int8EntropyCalibrator2::getBatch(void* bindings[], const char* names[], int nbBindings)
 {
-    std::cout << "name: " << names[0] << "nbBindings: " << nbBindings << std::endl;
-    if (mCurBatchIdx + mBatchSize > int(mDatas.size())) 
-            return false;
+    if (mCurBatchIdx + mBatchSize > mCount) {
+        return false;
+    }
 
-    float* ptr = mCurBatchData;
-    size_t imgSize = mInputCount / mBatchSize;
-    auto iter = mDatas.begin() + mCurBatchIdx;
+    for(int i=0;i<mBatchSize; i++) {
+        cnpy::npz_t data = cnpy::npz_load(mFileList[mCurBatchIdx]);
+        for(int j=0;j<nbBindings;j++) {
+            const char* name = names[j];
+            cnpy::NpyArray np_array = data[name];
+            size_t num_bytes = np_array.num_bytes();
+            float* arr = np_array.data<float>();
+            void* p = static_cast<char*>(mDeviceBatchData[j]) + i*num_bytes;
+            CUDA_CHECK(cudaMemcpy(p, arr, num_bytes, cudaMemcpyHostToDevice));
+        }
+        mCurBatchIdx++;
+    }
 
-    std::for_each(iter, iter + mBatchSize, [=,&ptr](std::vector<float>& val){
-        assert(imgSize == val.size());
-        memcpy(ptr,val.data(),imgSize*sizeof(float));
-        
-        ptr += imgSize;
-    });
-
-    CUDA_CHECK(cudaMemcpy(mDeviceInput, mCurBatchData, mInputCount * sizeof(float), cudaMemcpyHostToDevice));
-    //std::cout << "input name " << names[0] << std::endl;
-    bindings[0] = mDeviceInput;
-
-    std::cout << "load batch " << mCurBatchIdx << " to " << mCurBatchIdx + mBatchSize - 1 << std::endl;        
-    mCurBatchIdx += mBatchSize;
+    for(int j=0;j<nbBindings;j++) {
+        bindings[j] = mDeviceBatchData[j];
+    }
+    spdlog::info("load catlibrate data {}/{} done", mCurBatchIdx+1, mCount);
     return true;
 }
 
 const void* Int8EntropyCalibrator2::readCalibrationCache(size_t& length)
 {
     mCalibrationCache.clear();
-    std::ifstream input(mCalibDataName+".calib", std::ios::binary);
+    std::ifstream input("data.calib", std::ios::binary);
     input >> std::noskipws;
-    if (mReadCache && input.good())
-        std::copy(std::istream_iterator<char>(input), std::istream_iterator<char>(), std::back_inserter(mCalibrationCache));
+    if (input.good()) {
+        std::copy(std::istream_iterator<char>(input),
+                  std::istream_iterator<char>(), 
+                  std::back_inserter(mCalibrationCache));
+    }
 
     length = mCalibrationCache.size();
     return length ? &mCalibrationCache[0] : nullptr;
@@ -87,7 +112,7 @@ const void* Int8EntropyCalibrator2::readCalibrationCache(size_t& length)
 
 void Int8EntropyCalibrator2::writeCalibrationCache(const void* cache, size_t length)
 {
-    std::ofstream output(mCalibDataName+".calib", std::ios::binary);
+    std::ofstream output("data.calib", std::ios::binary);
     output.write(reinterpret_cast<const char*>(cache), length);
 }
 

@@ -121,10 +121,10 @@ int Trt::GetDevice() const {
     }
 }
 
-void Trt::SetInt8Calibrator(const std::string& calibratorType, const std::vector<std::vector<float>>& calibratorData) {
+void Trt::SetInt8Calibrator(const std::string& calibratorType, const std::string& dataPath) {
     mRunMode = 2;
     spdlog::warn("INT8 inference is available only on GPUs with compute capability equal or greater than 6.1");
-    nvinfer1::IInt8Calibrator* calibrator = GetInt8Calibrator(calibratorType, mBatchSize, calibratorData, "calibrator", false);
+    nvinfer1::IInt8Calibrator* calibrator = GetInt8Calibrator(calibratorType, mBatchSize, dataPath);
     spdlog::info("set int8 inference mode");
     if (!mBuilder->platformHasFastInt8()) {
         spdlog::warn("Warning: current platform doesn't support int8 inference");

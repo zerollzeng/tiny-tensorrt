@@ -92,7 +92,7 @@ public:
      *                  EntropyCalibrator:This is the legacy entropy calibrator.This is less complicated than a legacy calibrator and produces better results. Calibration happens after Layer fusion by default. See kCALIBRATION_BEFORE_FUSION for enabling calibration before fusion.
      *                  LegacyCalibrator:This calibrator is for compatibility with TensorRT 2.0 EA. This calibrator requires user parameterization, and is provided as a fallback option if the other calibrators yield poor results. Calibration happens after Layer fusion by default. See kCALIBRATION_BEFORE_FUSION for enabling calibration before fusion. Users can customize this calibrator to implement percentile max, like 99.99% percentile max is proved to have best accuracy for BERT. For more information, refer to the Integer Quantization for Deep Learning Inference: Principles and Empirical Evaluation paper.
      */
-    void SetInt8Calibrator(const std::string& calibratorType, const std::vector<std::vector<float>>& calibratorData);
+    void SetInt8Calibrator(const std::string& calibratorType, const std::string& dataPath);
 
     /**
      * @description: async data tranfer between host and device, see above.

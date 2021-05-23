@@ -95,6 +95,9 @@ include_directories(pybind11/include)
 include_directories(./)
 include_directories(./plugin)
 
+find_package(ZLIB REQUIRED)
+include_directories(${ZLIB_INCLUDE_DIRS})
+
 # TensorRT
 find_path(TENSORRT_INCLUDE_DIR NvInfer.h
   HINTS ${TENSORRT_ROOT} ${CUDA_TOOLKIT_ROOT_DIR}
@@ -111,6 +114,7 @@ ENABLE_PRELU_FP16 : ${ENABLE_PRELU_FP16}
 
 file(GLOB_RECURSE trt_source
      Trt.cpp
+     cnpy.cpp
      Int8Calibrator.cpp
      plugin/*.cu
      plugin/*.cpp
@@ -145,5 +149,6 @@ if(BUILD_TEST)
   target_link_libraries(unit_test nvinfer_plugin)
   target_link_libraries(unit_test nvparsers)
   target_link_libraries(unit_test nvonnxparser)
+  target_link_libraries(unit_test ${ZLIB_LIBRARIES})
   target_link_libraries(unit_test ${CUDART})
 endif()
