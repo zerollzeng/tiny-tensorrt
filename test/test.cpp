@@ -11,18 +11,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
-#include "time.h"
-
-void test_onnx_forward(
-    const std::string& onnxModelpath,
-    int maxBatchSize,
-    int mode,
-    std::string engineFile,
-    const std::vector<std::string> customOutput) {
-    Trt* onnx_net = new Trt();
-    onnx_net->CreateEngine(onnxModelpath, engineFile, customOutput, maxBatchSize, mode);
-    onnx_net->Forward();
-}
+#include <chrono>
 
 class InputParser{                                                              
     public:                                                                     
@@ -30,7 +19,6 @@ class InputParser{
             for (int i=1; i < argc; ++i)                                        
                 this->tokens.push_back(std::string(argv[i]));                   
         }                                                                       
-        /// @author iain                                                                                                                                                                     
         const std::string& getCmdOption(const std::string &option) const{       
             std::vector<std::string>::const_iterator itr;                       
             itr =  std::find(this->tokens.begin(), this->tokens.end(), option); 
@@ -40,7 +28,6 @@ class InputParser{
             static const std::string empty_string("");                          
             return empty_string;                                                
         }                                                                       
-        /// @author iain                                                        
         bool cmdOptionExists(const std::string &option) const{                  
             return std::find(this->tokens.begin(), this->tokens.end(), option)  
                    != this->tokens.end();                                       
@@ -49,13 +36,31 @@ class InputParser{
         std::vector <std::string> tokens;                                       
 };  
 
+static void show_usage(std::string name)
+{
+    std::cerr << "Usage: " << name << " <option(s)> SOURCES"
+              << "Options:\n"
+              << "\t--onnx\t\tinput onnx model, must specify\n"
+              << "\t--batch_size\t\tdefault is 1\n"
+              << "\t--mode\t\t0 for fp32 1 for fp16 2 for int8, default is 0\n"
+              << "\t--engine\t\tsaved path for engine file, if path exists,"
+              << "will load the engine file, otherwise will create the engine file"
+              <<  "after build engine. dafault is empty\n"
+              << "\t--calibrate_data\t\tdata path for calibrate data which contain npz files"
+              << "default is empty\n"
+              << std::endl;
+}
+
 int main(int argc, char** argv) {
+    if (argc < 2) {
+        show_usage(argv[0]);
+        return 1;
+    }
     InputParser cmdparams(argc, argv);
     const std::string& onnx_path = cmdparams.getCmdOption("--onnx");
     int batch_size = 1;
     int run_mode = 0;
     std::vector<std::string> custom_outputs;
-
     const std::string& custom_outputs_string = cmdparams.getCmdOption("--custom_outputs");
     std::istringstream stream(custom_outputs_string);
     if(custom_outputs_string != "") {
@@ -68,17 +73,24 @@ int main(int argc, char** argv) {
     if(run_mode_string != "") {
         run_mode = std::stoi(run_mode_string);
     }
-    const std::string& engine_file = cmdparams.getCmdOption("--engine_file");
+    const std::string& engine_file = cmdparams.getCmdOption("--engine");
     const std::string& batch_size_string = cmdparams.getCmdOption("--batch_size");
     if(batch_size_string != "") {
         batch_size = std::stoi(batch_size_string);
     }
-    std::cout << "**********************custom outputs: " << std::endl;
-    for(size_t i=0;i<custom_outputs.size();i++) {
-        std::cout << custom_outputs[i] << " ";
+    const std::string& calibrateDataDir = cmdparams.getCmdOption("--calibrate_data");
+
+
+    Trt* onnx_net = new Trt();
+    if(calibrateDataDir != "") {
+        onnx_net->SetInt8Calibrator("Int8EntropyCalibrator2", batch_size, calibrateDataDir);
     }
-    std::cout << std::endl;
-    test_onnx_forward(onnx_path, batch_size, run_mode, engine_file, custom_outputs);
+    onnx_net->CreateEngine(onnx_path, engine_file, custom_outputs, batch_size, run_mode);
+    auto time1 = std::chrono::steady_clock::now();
+    onnx_net->Forward();
+    auto time2 = std::chrono::steady_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(time2-time1).count();
+    std::cout << "TRT enqueue done, time: " << duration << " ms." << std::endl;
     
     return 0;
 }

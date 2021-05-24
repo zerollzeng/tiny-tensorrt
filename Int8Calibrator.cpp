@@ -24,7 +24,10 @@ void read_directory(const std::string& name, std::vector<std::string>& v)
     DIR* dirp = opendir(name.c_str());
     struct dirent * dp;
     while ((dp = readdir(dirp)) != NULL) {
-        v.push_back(dp->d_name);
+        if(strcmp(dp->d_name, ".") == 0 || strcmp(dp->d_name, "..") == 0 ) {
+            continue;
+        }
+        v.push_back(name+dp->d_name);
     }
     closedir(dirp);
 }
@@ -39,11 +42,22 @@ nvinfer1::IInt8Calibrator* GetInt8Calibrator(const std::string& calibratorType,
     }
 }
 
+inline bool ends_with(std::string const & value, std::string const & ending)
+{
+    if (ending.size() > value.size()) return false;
+    return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
+}
+
 
 Int8EntropyCalibrator2::Int8EntropyCalibrator2(const int batchSize, const std::string& dataPath)
 {
+    spdlog::info("init calibrator...");
+    std::string path = dataPath;
+    if(!ends_with(path, "/")) {
+        path = path + "/";
+    }
     mBatchSize = batchSize;
-    read_directory(dataPath, mFileList);
+    read_directory(path, mFileList);
     mCount = mFileList.size();
 
     assert(mCount != 0);
