@@ -95,9 +95,13 @@ public:
     void SetInt8Calibrator(const std::string& calibratorType, const std::string& dataPath);
 
     /**
-     * @description: async data tranfer between host and device, see above.
-     * @stream cuda stream for async interface and data transfer.
-     * @return: 
+     * @description: set dla core
+     * @dlaCore dla core index, eg 0,1...
+     */
+    void SetDLACore(int dlaCore);
+
+    /**
+     * @description: add dynamic shape profile
      */
     void AddDynamicShapeProfile(int batchSize,
                                 const std::string& inputName,

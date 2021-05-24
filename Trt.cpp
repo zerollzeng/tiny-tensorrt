@@ -22,7 +22,7 @@
 #include "NvOnnxParser.h"
 #include "NvInferPlugin.h"
 
-using Expplicit_Flag = nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH
+using NDCFLAG = nvinfer1::NetworkDefinitionCreationFlag;
 
 
 Trt::Trt() {
@@ -67,7 +67,7 @@ void Trt::CreateEngine(
 }
 
 void Trt::Forward() {
-    if(mFlags == 1U << static_cast<uint32_t>(Expplicit_Flag)) {
+    if(mFlags == 1U << static_cast<uint32_t>(NDCFLAG::kEXPLICIT_BATCH)) {
         mContext->executeV2(&mBinding[0]);
     } else {
         mContext->execute(mBatchSize, &mBinding[0]);
@@ -75,7 +75,7 @@ void Trt::Forward() {
 }
 
 void Trt::ForwardAsync(const cudaStream_t& stream) {
-    if(mFlags == 1U << static_cast<uint32_t>(Expplicit_Flag)) {
+    if(mFlags == 1U << static_cast<uint32_t>(NDCFLAG::kEXPLICIT_BATCH)) {
         mContext->enqueueV2(&mBinding[0], stream, nullptr);
     } else {
         mContext->enqueue(mBatchSize, &mBinding[0], stream, nullptr);
@@ -114,7 +114,7 @@ void Trt::CopyFromDeviceToHost(std::vector<float>& output, int bindIndex,
 }
 
 void Trt::SetDevice(int device) {
-    spdlog::warn("warning: make sure save engine file match choosed device");
+    spdlog::info("please make sure save engine file match choosed device");
     CUDA_CHECK(cudaSetDevice(device));
 }
 
@@ -131,7 +131,7 @@ int Trt::GetDevice() const {
 
 void Trt::SetInt8Calibrator(const std::string& calibratorType, const std::string& dataPath) {
     mRunMode = 2;
-    spdlog::warn("INT8 inference is available only on GPUs with compute capability equal or greater than 6.1");
+    spdlog::info("INT8 inference is available only on GPUs with compute capability equal or greater than 6.1");
     nvinfer1::IInt8Calibrator* calibrator = GetInt8Calibrator(calibratorType, mBatchSize, dataPath);
     spdlog::info("set int8 inference mode");
     if (!mBuilder->platformHasFastInt8()) {
@@ -148,6 +148,15 @@ void Trt::SetInt8Calibrator(const std::string& calibratorType, const std::string
     // };
     mConfig->setFlag(nvinfer1::BuilderFlag::kINT8);
     mConfig->setInt8Calibrator(calibrator);
+}
+
+void Trt::SetDLACore(int dlaCore) {
+    if(dlaCore+1 > mBuilder->getNbDLACores()) {
+        spdlog::error("your device does not support DLA or dlaCore index invalid");
+    } else {
+        mConfig->setDLACore(dlaCore);
+        spdlog::info("set dla core {}", dlaCore);
+    }
 }
 
 void Trt::AddDynamicShapeProfile(int batchSize,
@@ -259,7 +268,6 @@ void Trt::BuildEngine() {
     spdlog::info("int8 support: {}",mBuilder->platformHasFastInt8 ());
     spdlog::info("Max batchsize: {}",mBuilder->getMaxBatchSize());
     spdlog::info("Max workspace size: {}",mConfig->getMaxWorkspaceSize());
-    spdlog::info("Number of DLA core: {}",mBuilder->getNbDLACores());
     spdlog::info("Max DLA batchsize: {}",mBuilder->getMaxDLABatchSize());
     spdlog::info("Current use DLA core: {}",mConfig->getDLACore());
     spdlog::info("build engine...");
@@ -272,7 +280,7 @@ bool Trt::BuildEngineWithOnnx(const std::string& onnxModel,
                       const std::vector<std::string>& customOutput) {
     spdlog::info("build onnx engine from {}...",onnxModel);
     assert(mBuilder != nullptr);
-    mFlags = 1U << static_cast<uint32_t>(Expplicit_Flag);
+    mFlags = 1U << static_cast<uint32_t>(NDCFLAG::kEXPLICIT_BATCH);
     mNetwork = mBuilder->createNetworkV2(mFlags);
     assert(mNetwork != nullptr);
     nvonnxparser::IParser* parser = nvonnxparser::createParser(*mNetwork, mLogger);
