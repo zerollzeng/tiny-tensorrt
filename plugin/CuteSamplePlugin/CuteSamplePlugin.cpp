@@ -9,7 +9,7 @@
 #include <iostream>
 
 #ifndef CUTEDEBUG 
-#define CUTEDEBUG 1 // set debug mode
+#define CUTEDEBUG 0 // set debug mode, if you want to see the api call, set it to 1
 #endif
 
 #if CUTEDEBUG
@@ -217,6 +217,4 @@ IPluginV2Ext* CuteSamplePluginCreator::deserializePlugin(const char* name, const
     return new CuteSamplePlugin(name, serialData, serialLength);
 }
 
-// if you want to enable the plugin, please uncomment this line
-// I comment it for suppress cutelogs
-// REGISTER_TENSORRT_PLUGIN(CuteSamplePluginCreator);
+REGISTER_TENSORRT_PLUGIN(CuteSamplePluginCreator);
