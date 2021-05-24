@@ -43,23 +43,26 @@ static void show_usage(std::string name)
               << "\t--onnx\t\tinput onnx model, must specify\n"
               << "\t--batch_size\t\tdefault is 1\n"
               << "\t--mode\t\t0 for fp32 1 for fp16 2 for int8, default is 0\n"
-              << "\t--engine\t\tsaved path for engine file, if path exists,"
-              << "will load the engine file, otherwise will create the engine file"
-              <<  "after build engine. dafault is empty\n"
-              << "\t--calibrate_data\t\tdata path for calibrate data which contain npz files"
-              << "default is empty\n"
+              << "\t--engine\t\tsaved path for engine file, if path exists, "
+                  "will load the engine file, otherwise will create the engine file "
+                  "after build engine. dafault is empty\n"
+              << "\t--calibrate_data\t\tdata path for calibrate data which contain "
+                 "npz files, default is empty\n"
+              << "\t--gpu\t\tchoose your device, default is 0\n"
+              << "\t--dla\t\tset dla core if you want with 0,1..., default is -1(not enable)\n"
               << std::endl;
 }
 
 int main(int argc, char** argv) {
+    // parse args
     if (argc < 2) {
         show_usage(argv[0]);
         return 1;
     }
     InputParser cmdparams(argc, argv);
+
     const std::string& onnx_path = cmdparams.getCmdOption("--onnx");
-    int batch_size = 1;
-    int run_mode = 0;
+    
     std::vector<std::string> custom_outputs;
     const std::string& custom_outputs_string = cmdparams.getCmdOption("--custom_outputs");
     std::istringstream stream(custom_outputs_string);
@@ -69,23 +72,45 @@ int main(int argc, char** argv) {
             custom_outputs.push_back(s);
         }
     }
+
+    int run_mode = 0;
     const std::string& run_mode_string = cmdparams.getCmdOption("--mode");
     if(run_mode_string != "") {
         run_mode = std::stoi(run_mode_string);
     }
+
     const std::string& engine_file = cmdparams.getCmdOption("--engine");
+
+    int batch_size = 1;
     const std::string& batch_size_string = cmdparams.getCmdOption("--batch_size");
     if(batch_size_string != "") {
         batch_size = std::stoi(batch_size_string);
     }
+
     const std::string& calibrateDataDir = cmdparams.getCmdOption("--calibrate_data");
 
+    int device = 0;
+    const std::string& device_string = cmdparams.getCmdOption("--gpu");
+    if(device_string != "") {
+        device = std::stoi(device_string);
+    }
 
+    int dla_core = -1;
+    const std::string& dla_core_string = cmdparams.getCmdOption("--dla");
+    if(dla_core_string != "") {
+        dla_core = std::stoi(dla_core_string);
+    }
+
+    // build engine
     Trt* onnx_net = new Trt();
+    onnx_net->SetDevice(device);
+    onnx_net->SetDLACore(dla_core);
     if(calibrateDataDir != "") {
         onnx_net->SetInt8Calibrator("Int8EntropyCalibrator2", batch_size, calibrateDataDir);
     }
     onnx_net->CreateEngine(onnx_path, engine_file, custom_outputs, batch_size, run_mode);
+
+    // do inference
     auto time1 = std::chrono::steady_clock::now();
     onnx_net->Forward();
     auto time2 = std::chrono::steady_clock::now();

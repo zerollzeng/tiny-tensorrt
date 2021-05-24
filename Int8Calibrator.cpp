@@ -105,7 +105,7 @@ bool Int8EntropyCalibrator2::getBatch(void* bindings[], const char* names[], int
     for(int j=0;j<nbBindings;j++) {
         bindings[j] = mDeviceBatchData[j];
     }
-    spdlog::info("load catlibrate data {}/{} done", mCurBatchIdx+1, mCount);
+    spdlog::info("load catlibrate data {}/{} done", mCurBatchIdx, mCount);
     return true;
 }
 
