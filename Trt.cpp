@@ -22,6 +22,8 @@
 #include "NvOnnxParser.h"
 #include "NvInferPlugin.h"
 
+using Expplicit_Flag = nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH
+
 
 Trt::Trt() {
     mBuilder = nvinfer1::createInferBuilder(mLogger);
@@ -65,7 +67,7 @@ void Trt::CreateEngine(
 }
 
 void Trt::Forward() {
-    if(mFlags == 1U << static_cast<uint32_t>(nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH)) {
+    if(mFlags == 1U << static_cast<uint32_t>(Expplicit_Flag)) {
         mContext->executeV2(&mBinding[0]);
     } else {
         mContext->execute(mBatchSize, &mBinding[0]);
@@ -73,7 +75,7 @@ void Trt::Forward() {
 }
 
 void Trt::ForwardAsync(const cudaStream_t& stream) {
-    if(mFlags == 1U << static_cast<uint32_t>(nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH)) {
+    if(mFlags == 1U << static_cast<uint32_t>(Expplicit_Flag)) {
         mContext->enqueueV2(&mBinding[0], stream, nullptr);
     } else {
         mContext->enqueue(mBatchSize, &mBinding[0], stream, nullptr);
@@ -87,22 +89,28 @@ void Trt::SetBindingDimensions(std::vector<int>& inputDims, int bindIndex) {
 
 void Trt::CopyFromHostToDevice(const std::vector<float>& input, int bindIndex) {
     assert(input.size()*sizeof(float) <= mBindingSize[bindIndex]);
-    CUDA_CHECK(cudaMemcpy(mBinding[bindIndex], input.data(), mBindingSize[bindIndex], cudaMemcpyHostToDevice));
+    CUDA_CHECK(cudaMemcpy(mBinding[bindIndex], input.data(), 
+        mBindingSize[bindIndex], cudaMemcpyHostToDevice));
 }
 
-void Trt::CopyFromHostToDevice(const std::vector<float>& input, int bindIndex, const cudaStream_t& stream) {
+void Trt::CopyFromHostToDevice(const std::vector<float>& input, 
+                               int bindIndex, const cudaStream_t& stream) {
     assert(input.size()*sizeof(float) <= mBindingSize[bindIndex]);
-    CUDA_CHECK(cudaMemcpyAsync(mBinding[bindIndex], input.data(), mBindingSize[bindIndex], cudaMemcpyHostToDevice, stream));
+    CUDA_CHECK(cudaMemcpyAsync(mBinding[bindIndex], input.data(), 
+        mBindingSize[bindIndex], cudaMemcpyHostToDevice, stream));
 }
 
 void Trt::CopyFromDeviceToHost(std::vector<float>& output, int bindIndex) {
     output.resize(mBindingSize[bindIndex]/sizeof(float));
-    CUDA_CHECK(cudaMemcpy(output.data(), mBinding[bindIndex], mBindingSize[bindIndex], cudaMemcpyDeviceToHost));
+    CUDA_CHECK(cudaMemcpy(output.data(), mBinding[bindIndex], 
+        mBindingSize[bindIndex], cudaMemcpyDeviceToHost));
 }
 
-void Trt::CopyFromDeviceToHost(std::vector<float>& output, int bindIndex, const cudaStream_t& stream) {
+void Trt::CopyFromDeviceToHost(std::vector<float>& output, int bindIndex,
+                               const cudaStream_t& stream) {
     output.resize(mBindingSize[bindIndex]/sizeof(float));
-    CUDA_CHECK(cudaMemcpyAsync(output.data(), mBinding[bindIndex], mBindingSize[bindIndex], cudaMemcpyDeviceToHost, stream));
+    CUDA_CHECK(cudaMemcpyAsync(output.data(), mBinding[bindIndex],
+        mBindingSize[bindIndex], cudaMemcpyDeviceToHost, stream));
 }
 
 void Trt::SetDevice(int device) {
@@ -253,7 +261,7 @@ void Trt::BuildEngine() {
     spdlog::info("Max workspace size: {}",mConfig->getMaxWorkspaceSize());
     spdlog::info("Number of DLA core: {}",mBuilder->getNbDLACores());
     spdlog::info("Max DLA batchsize: {}",mBuilder->getMaxDLABatchSize());
-    spdlog::info("Current use DLA core: {}",mConfig->getDLACore()); // TODO: set DLA core
+    spdlog::info("Current use DLA core: {}",mConfig->getDLACore());
     spdlog::info("build engine...");
     mEngine = mBuilder -> buildEngineWithConfig(*mNetwork, *mConfig);
     assert(mEngine != nullptr);
@@ -264,11 +272,12 @@ bool Trt::BuildEngineWithOnnx(const std::string& onnxModel,
                       const std::vector<std::string>& customOutput) {
     spdlog::info("build onnx engine from {}...",onnxModel);
     assert(mBuilder != nullptr);
-    mFlags = 1U << static_cast<uint32_t>(nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
+    mFlags = 1U << static_cast<uint32_t>(Expplicit_Flag);
     mNetwork = mBuilder->createNetworkV2(mFlags);
     assert(mNetwork != nullptr);
     nvonnxparser::IParser* parser = nvonnxparser::createParser(*mNetwork, mLogger);
-    if(!parser->parseFromFile(onnxModel.c_str(), static_cast<int>(nvinfer1::ILogger::Severity::kWARNING))) {
+    if(!parser->parseFromFile(onnxModel.c_str(), 
+            static_cast<int>(nvinfer1::ILogger::Severity::kWARNING))) {
         spdlog::error("error: could not parse onnx engine");
         return false;
     }
