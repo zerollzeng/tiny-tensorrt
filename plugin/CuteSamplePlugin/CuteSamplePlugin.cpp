@@ -218,5 +218,5 @@ IPluginV2Ext* CuteSamplePluginCreator::deserializePlugin(const char* name, const
 }
 
 // if you want to enable the plugin, please uncomment this line
-// I comment it for surpress cutelogs
+// I comment it for suppress cutelogs
 // REGISTER_TENSORRT_PLUGIN(CuteSamplePluginCreator);
