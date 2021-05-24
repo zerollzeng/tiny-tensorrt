@@ -196,7 +196,6 @@ cnpy::NpyArray load_the_npz_array(FILE* fp, uint32_t compr_bytes, uint32_t uncom
     if(nread != compr_bytes)
         throw std::runtime_error("load_the_npy_file: failed fread");
 
-    int err;
     z_stream d_stream;
 
     d_stream.zalloc = Z_NULL;
@@ -204,15 +203,15 @@ cnpy::NpyArray load_the_npz_array(FILE* fp, uint32_t compr_bytes, uint32_t uncom
     d_stream.opaque = Z_NULL;
     d_stream.avail_in = 0;
     d_stream.next_in = Z_NULL;
-    err = inflateInit2(&d_stream, -MAX_WBITS);
+    inflateInit2(&d_stream, -MAX_WBITS);
 
     d_stream.avail_in = compr_bytes;
     d_stream.next_in = &buffer_compr[0];
     d_stream.avail_out = uncompr_bytes;
     d_stream.next_out = &buffer_uncompr[0];
 
-    err = inflate(&d_stream, Z_FINISH);
-    err = inflateEnd(&d_stream);
+    inflate(&d_stream, Z_FINISH);
+    inflateEnd(&d_stream);
 
     std::vector<size_t> shape;
     size_t word_size;
