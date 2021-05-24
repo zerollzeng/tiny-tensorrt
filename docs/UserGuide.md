@@ -10,9 +10,7 @@ Take a look at test/test.cpp or test/test.py
 
 Trt trt;
 // create engine and running context, note that engine file is device specific, so don't copy engine file to new device, it may cause crash
-// trt.CreateEngine(prototxt, caffeModel, engineFile, outputBlobName, maxBatchSize, mode); // for caffe model
 trt.CreateEngine(onnxModelpath, engineFile, customOutput, maxBatchSize, mode); // for onnx model
-// trt.CreateEngine(uffModelpath, engineFile, input, inputDims, output, maxBatchSize, mode); // for tensorflow model
 
 // you might need to do some pre-processing in input such as normalization, it depends on your model.
 trt.CopyFromHostToDevice(input,0); // 0 for input index, you can get it from CreateEngine phase log output.
@@ -39,4 +37,17 @@ trt.CopyFromHostToDevice(input_numpy_array, 0)
 trt.Forward()
 output_numpy_array = trt.CopyFromDeviceToHost(1)
 # post processing
+```
+
+# How to do int8 calibration with tiny-tensorrt
+
+tiny-tensorrt provide a easy-to-use calibration solution now. you can use python to generate the calibration data and load it with c++.
+
+following steps below:
+
+1. modify and run generate_calibration_data.py to generate the calibration data, you can do pre-processing with python, it's pretty easy.
+
+2. use the SetInt8Calibrator(), or use the tinyexec for test purpose.
+```
+./tinyexec --onnx /usr/src/tensorrt/data/resnet50/ResNet50.onnx --mode 2 --batch_size 1 --calibrate_data calibrate_data/
 ```

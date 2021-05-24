@@ -23,6 +23,8 @@ trt.CopyFromHostToDevice(output, outputIndex) // you can get outputIndex in Crea
 
 # News
 
+Better int8 calibrator api, refer to [User Guide](https://github.com/zerollzeng/tiny-tensorrt/blob/master/docs/UserGuide.md) - 2021-5-24
+
 Remove caffe and uff support, convert to onnx with tf2onnx or keras.onnx. - 2021-4-23
 
 Want to implement your own onnx plugin and don't know where to start? - 2021-1-29
@@ -30,6 +32,7 @@ Want to implement your own onnx plugin and don't know where to start? - 2021-1-2
 [onnx plugin template](https://github.com/zerollzeng/tiny-tensorrt/blob/master/plugin/CuteSamplePlugin)
 
 # Features
+- [x] Add DLA support
 - [x] Support TensorRT 7
 - [x] Custom plugin tutorial and well_commented sample
 - [x] Custom onnx model output node
@@ -65,7 +68,8 @@ Then you can intergrate it into your own project with libtinytrt.so and Trt.h, f
 [Custom Plugin Tutorial](https://github.com/zerollzeng/tiny-tensorrt/blob/master/docs/CustomPlugin.md) (En-Ch)
 
 # About License
-For the 3rd-party module and TensorRT, maybe you need to follow their license
+
+For the 3rd-party module and TensorRT, you need to follow their license
 
 For the part I wrote, you can do anything you want
 
