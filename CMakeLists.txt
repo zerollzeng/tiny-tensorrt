@@ -41,15 +41,8 @@ message(WARNING "
 ")
 
 message(STATUS "
-  =============> PRELU FP16 SETTING <===============
-  By default prelu plugin's fp16 mode is disable since it require device that sm version is equal or greater than SM_60, so you need to enable it manully.
-  usage cmake -DENABLE_PRELU_FP16=ON ..
-  ==================================================
-")
-
-message(STATUS "
   =============> USAGE <===============
-  cmake -DENABLE_PRELU_FP16=ON/OFF -DSM_VERSION=xx -DBUILD_PYTHON=ON/OFF -DBUILD_TEST=ON/OFF ..
+  cmake -DSM_VERSION=xx -DBUILD_PYTHON=ON/OFF -DBUILD_TEST=ON/OFF ..
   =====================================
 ")
 
@@ -58,6 +51,10 @@ project(tinytrt VERSION 7.2.2)
 set(CMAKE_CXX_FLAGS "-std=c++11")
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
+set(CMAKE_INSTALL_LIBDIR /usr/lib CACHE PATH "Install dir for shared libraries")
+set(CMAKE_INSTALL_INCLUDEDIR /usr/include CACHE PATH "Install dir for headers")
+set(CMAKE_INSTALL_LIBDIR /usr/lib CACHE PATH "Install dir for shared libraries")
+set(CMAKE_INSTALL_BINDIR /usr/bin CACHE PATH "Install dir for binary")
 
 # set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib CACHE PATH "")
 option(BUILD_PYTHON "compile python api" OFF)
@@ -108,7 +105,6 @@ message(STATUS "
 Generated gencode flags: ${CUDA_gencode_flags} 
 BUILD_PYTHON : ${BUILD_PYTHON} 
 BUILD_TEST : ${BUILD_TEST} 
-ENABLE_PRELU_FP16 : ${ENABLE_PRELU_FP16} 
 ")
 
 
@@ -124,6 +120,9 @@ target_compile_options(tinytrt PUBLIC -std=c++11 -Wall -Wfloat-conversion)
 set_target_properties(tinytrt PROPERTIES POSITION_INDEPENDENT_CODE ON)
 set_target_properties(tinytrt PROPERTIES VERSION ${PROJECT_VERSION})
 set_target_properties(tinytrt PROPERTIES PUBLIC_HEADER Trt.h)
+install(TARGETS tinytrt
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 if(BUILD_PYTHON)
   # set(Python3_ROOT_DIR /root/miniconda3/bin)
@@ -153,4 +152,7 @@ if(BUILD_TEST)
   target_link_libraries(tinyexec nvparsers)
   target_link_libraries(tinyexec nvonnxparser)
   target_link_libraries(tinyexec ${ZLIB_LIBRARIES})
+  install(TARGETS tinyexec DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
+
+## uninstall with xargs rm < install_manifest.txt
