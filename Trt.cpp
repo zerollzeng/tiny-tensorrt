@@ -160,14 +160,13 @@ void Trt::SetDLACore(int dlaCore) {
     }
 }
 
-void Trt::AddDynamicShapeProfile(int batchSize,
-                                const std::string& inputName,
+void Trt::AddDynamicShapeProfile(const std::string& inputName,
                                 const std::vector<int>& minDimVec,
                                 const std::vector<int>& optDimVec,
                                 const std::vector<int>& maxDimVec) {
-    const nvinfer1::Dims4& minDim{batchSize, minDimVec[0],minDimVec[1],minDimVec[2]};
-    const nvinfer1::Dims4& optDim{batchSize, optDimVec[0],optDimVec[1],optDimVec[2]};
-    const nvinfer1::Dims4& maxDim{batchSize, maxDimVec[0],maxDimVec[1],maxDimVec[2]};
+    const nvinfer1::Dims4& minDim{minDimVec[0],minDimVec[1],minDimVec[2],minDimVec[3]};
+    const nvinfer1::Dims4& optDim{optDimVec[0],optDimVec[1],optDimVec[2],optDimVec[3]};
+    const nvinfer1::Dims4& maxDim{maxDimVec[0],maxDimVec[1],maxDimVec[2],maxDimVec[3]};
     nvinfer1::IOptimizationProfile* profile = mBuilder->createOptimizationProfile();
     profile->setDimensions(inputName.c_str(), nvinfer1::OptProfileSelector::kMIN, minDim);
     profile->setDimensions(inputName.c_str(), nvinfer1::OptProfileSelector::kOPT, optDim);

@@ -103,8 +103,7 @@ public:
     /**
      * @description: add dynamic shape profile
      */
-    void AddDynamicShapeProfile(int batchSize,
-                                const std::string& inputName,
+    void AddDynamicShapeProfile(const std::string& inputName,
                                 const std::vector<int>& minDimVec,
                                 const std::vector<int>& optDimVec,
                                 const std::vector<int>& maxDimVec);

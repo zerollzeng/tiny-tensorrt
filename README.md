@@ -40,7 +40,6 @@ Want to implement your own onnx plugin and don't know where to start? - 2021-1-2
 - [x] INT8 support
 - [x] Python api support
 - [x] Set device
-- [x] Dynamic shape suppport for onnx
 
 # System Requirements
 cuda 10.0+
