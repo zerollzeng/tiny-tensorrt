@@ -88,6 +88,7 @@ int main(int argc, char** argv) {
     }
 
     const std::string& calibrateDataDir = cmdparams.getCmdOption("--calibrate_data");
+    const std::string& calibrateCache = cmdparams.getCmdOption("--calibrate_cache");
 
     int device = 0;
     const std::string& device_string = cmdparams.getCmdOption("--gpu");
@@ -105,8 +106,8 @@ int main(int argc, char** argv) {
     Trt* onnx_net = new Trt();
     onnx_net->SetDevice(device);
     onnx_net->SetDLACore(dla_core);
-    if(calibrateDataDir != "") {
-        onnx_net->SetInt8Calibrator("Int8EntropyCalibrator2", batch_size, calibrateDataDir);
+    if(calibrateDataDir != "" || calibrateCache != "") {
+        onnx_net->SetInt8Calibrator("Int8EntropyCalibrator2", batch_size, calibrateDataDir, calibrateCache);
     }
     onnx_net->CreateEngine(onnx_path, engine_file, custom_outputs, batch_size, run_mode);
 

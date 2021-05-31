@@ -15,18 +15,17 @@
 #include "utils.h"
 
 nvinfer1::IInt8Calibrator* GetInt8Calibrator(const std::string& calibratorType,
-                int batchSize,const std::string& dataPath);
+                int batchSize,const std::string& dataPath,
+				const std::string& calibrateCachePath);
 
 class Int8EntropyCalibrator2 : public nvinfer1::IInt8EntropyCalibrator2 {
 public:
-	Int8EntropyCalibrator2(const int batchSize, const std::string& dataPath);
+	Int8EntropyCalibrator2(const int batchSize, const std::string& dataPath, 
+                           const std::string& calibrateCachePath);
 
 	virtual ~Int8EntropyCalibrator2();
 
-	int getBatchSize() const override {
-		std::cout << "getbatchSize: " << mBatchSize << std::endl;
-		return mBatchSize;
-	}
+	int getBatchSize() const override;
 
 	bool getBatch(void* bindings[], const char* names[], int nbBindings) override;
 
@@ -37,6 +36,7 @@ public:
 private:
 	int mBatchSize;
     std::vector<std::string> mFileList;
+	std::string mCalibrateCachePath;
 	int mCurBatchIdx=0;
 	int mCount;
 	std::vector<void*> mDeviceBatchData;

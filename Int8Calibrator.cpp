@@ -33,9 +33,10 @@ void read_directory(const std::string& name, std::vector<std::string>& v)
 }
 
 nvinfer1::IInt8Calibrator* GetInt8Calibrator(const std::string& calibratorType,
-                int batchSize,const std::string& dataPath) {
+                int batchSize,const std::string& dataPath, 
+                const std::string& calibrateCachePath) {
     if(calibratorType == "Int8EntropyCalibrator2") {
-        return new Int8EntropyCalibrator2(batchSize,dataPath);
+        return new Int8EntropyCalibrator2(batchSize,dataPath,calibrateCachePath);
     } else {
         spdlog::error("unsupported calibrator type");
         assert(false);
@@ -49,29 +50,32 @@ inline bool ends_with(std::string const & value, std::string const & ending)
 }
 
 
-Int8EntropyCalibrator2::Int8EntropyCalibrator2(const int batchSize, const std::string& dataPath)
+Int8EntropyCalibrator2::Int8EntropyCalibrator2(const int batchSize, const std::string& dataPath, 
+                                               const std::string& calibrateCachePath)
 {
     spdlog::info("init calibrator...");
-    std::string path = dataPath;
-    if(!ends_with(path, "/")) {
-        path = path + "/";
-    }
     mBatchSize = batchSize;
-    read_directory(path, mFileList);
-    mCount = mFileList.size();
+    mCalibrateCachePath = calibrateCachePath;
 
-    assert(mCount != 0);
+    if(dataPath != "") {
+        std::string path = dataPath;
+        if(!ends_with(path, "/")) {
+            path = path + "/";
+        }
+        read_directory(path, mFileList);
+        mCount = mFileList.size();
+        assert(mCount != 0);
 
-    cnpy::npz_t data = cnpy::npz_load(mFileList[0]);
-    mDeviceBatchData.resize(data.size());
-    int i=0;
-    for(cnpy::npz_t::iterator it = data.begin(); it != data.end(); ++it) {
-        cnpy::NpyArray np_array = it->second;
-        size_t num_bytes = np_array.num_bytes();
-        mDeviceBatchData[i] = safeCudaMalloc(num_bytes * mBatchSize);
-        i++;
-    }
-    
+        cnpy::npz_t data = cnpy::npz_load(mFileList[0]);
+        mDeviceBatchData.resize(data.size());
+        int i=0;
+        for(cnpy::npz_t::iterator it = data.begin(); it != data.end(); ++it) {
+            cnpy::NpyArray np_array = it->second;
+            size_t num_bytes = np_array.num_bytes();
+            mDeviceBatchData[i] = safeCudaMalloc(num_bytes * mBatchSize);
+            i++;
+        }
+    }    
 }
 
 
@@ -80,6 +84,11 @@ Int8EntropyCalibrator2::~Int8EntropyCalibrator2()
     for(size_t i=0;i<mDeviceBatchData.size();i++) {
         safeCudaFree(mDeviceBatchData[i]);
     }
+}
+
+int Int8EntropyCalibrator2::getBatchSize() const{
+    spdlog::info("get batch size {}", mBatchSize);
+    return mBatchSize;
 }
 
 
@@ -111,8 +120,9 @@ bool Int8EntropyCalibrator2::getBatch(void* bindings[], const char* names[], int
 
 const void* Int8EntropyCalibrator2::readCalibrationCache(size_t& length)
 {
+    spdlog::info("read calibration cache");
     mCalibrationCache.clear();
-    std::ifstream input("data.calib", std::ios::binary);
+    std::ifstream input(mCalibrateCachePath, std::ios::binary);
     input >> std::noskipws;
     if (input.good()) {
         std::copy(std::istream_iterator<char>(input),
@@ -126,7 +136,8 @@ const void* Int8EntropyCalibrator2::readCalibrationCache(size_t& length)
 
 void Int8EntropyCalibrator2::writeCalibrationCache(const void* cache, size_t length)
 {
-    std::ofstream output("data.calib", std::ios::binary);
+    spdlog::info("write calibration cache");
+    std::ofstream output(mCalibrateCachePath, std::ios::binary);
     output.write(reinterpret_cast<const char*>(cache), length);
 }
 
