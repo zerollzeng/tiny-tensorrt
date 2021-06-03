@@ -132,7 +132,6 @@ int Trt::GetDevice() const {
 void Trt::SetInt8Calibrator(const std::string& calibratorType, const int batchSize, 
                             const std::string& dataPath, const std::string& calibrateCachePath) {
     mRunMode = 2;
-    spdlog::info("INT8 inference is available only on GPUs with compute capability equal or greater than 6.1");
     nvinfer1::IInt8Calibrator* calibrator = GetInt8Calibrator(calibratorType, batchSize, dataPath, calibrateCachePath);
     spdlog::info("set int8 inference mode");
     if (!mBuilder->platformHasFastInt8()) {
@@ -153,12 +152,10 @@ void Trt::SetInt8Calibrator(const std::string& calibratorType, const int batchSi
 }
 
 void Trt::SetDLACore(int dlaCore) {
-    if(dlaCore+1 > mBuilder->getNbDLACores()) {
-        spdlog::error("your device does not support DLA or dlaCore index invalid");
-    } else {
-        mConfig->setDLACore(dlaCore);
-        spdlog::info("set dla core {}", dlaCore);
-    }
+    mConfig->setDefaultDeviceType(nvinfer1::DeviceType::kDLA);
+    mConfig->setDLACore(dlaCore);
+    mConfig->setFlag(nvinfer1::BuilderFlag::kGPU_FALLBACK);
+    spdlog::info("set dla core {}", dlaCore);
 }
 
 void Trt::AddDynamicShapeProfile(const std::string& inputName,
@@ -265,8 +262,6 @@ void Trt::BuildEngine() {
     // set the maximum GPU temporary memory which the engine can use at execution time.
     mConfig->setMaxWorkspaceSize(10 << 20);
     
-    spdlog::info("fp16 support: {}",mBuilder->platformHasFastFp16 ());
-    spdlog::info("int8 support: {}",mBuilder->platformHasFastInt8 ());
     spdlog::info("Max batchsize: {}",mBuilder->getMaxBatchSize());
     spdlog::info("Max workspace size: {}",mConfig->getMaxWorkspaceSize());
     spdlog::info("Max DLA batchsize: {}",mBuilder->getMaxDLABatchSize());
