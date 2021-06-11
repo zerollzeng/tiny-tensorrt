@@ -47,7 +47,7 @@ message(STATUS "
 ")
 
 cmake_minimum_required(VERSION 3.0)
-project(tinytrt VERSION 7.2.2)
+project(tinytrt VERSION 8.0.1)
 set(CMAKE_CXX_FLAGS "-std=c++11")
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)

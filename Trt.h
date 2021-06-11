@@ -18,7 +18,7 @@
 
 
 class TrtLogger : public nvinfer1::ILogger {
-    void log(Severity severity, const char* msg) override
+    void log(Severity severity, const char* msg)  noexcept override
     {
         // suppress info-level messages
         if (severity != Severity::kVERBOSE)
@@ -34,14 +34,14 @@ public:
     Trt();
 
     ~Trt();
-    
+
     /**
      * @description: create engine from onnx model
      * @onnxModel: path to onnx model
      * @engineFile: path to saved engien file will be load or save, if it's empty them will not
      *              save engine file
      * @maxBatchSize: max batch size for inference.
-     * @return: 
+     * @return:
      */
     void CreateEngine(
         const std::string& onnxModel,
@@ -76,14 +76,14 @@ public:
     void CopyFromHostToDevice(const std::vector<float>& input, int bindIndex,const cudaStream_t& stream);
 
     void CopyFromDeviceToHost(std::vector<float>& output, int bindIndex,const cudaStream_t& stream);
-    
+
     void SetDevice(int device);
 
     int GetDevice() const;
-     
+
     /**
      * @description: setting a int8 calibrator.To run INT8 calibration for a network with dynamic shapes, calibration optimization profile must be set. Calibration is performed using kOPT values of the profile. Calibration input data size must match this profile.
-     * @calibratorData: use for int8 mode, calabrator data is a batch of sample input, 
+     * @calibratorData: use for int8 mode, calabrator data is a batch of sample input,
      *                  for classification task you need around 500 sample input. and this
      *                  is for int8 mode
      * @calibratorType: there are four calibrator types now.
@@ -92,7 +92,7 @@ public:
      *                  EntropyCalibrator:This is the legacy entropy calibrator.This is less complicated than a legacy calibrator and produces better results. Calibration happens after Layer fusion by default. See kCALIBRATION_BEFORE_FUSION for enabling calibration before fusion.
      *                  LegacyCalibrator:This calibrator is for compatibility with TensorRT 2.0 EA. This calibrator requires user parameterization, and is provided as a fallback option if the other calibrators yield poor results. Calibration happens after Layer fusion by default. See kCALIBRATION_BEFORE_FUSION for enabling calibration before fusion. Users can customize this calibrator to implement percentile max, like 99.99% percentile max is proved to have best accuracy for BERT. For more information, refer to the Integer Quantization for Deep Learning Inference: Principles and Empirical Evaluation paper.
      */
-    void SetInt8Calibrator(const std::string& calibratorType, const int batchSize, 
+    void SetInt8Calibrator(const std::string& calibratorType, const int batchSize,
                            const std::string& dataPath, const std::string& calibrateCachePath);
 
     /**
@@ -160,7 +160,7 @@ protected:
     bool BuildEngineWithOnnx(const std::string& onnxModel,
                      const std::string& engineFile,
                      const std::vector<std::string>& customOutput);
-                     
+
     /**
      * description: Init resource such as device memory
      */
