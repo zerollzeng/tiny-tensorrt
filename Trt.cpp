@@ -89,20 +89,20 @@ void Trt::SetBindingDimensions(std::vector<int>& inputDims, int bindIndex) {
 
 void Trt::CopyFromHostToDevice(const std::vector<float>& input, int bindIndex) {
     assert(input.size()*sizeof(float) <= mBindingSize[bindIndex]);
-    CUDA_CHECK(cudaMemcpy(mBinding[bindIndex], input.data(), 
+    CUDA_CHECK(cudaMemcpy(mBinding[bindIndex], input.data(),
         mBindingSize[bindIndex], cudaMemcpyHostToDevice));
 }
 
-void Trt::CopyFromHostToDevice(const std::vector<float>& input, 
+void Trt::CopyFromHostToDevice(const std::vector<float>& input,
                                int bindIndex, const cudaStream_t& stream) {
     assert(input.size()*sizeof(float) <= mBindingSize[bindIndex]);
-    CUDA_CHECK(cudaMemcpyAsync(mBinding[bindIndex], input.data(), 
+    CUDA_CHECK(cudaMemcpyAsync(mBinding[bindIndex], input.data(),
         mBindingSize[bindIndex], cudaMemcpyHostToDevice, stream));
 }
 
 void Trt::CopyFromDeviceToHost(std::vector<float>& output, int bindIndex) {
     output.resize(mBindingSize[bindIndex]/sizeof(float));
-    CUDA_CHECK(cudaMemcpy(output.data(), mBinding[bindIndex], 
+    CUDA_CHECK(cudaMemcpy(output.data(), mBinding[bindIndex],
         mBindingSize[bindIndex], cudaMemcpyDeviceToHost));
 }
 
@@ -118,7 +118,7 @@ void Trt::SetDevice(int device) {
     CUDA_CHECK(cudaSetDevice(device));
 }
 
-int Trt::GetDevice() const { 
+int Trt::GetDevice() const {
     int device = -1;
     CUDA_CHECK(cudaGetDevice(&device));
     if(device != -1) {
@@ -129,7 +129,7 @@ int Trt::GetDevice() const {
     }
 }
 
-void Trt::SetInt8Calibrator(const std::string& calibratorType, const int batchSize, 
+void Trt::SetInt8Calibrator(const std::string& calibratorType, const int batchSize,
                             const std::string& dataPath, const std::string& calibrateCachePath) {
     mRunMode = 2;
     nvinfer1::IInt8Calibrator* calibrator = GetInt8Calibrator(calibratorType, batchSize, dataPath, calibrateCachePath);
@@ -152,9 +152,11 @@ void Trt::SetInt8Calibrator(const std::string& calibratorType, const int batchSi
 }
 
 void Trt::SetDLACore(int dlaCore) {
-    mConfig->setDefaultDeviceType(nvinfer1::DeviceType::kDLA);
-    mConfig->setDLACore(dlaCore);
-    mConfig->setFlag(nvinfer1::BuilderFlag::kGPU_FALLBACK);
+    if(dlaCore >= 0) {
+        mConfig->setDefaultDeviceType(nvinfer1::DeviceType::kDLA);
+        mConfig->setDLACore(dlaCore);
+        mConfig->setFlag(nvinfer1::BuilderFlag::kGPU_FALLBACK);
+    }
     spdlog::info("set dla core {}", dlaCore);
 }
 
@@ -261,7 +263,7 @@ void Trt::BuildEngine() {
     mBuilder->setMaxBatchSize(mBatchSize);
     // set the maximum GPU temporary memory which the engine can use at execution time.
     mConfig->setMaxWorkspaceSize(10 << 20);
-    
+
     spdlog::info("Max batchsize: {}",mBuilder->getMaxBatchSize());
     spdlog::info("Max workspace size: {}",mConfig->getMaxWorkspaceSize());
     spdlog::info("Max DLA batchsize: {}",mBuilder->getMaxDLABatchSize());
@@ -280,7 +282,7 @@ bool Trt::BuildEngineWithOnnx(const std::string& onnxModel,
     mNetwork = mBuilder->createNetworkV2(mFlags);
     assert(mNetwork != nullptr);
     nvonnxparser::IParser* parser = nvonnxparser::createParser(*mNetwork, mLogger);
-    if(!parser->parseFromFile(onnxModel.c_str(), 
+    if(!parser->parseFromFile(onnxModel.c_str(),
             static_cast<int>(nvinfer1::ILogger::Severity::kWARNING))) {
         spdlog::error("error: could not parse onnx engine");
         return false;
@@ -320,7 +322,7 @@ bool Trt::BuildEngineWithOnnx(const std::string& onnxModel,
                 }
             }
 
-        }    
+        }
     }
     BuildEngine();
 
