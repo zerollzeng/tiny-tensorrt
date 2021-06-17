@@ -104,12 +104,15 @@ int main(int argc, char** argv) {
 
     // build engine
     Trt* onnx_net = new Trt();
+    if(custom_outputs.size() > 0) {
+        onnx_net->SetCustomOutput(custom_outputs);
+    }
     onnx_net->SetDevice(device);
     onnx_net->SetDLACore(dla_core);
     if(calibrateDataDir != "" || calibrateCache != "") {
         onnx_net->SetInt8Calibrator("Int8EntropyCalibrator2", batch_size, calibrateDataDir, calibrateCache);
     }
-    onnx_net->CreateEngine(onnx_path, engine_file, custom_outputs, batch_size, run_mode);
+    onnx_net->CreateEngine(onnx_path, engine_file, batch_size, run_mode);
 
     // do inference
     auto time1 = std::chrono::steady_clock::now();

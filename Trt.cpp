@@ -51,13 +51,12 @@ Trt::~Trt() {
 void Trt::CreateEngine(
         const std::string& onnxModel,
         const std::string& engineFile,
-        const std::vector<std::string>& customOutput,
         int maxBatchSize,
         int mode) {
     mBatchSize = maxBatchSize;
     mRunMode = mode;
     if(!DeserializeEngine(engineFile)) {
-        if(!BuildEngineWithOnnx(onnxModel,engineFile,customOutput)) {
+        if(!BuildEngineWithOnnx(onnxModel,engineFile,mCustomOutputs)) {
             spdlog::error("error: could not deserialize or build engine");
             return;
         }
@@ -158,6 +157,11 @@ void Trt::SetDLACore(int dlaCore) {
         mConfig->setFlag(nvinfer1::BuilderFlag::kGPU_FALLBACK);
     }
     spdlog::info("set dla core {}", dlaCore);
+}
+
+void Trt::SetCustomOutput(const std::vector<std::string>& customOutputs) {
+    mCustomOutputs = customOutputs;
+    spdlog::info("set custom output...");
 }
 
 void Trt::AddDynamicShapeProfile(const std::string& inputName,

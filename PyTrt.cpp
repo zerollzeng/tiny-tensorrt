@@ -24,7 +24,6 @@ PYBIND11_MODULE(pytrt, m) {
         .def("CreateEngine", (void (Trt::*)(
             const std::string&,
             const std::string&,
-            const std::vector<std::string>&,
             int,
             int
             )) &Trt::CreateEngine, "create engine with onnx model")

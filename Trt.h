@@ -46,7 +46,6 @@ public:
     void CreateEngine(
         const std::string& onnxModel,
         const std::string& engineFile,
-        const std::vector<std::string>& customOutput,
         int maxBatchSize,
         int mode);
 
@@ -100,6 +99,12 @@ public:
      * @dlaCore dla core index, eg 0,1...
      */
     void SetDLACore(int dlaCore);
+
+    /**
+     * @description: set custom output, this will un-mark the original output
+     * @customOutputs custom output node name list
+     */
+    void SetCustomOutput(const std::vector<std::string>& customOutputs);
 
     /**
      * @description: add dynamic shape profile
@@ -193,6 +198,8 @@ protected:
     nvinfer1::IExecutionContext* mContext = nullptr;
 
     nvinfer1::IRuntime* mRuntime = nullptr;
+
+    std::vector<std::string> mCustomOutputs;
 
     std::vector<void*> mBinding;
 
