@@ -21,7 +21,7 @@ net->CopyFromDeviceToHost(output, outputBindIndex)
 
 # News
 
-Upgrade to TensorRT 8.0 API, **checkout 7.x branch if you need to deploy under TensorRT 7** - 2021-7-9
+Upgrade to TensorRT 8.0 API, **checkout 7.x branch for use under TensorRT 7** - 2021-7-9
 
 Better int8 calibrator api, refer to [User Guide](https://github.com/zerollzeng/tiny-tensorrt/blob/master/docs/UserGuide.md) - 2021-5-24
 
