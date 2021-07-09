@@ -10,20 +10,18 @@
 
 # tiny-tensorrt
 A simple, efficient, easy-to-use nvidia TensorRT wrapper for cnn with c++ and python api,support caffe, uff and onnx format models. you will be able to deploy your model with tiny-tensorrt in few lines of code!
+
 ```c++
-// create engine
-trt.CreateEngine(onnxModelpath, engineFile, customOutput, maxBatchSize, mode);
-// transfer you input data to tensorrt engine
-trt.CopyFromHostToDevice(input,inputIndex);
-// inference!!!
-trt.Forward();
-//  retrieve network output
-trt.CopyFromHostToDevice(output, outputIndex) // you can get outputIndex in CreateEngine phase
+Trt* net = Trt();
+net->CreateEngine(onnxModel, engineFile,maxBatchSize, int mode);
+net->CopyFromHostToDevice(input, inputBindIndex);
+net->Forward();
+net->CopyFromDeviceToHost(output, outputBindIndex)
 ```
 
 # News
 
-Upgrade to TensorRT 8.0 API, checkout 7.x branch if you need to deploy under TensorRT 7 - 2021-7-9
+Upgrade to TensorRT 8.0 API, **checkout 7.x branch if you need to deploy under TensorRT 7** - 2021-7-9
 
 Better int8 calibrator api, refer to [User Guide](https://github.com/zerollzeng/tiny-tensorrt/blob/master/docs/UserGuide.md) - 2021-5-24
 
