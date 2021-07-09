@@ -23,6 +23,8 @@ trt.CopyFromHostToDevice(output, outputIndex) // you can get outputIndex in Crea
 
 # News
 
+Upgrade to TensorRT 8.0 API, checkout 7.x branch if you need to deploy under TensorRT 7 - 2021-7-9
+
 Better int8 calibrator api, refer to [User Guide](https://github.com/zerollzeng/tiny-tensorrt/blob/master/docs/UserGuide.md) - 2021-5-24
 
 Remove caffe and uff support, convert to onnx with tf2onnx or keras.onnx. - 2021-4-23
@@ -33,7 +35,6 @@ Want to implement your own onnx plugin and don't know where to start? - 2021-1-2
 
 # Features
 - [x] Add DLA support
-- [x] Support TensorRT 7
 - [x] Custom plugin tutorial and well_commented sample
 - [x] Custom onnx model output node
 - [x] Engine serialization and deserialization
