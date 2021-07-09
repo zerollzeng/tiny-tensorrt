@@ -33,7 +33,7 @@ void read_directory(const std::string& name, std::vector<std::string>& v)
 }
 
 nvinfer1::IInt8Calibrator* GetInt8Calibrator(const std::string& calibratorType,
-                int batchSize,const std::string& dataPath, 
+                int batchSize,const std::string& dataPath,
                 const std::string& calibrateCachePath) {
     if(calibratorType == "Int8EntropyCalibrator2") {
         return new Int8EntropyCalibrator2(batchSize,dataPath,calibrateCachePath);
@@ -50,7 +50,7 @@ inline bool ends_with(std::string const & value, std::string const & ending)
 }
 
 
-Int8EntropyCalibrator2::Int8EntropyCalibrator2(const int batchSize, const std::string& dataPath, 
+Int8EntropyCalibrator2::Int8EntropyCalibrator2(const int batchSize, const std::string& dataPath,
                                                const std::string& calibrateCachePath)
 {
     spdlog::info("init calibrator...");
@@ -75,7 +75,7 @@ Int8EntropyCalibrator2::Int8EntropyCalibrator2(const int batchSize, const std::s
             mDeviceBatchData[i] = safeCudaMalloc(num_bytes * mBatchSize);
             i++;
         }
-    }    
+    }
 }
 
 
@@ -86,13 +86,13 @@ Int8EntropyCalibrator2::~Int8EntropyCalibrator2()
     }
 }
 
-int Int8EntropyCalibrator2::getBatchSize() const{
+int Int8EntropyCalibrator2::getBatchSize() const noexcept{
     spdlog::info("get batch size {}", mBatchSize);
     return mBatchSize;
 }
 
 
-bool Int8EntropyCalibrator2::getBatch(void* bindings[], const char* names[], int nbBindings)
+bool Int8EntropyCalibrator2::getBatch(void* bindings[], const char* names[], int nbBindings) noexcept
 {
     if (mCurBatchIdx + mBatchSize > mCount) {
         return false;
@@ -118,7 +118,7 @@ bool Int8EntropyCalibrator2::getBatch(void* bindings[], const char* names[], int
     return true;
 }
 
-const void* Int8EntropyCalibrator2::readCalibrationCache(size_t& length)
+const void* Int8EntropyCalibrator2::readCalibrationCache(size_t& length) noexcept
 {
     spdlog::info("read calibration cache");
     mCalibrationCache.clear();
@@ -126,7 +126,7 @@ const void* Int8EntropyCalibrator2::readCalibrationCache(size_t& length)
     input >> std::noskipws;
     if (input.good()) {
         std::copy(std::istream_iterator<char>(input),
-                  std::istream_iterator<char>(), 
+                  std::istream_iterator<char>(),
                   std::back_inserter(mCalibrationCache));
     }
 
@@ -134,7 +134,7 @@ const void* Int8EntropyCalibrator2::readCalibrationCache(size_t& length)
     return length ? &mCalibrationCache[0] : nullptr;
 }
 
-void Int8EntropyCalibrator2::writeCalibrationCache(const void* cache, size_t length)
+void Int8EntropyCalibrator2::writeCalibrationCache(const void* cache, size_t length) noexcept
 {
     spdlog::info("write calibration cache");
     std::ofstream output(mCalibrateCachePath, std::ios::binary);
