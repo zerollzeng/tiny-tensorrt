@@ -21,6 +21,8 @@ net->CopyFromDeviceToHost(output, outputBindIndex)
 
 # News
 
+Add support for dynamic shapes, **currently dynamic shape can not work with int8** - 2021-8-18
+
 Upgrade to TensorRT 8.0 API, **checkout 7.x branch for use under TensorRT 7** - 2021-7-9
 
 Better int8 calibrator api, refer to [User Guide](https://github.com/zerollzeng/tiny-tensorrt/blob/master/docs/UserGuide.md) - 2021-5-24
@@ -32,6 +34,7 @@ Want to implement your own onnx plugin and don't know where to start? - 2021-1-2
 [onnx plugin template](https://github.com/zerollzeng/tiny-tensorrt/blob/master/plugin/CuteSamplePlugin)
 
 # Features
+- [x] Add dynamic shapes support
 - [x] Add DLA support
 - [x] Custom plugin tutorial and well_commented sample
 - [x] Custom onnx model output node
@@ -41,11 +44,11 @@ Want to implement your own onnx plugin and don't know where to start? - 2021-1-2
 - [x] Set device
 
 # System Requirements
-cuda 10.0+
+cuda 11.0+(recommended)
 
-TensorRT 7
+TensorRT 8
 
-For python api, python 2.x/3.x and numpy in needed
+For python api, python 3.x and numpy in needed
 
 # Installation
 Make sure you had install dependencies list above, if you are familiar with docker, you can use [official docker](https://ngc.nvidia.com/catalog/containers/nvidia:tensorrt)
