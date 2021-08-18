@@ -28,20 +28,29 @@ using NDCFLAG = nvinfer1::NetworkDefinitionCreationFlag;
 Trt::Trt() {
     mBuilder = nvinfer1::createInferBuilder(mLogger);
     mConfig = mBuilder->createBuilderConfig();
+    mProfile = mBuilder->createOptimizationProfile();
 }
 
 Trt::~Trt() {
     if(mContext != nullptr) {
-        mContext->destroy();
+        delete mContext;
         mContext = nullptr;
     }
     if(mEngine !=nullptr) {
-        mEngine->destroy();
+        delete mEngine;
         mEngine = nullptr;
     }
     if(mConfig !=nullptr) {
-        mConfig->destroy();
+        delete mConfig;
         mConfig = nullptr;
+    }
+    if(mBuilder !=nullptr) {
+        delete mBuilder;
+        mBuilder = nullptr;
+    }
+    if(mNetwork !=nullptr) {
+        delete mNetwork;
+        mNetwork = nullptr;
     }
     for(size_t i=0;i<mBinding.size();i++) {
         safeCudaFree(mBinding[i]);
@@ -61,7 +70,6 @@ void Trt::CreateEngine(
             return;
         }
     }
-    spdlog::info("create execute context and malloc device memory...");
     InitEngine();
 }
 
@@ -82,7 +90,12 @@ void Trt::ForwardAsync(const cudaStream_t& stream) {
 }
 
 void Trt::SetBindingDimensions(std::vector<int>& inputDims, int bindIndex) {
-    const nvinfer1::Dims3& dims{inputDims[0],inputDims[1],inputDims[2]};
+    nvinfer1::Dims dims;
+    int nbDims = inputDims.size();
+    dims.nbDims = nbDims;
+    for(int i=0; i< nbDims; i++) {
+        dims.d[i] = inputDims[i];
+    }
     mContext->setBindingDimensions(bindIndex, dims);
 }
 
@@ -113,7 +126,7 @@ void Trt::CopyFromDeviceToHost(std::vector<float>& output, int bindIndex,
 }
 
 void Trt::SetDevice(int device) {
-    spdlog::info("please make sure save engine file match choosed device");
+    spdlog::info("set device {}", device);
     CUDA_CHECK(cudaSetDevice(device));
 }
 
@@ -130,9 +143,10 @@ int Trt::GetDevice() const {
 
 void Trt::SetInt8Calibrator(const std::string& calibratorType, const int batchSize,
                             const std::string& dataPath, const std::string& calibrateCachePath) {
-    mRunMode = 2;
-    nvinfer1::IInt8Calibrator* calibrator = GetInt8Calibrator(calibratorType, batchSize, dataPath, calibrateCachePath);
     spdlog::info("set int8 inference mode");
+    mRunMode = 2;
+    nvinfer1::IInt8Calibrator* calibrator = GetInt8Calibrator(
+        calibratorType, batchSize, dataPath, calibrateCachePath);
     if (!mBuilder->platformHasFastInt8()) {
         spdlog::warn("Warning: current platform doesn't support int8 inference");
     }
@@ -151,32 +165,39 @@ void Trt::SetInt8Calibrator(const std::string& calibratorType, const int batchSi
 }
 
 void Trt::SetDLACore(int dlaCore) {
+    spdlog::info("set dla core {}", dlaCore);
     if(dlaCore >= 0) {
         mConfig->setDefaultDeviceType(nvinfer1::DeviceType::kDLA);
         mConfig->setDLACore(dlaCore);
         mConfig->setFlag(nvinfer1::BuilderFlag::kGPU_FALLBACK);
     }
-    spdlog::info("set dla core {}", dlaCore);
 }
 
 void Trt::SetCustomOutput(const std::vector<std::string>& customOutputs) {
+    spdlog::info("set custom output");
     mCustomOutputs = customOutputs;
-    spdlog::info("set custom output...");
 }
 
 void Trt::AddDynamicShapeProfile(const std::string& inputName,
                                 const std::vector<int>& minDimVec,
                                 const std::vector<int>& optDimVec,
                                 const std::vector<int>& maxDimVec) {
-    const nvinfer1::Dims4& minDim{minDimVec[0],minDimVec[1],minDimVec[2],minDimVec[3]};
-    const nvinfer1::Dims4& optDim{optDimVec[0],optDimVec[1],optDimVec[2],optDimVec[3]};
-    const nvinfer1::Dims4& maxDim{maxDimVec[0],maxDimVec[1],maxDimVec[2],maxDimVec[3]};
-    nvinfer1::IOptimizationProfile* profile = mBuilder->createOptimizationProfile();
-    profile->setDimensions(inputName.c_str(), nvinfer1::OptProfileSelector::kMIN, minDim);
-    profile->setDimensions(inputName.c_str(), nvinfer1::OptProfileSelector::kOPT, optDim);
-    profile->setDimensions(inputName.c_str(), nvinfer1::OptProfileSelector::kMAX, maxDim);
-    assert(profile->isValid());
-    mConfig->addOptimizationProfile(profile);
+    spdlog::info("add mProfile for {}", inputName);
+    nvinfer1::Dims minDim, optDim, maxDim;
+    int nbDims = optDimVec.size();
+    minDim.nbDims = nbDims;
+    optDim.nbDims = nbDims;
+    maxDim.nbDims = nbDims;
+    for(int i=0; i< nbDims; i++) {
+        minDim.d[i] = minDimVec[i];
+        optDim.d[i] = optDimVec[i];
+        maxDim.d[i] = maxDimVec[i];
+    }
+    mProfile->setDimensions(inputName.c_str(), nvinfer1::OptProfileSelector::kMIN, minDim);
+    mProfile->setDimensions(inputName.c_str(), nvinfer1::OptProfileSelector::kOPT, optDim);
+    mProfile->setDimensions(inputName.c_str(), nvinfer1::OptProfileSelector::kMAX, maxDim);
+    assert(mProfile->isValid());
+    mConfig->addOptimizationProfile(mProfile);
 }
 
 int Trt::GetMaxBatchSize() const{
@@ -249,7 +270,7 @@ bool Trt::DeserializeEngine(const std::string& engineFile) {
         assert(mEngine != nullptr);
         mBatchSize = mEngine->getMaxBatchSize();
         spdlog::info("max batch size of deserialized engine: {}",mEngine->getMaxBatchSize());
-        mRuntime->destroy();
+        delete mRuntime;
         return true;
     }
     return false;
@@ -270,8 +291,6 @@ void Trt::BuildEngine() {
 
     spdlog::info("Max batchsize: {}",mBuilder->getMaxBatchSize());
     spdlog::info("Max workspace size: {}",mConfig->getMaxWorkspaceSize());
-    spdlog::info("Max DLA batchsize: {}",mBuilder->getMaxDLABatchSize());
-    spdlog::info("Current use DLA core: {}",mConfig->getDLACore());
     spdlog::info("build engine...");
     mEngine = mBuilder -> buildEngineWithConfig(*mNetwork, *mConfig);
     assert(mEngine != nullptr);
@@ -330,12 +349,10 @@ bool Trt::BuildEngineWithOnnx(const std::string& onnxModel,
     }
     BuildEngine();
 
-    spdlog::info("serialize engine to {}", engineFile);
     SaveEngine(engineFile);
 
-    mBuilder->destroy();
-    mNetwork->destroy();
-    parser->destroy();
+    delete parser;
+
     return true;
 }
 
@@ -346,6 +363,10 @@ void Trt::InitEngine() {
 
     spdlog::info("malloc device memory");
     int nbBindings = mEngine->getNbBindings();
+    if(mProfile != nullptr) {
+        spdlog::info("malloc memory with max dims when use dynamic shape");
+        nbBindings = nbBindings / 2;
+    }
     std::cout << "nbBingdings: " << nbBindings << std::endl;
     mBinding.resize(nbBindings);
     mBindingSize.resize(nbBindings);
@@ -353,9 +374,20 @@ void Trt::InitEngine() {
     mBindingDims.resize(nbBindings);
     mBindingDataType.resize(nbBindings);
     for(int i=0; i< nbBindings; i++) {
-        nvinfer1::Dims dims = mEngine->getBindingDimensions(i);
-        nvinfer1::DataType dtype = mEngine->getBindingDataType(i);
         const char* name = mEngine->getBindingName(i);
+        nvinfer1::DataType dtype = mEngine->getBindingDataType(i);
+        nvinfer1::Dims dims;
+        if(mProfile != nullptr) {
+            if(mEngine->bindingIsInput(i)) {
+                dims = mProfile->getDimensions(name, nvinfer1::OptProfileSelector::kMAX);
+                mContext->setBindingDimensions(i, dims);
+            } else {
+                assert(mContext->allInputDimensionsSpecified());
+                dims = mContext->getBindingDimensions(i);
+            }
+        } else {
+            dims = mEngine->getBindingDimensions(i);
+        }
         int64_t totalSize = volume(dims) * mBatchSize * getElementSize(dtype);
         mBindingSize[i] = totalSize;
         mBindingName[i] = name;

@@ -199,6 +199,8 @@ protected:
 
     nvinfer1::IRuntime* mRuntime = nullptr;
 
+    nvinfer1::IOptimizationProfile* mProfile = nullptr;
+
     std::vector<std::string> mCustomOutputs;
 
     std::vector<void*> mBinding;
