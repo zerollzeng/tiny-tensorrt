@@ -1,7 +1,9 @@
-#ifndef BATCHTILEPLUGIN_H
-#define BATCHTILEPLUGIN_H
+#ifndef CUTE_SAMPLE_PLUGIN_H
+#define CUTE_SAMPLE_PLUGIN_H
+
 #include "NvInferPlugin.h"
 #include <string>
+#include <vector>
 
 namespace nvinfer1
 {
@@ -10,11 +12,9 @@ namespace plugin
 class CuteSamplePlugin : public IPluginV2Ext
 {
 public:
-    CuteSamplePlugin(const std::string name);
+    CuteSamplePlugin();
 
-    CuteSamplePlugin(const std::string name, const void* data, size_t length);
-
-    CuteSamplePlugin() = delete;
+    CuteSamplePlugin(const void* data, size_t length);
 
     int getNbOutputs() const noexcept override;
 
@@ -57,8 +57,6 @@ public:
     const char* getPluginNamespace() const noexcept override;
 
 private:
-    const std::string mLayerName;
-    size_t mCopySize;
     std::string mNamespace;
 };
 
@@ -89,6 +87,9 @@ public:
 
 private:
     static PluginFieldCollection mFC;
+
+    static std::vector<nvinfer1::PluginField> mPluginAttributes;
+
     std::string mNamespace;
 };
 

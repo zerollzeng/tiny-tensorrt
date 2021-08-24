@@ -4,24 +4,13 @@
  * https://docs.nvidia.com/deeplearning/tensorrt/api/c_api/classnvinfer1_1_1_i_plugin_v2_ext.html
  */
 
-#include "CuteSamplePlugin.h"
-#include <cassert>
-#include <iostream>
-
 #ifndef CUTEDEBUG
 #define CUTEDEBUG 0 // set debug mode, if you want to see the api call, set it to 1
 #endif
 
-#if CUTEDEBUG
-#define cutelog(...) {\
-    char str[100];\
-    sprintf(str, __VA_ARGS__);\
-    std::cout << " (๑¯◡¯๑) noexcept CUSTOM PLUGIN TRACE----> call " << "[" << __FILE__ << "][" \
-              << __FUNCTION__ << "][Line " << __LINE__ << "] " << str << std::endl;\
-    }
-#else
-#define cutelog(...)
-#endif
+#include "CuteSamplePlugin.h"
+#include "plugin_utils.h"
+#include <cassert>
 
 using namespace nvinfer1;
 using nvinfer1::plugin::CuteSamplePlugin;
@@ -31,15 +20,14 @@ static const char* CUTE_PLUGIN_VERSION{"1"};
 static const char* CUTE_PLUGIN_NAME{"CuteSamplePlugin"};
 
 PluginFieldCollection CuteSamplePluginCreator::mFC{};
+std::vector<PluginField> CuteSamplePluginCreator::mPluginAttributes;
 
-CuteSamplePlugin::CuteSamplePlugin(const std::string name)
-    : mLayerName(name)
+CuteSamplePlugin::CuteSamplePlugin()
 {
     cutelog("wow I run to here now");
 }
 
-CuteSamplePlugin::CuteSamplePlugin(const std::string name, const void* data, size_t length)
-    : mLayerName(name)
+CuteSamplePlugin::CuteSamplePlugin(const void* data, size_t length)
 {
     cutelog("wow I run to here now");
 }
@@ -146,7 +134,8 @@ void CuteSamplePlugin::destroy() noexcept
 
 IPluginV2Ext* CuteSamplePlugin::clone() const noexcept
 {
-    auto* plugin = new CuteSamplePlugin(mLayerName);
+    cutelog("wow I run to here now");
+    auto* plugin = new CuteSamplePlugin();
     plugin->setPluginNamespace(mNamespace.c_str());
     return plugin;
 }
@@ -206,7 +195,7 @@ const PluginFieldCollection* CuteSamplePluginCreator::getFieldNames() noexcept
 IPluginV2Ext* CuteSamplePluginCreator::createPlugin(const char* name, const PluginFieldCollection* fc) noexcept
 {
     cutelog("wow I run to here now");
-    auto* plugin = new CuteSamplePlugin(name);
+    auto* plugin = new CuteSamplePlugin();
     plugin->setPluginNamespace(mNamespace.c_str());
     return plugin;
 }
@@ -214,7 +203,7 @@ IPluginV2Ext* CuteSamplePluginCreator::createPlugin(const char* name, const Plug
 IPluginV2Ext* CuteSamplePluginCreator::deserializePlugin(const char* name, const void* serialData, size_t serialLength) noexcept
 {
     cutelog("wow I run to here now");
-    return new CuteSamplePlugin(name, serialData, serialLength);
+    return new CuteSamplePlugin(serialData, serialLength);
 }
 
 REGISTER_TENSORRT_PLUGIN(CuteSamplePluginCreator);

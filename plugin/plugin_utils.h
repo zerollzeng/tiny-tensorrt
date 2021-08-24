@@ -11,10 +11,21 @@
 #include "NvInfer.h"
 #include "cuda_runtime.h"
 #include "cuda_fp16.h"
-
 #include <iostream>
-
 #include "utils.h"
+
+
+#if CUTEDEBUG
+#define cutelog(...) {\
+    char str[100];\
+    sprintf(str, __VA_ARGS__);\
+    std::cout << " (๑¯◡¯๑) noexcept CUSTOM PLUGIN TRACE----> call " << "[" << __FILE__ << "][" \
+              << __FUNCTION__ << "][Line " << __LINE__ << "] " << str << std::endl;\
+    }
+#else
+#define cutelog(...)
+#endif
+
 
 /**
  * @description: these are some common function during write your custom plugin,
