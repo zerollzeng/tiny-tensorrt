@@ -248,7 +248,7 @@ void Trt::SaveEngine(const std::string& fileName) {
         }
         file.write((const char*)data->data(), data->size());
         file.close();
-        data->destroy();
+        delete data;
     } else {
         spdlog::error("engine is empty, save engine failed");
     }
@@ -266,7 +266,7 @@ bool Trt::DeserializeEngine(const std::string& engineFile) {
         in.read(engineBuf.get(), bufCount);
         initLibNvInferPlugins(&mLogger, "");
         mRuntime = nvinfer1::createInferRuntime(mLogger);
-        mEngine = mRuntime->deserializeCudaEngine((void*)engineBuf.get(), bufCount, nullptr);
+        mEngine = mRuntime->deserializeCudaEngine((void*)engineBuf.get(), bufCount);
         assert(mEngine != nullptr);
         mBatchSize = mEngine->getMaxBatchSize();
         spdlog::info("max batch size of deserialized engine: {}",mEngine->getMaxBatchSize());
