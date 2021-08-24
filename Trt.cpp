@@ -26,12 +26,14 @@ using NDCFLAG = nvinfer1::NetworkDefinitionCreationFlag;
 
 
 Trt::Trt() {
+    spdlog::info("create Trt instance");
     mBuilder = nvinfer1::createInferBuilder(mLogger);
     mConfig = mBuilder->createBuilderConfig();
     mProfile = mBuilder->createOptimizationProfile();
 }
 
 Trt::~Trt() {
+    spdlog::info("destroy Trt instance");
     if(mContext != nullptr) {
         delete mContext;
         mContext = nullptr;
@@ -363,7 +365,7 @@ void Trt::InitEngine() {
 
     spdlog::info("malloc device memory");
     int nbBindings = mEngine->getNbBindings();
-    if(mProfile != nullptr) {
+    if(mConfig->getNbOptimizationProfiles() > 0) {
         spdlog::info("malloc memory with max dims when use dynamic shape");
         nbBindings = nbBindings / 2;
     }
@@ -377,7 +379,7 @@ void Trt::InitEngine() {
         const char* name = mEngine->getBindingName(i);
         nvinfer1::DataType dtype = mEngine->getBindingDataType(i);
         nvinfer1::Dims dims;
-        if(mProfile != nullptr) {
+        if(mConfig->getNbOptimizationProfiles() > 0) {
             if(mEngine->bindingIsInput(i)) {
                 dims = mProfile->getDimensions(name, nvinfer1::OptProfileSelector::kMAX);
                 mContext->setBindingDimensions(i, dims);

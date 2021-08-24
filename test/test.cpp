@@ -175,6 +175,7 @@ int main(int argc, char** argv) {
 
     if(input_specs_str != "") {
         for(size_t i=0;i<input_names.size();i++) {
+            std::cout << "Add profile for: " << input_names[i] << std::endl;
             onnx_net->AddDynamicShapeProfile(input_names[i],min_shapes[i], opt_shapes[i], max_shapes[i]);
         }
     }
@@ -203,6 +204,8 @@ int main(int argc, char** argv) {
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(time2-time1).count();
 
     std::cout << "TRT enqueue done, time: " << duration << " ms." << std::endl;
+
+    delete onnx_net;
     
     return 0;
 }
