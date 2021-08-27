@@ -1,5 +1,3 @@
-Note: This template runs successfully with TensorRT 7.2.2 and failed at some previous versions.
-
 ## A Cute custom onnx plugin template
 
 Want to implement a custom plugin for your onnx model and don't know where to start? here is a simple template, let's go!
