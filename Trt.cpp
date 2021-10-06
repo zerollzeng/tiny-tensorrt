@@ -104,14 +104,14 @@ void Trt::SetBindingDimensions(std::vector<int>& inputDims, int bindIndex) {
 void Trt::CopyFromHostToDevice(const std::vector<float>& input, int bindIndex) {
     assert(input.size()*sizeof(float) <= mBindingSize[bindIndex]);
     CUDA_CHECK(cudaMemcpy(mBinding[bindIndex], input.data(),
-        mBindingSize[bindIndex], cudaMemcpyHostToDevice));
+        input.size()*sizeof(float), cudaMemcpyHostToDevice));
 }
 
 void Trt::CopyFromHostToDevice(const std::vector<float>& input,
                                int bindIndex, const cudaStream_t& stream) {
     assert(input.size()*sizeof(float) <= mBindingSize[bindIndex]);
     CUDA_CHECK(cudaMemcpyAsync(mBinding[bindIndex], input.data(),
-        mBindingSize[bindIndex], cudaMemcpyHostToDevice, stream));
+        input.size()*sizeof(float), cudaMemcpyHostToDevice, stream));
 }
 
 void Trt::CopyFromDeviceToHost(std::vector<float>& output, int bindIndex) {
