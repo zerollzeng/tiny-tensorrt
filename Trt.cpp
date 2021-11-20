@@ -24,10 +24,41 @@
 
 using NDCFLAG = nvinfer1::NetworkDefinitionCreationFlag;
 
+void TrtLogger::log(Severity severity, const char* msg) noexcept {
+    if (severity <= mSeverity) {
+        switch (severity)
+        {
+        case Severity::kINTERNAL_ERROR:
+            spdlog::critical("[F] [TRT] {}", msg);
+            break;
+        case Severity::kERROR:
+            spdlog::error("[E] [TRT] {}", msg);
+            break;
+        case Severity::kWARNING:
+            spdlog::warn("[W] [TRT] {}", msg);
+            break;
+        case Severity::kINFO:
+            spdlog::info("[I] [TRT] {}", msg);
+            break;
+        case Severity::kVERBOSE:
+            spdlog::info("[V] [TRT] {}", msg);
+            break;
+        default:
+            assert(false && "invalid log level");
+            break;
+        }
+    }
+}
+
+void TrtLogger::setLogSeverity(Severity severity) {
+    mSeverity = severity;
+}
+
 
 Trt::Trt() {
     spdlog::info("create Trt instance");
-    mBuilder = nvinfer1::createInferBuilder(mLogger);
+    mLogger = new TrtLogger();
+    mBuilder = nvinfer1::createInferBuilder(*mLogger);
     mConfig = mBuilder->createBuilderConfig();
     mProfile = mBuilder->createOptimizationProfile();
 }
@@ -180,6 +211,11 @@ void Trt::SetCustomOutput(const std::vector<std::string>& customOutputs) {
     mCustomOutputs = customOutputs;
 }
 
+void Trt::SetLogLevel(int severity) {
+    spdlog::info("set log level {}", severity);
+    mLogger->setLogSeverity(static_cast<nvinfer1::ILogger::Severity>(severity));
+}
+
 void Trt::AddDynamicShapeProfile(const std::string& inputName,
                                 const std::vector<int>& minDimVec,
                                 const std::vector<int>& optDimVec,
@@ -266,8 +302,8 @@ bool Trt::DeserializeEngine(const std::string& engineFile) {
         in.seekg(start_pos);
         std::unique_ptr<char[]> engineBuf(new char[bufCount]);
         in.read(engineBuf.get(), bufCount);
-        initLibNvInferPlugins(&mLogger, "");
-        mRuntime = nvinfer1::createInferRuntime(mLogger);
+        initLibNvInferPlugins(mLogger, "");
+        mRuntime = nvinfer1::createInferRuntime(*mLogger);
         mEngine = mRuntime->deserializeCudaEngine((void*)engineBuf.get(), bufCount);
         assert(mEngine != nullptr);
         mBatchSize = mEngine->getMaxBatchSize();
@@ -306,7 +342,7 @@ bool Trt::BuildEngineWithOnnx(const std::string& onnxModel,
     mFlags = 1U << static_cast<uint32_t>(NDCFLAG::kEXPLICIT_BATCH);
     mNetwork = mBuilder->createNetworkV2(mFlags);
     assert(mNetwork != nullptr);
-    nvonnxparser::IParser* parser = nvonnxparser::createParser(*mNetwork, mLogger);
+    nvonnxparser::IParser* parser = nvonnxparser::createParser(*mNetwork, *mLogger);
     if(!parser->parseFromFile(onnxModel.c_str(),
             static_cast<int>(nvinfer1::ILogger::Severity::kWARNING))) {
         spdlog::error("error: could not parse onnx engine");

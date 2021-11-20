@@ -16,21 +16,20 @@
 #include "NvInfer.h"
 
 
-
+using Severity = nvinfer1::ILogger::Severity;
 class TrtLogger : public nvinfer1::ILogger {
-    void log(Severity severity, const char* msg)  noexcept override
-    {
-        // suppress info-level messages
-        if (severity != Severity::kVERBOSE)
-            std::cout << msg << std::endl;
-    }
+public:
+    void setLogSeverity(Severity severity);
+
+private:
+    void log(Severity severity, const char* msg)  noexcept override;
+
+    Severity mSeverity = Severity::kINFO;
 };
 
 class Trt {
 public:
-    /**
-     * @description: default constructor, will initialize plugin factory with default parameters.
-     */
+
     Trt();
 
     ~Trt();
@@ -107,6 +106,13 @@ public:
     void SetCustomOutput(const std::vector<std::string>& customOutputs);
 
     /**
+     * @description: set tensorrt internal log level
+     * @level Severity::kINTERNAL_ERROR = 0, Severity::kERROR = 1, Severity::kWARNING = 2, Severity::kINFO = 3,
+     *                  Severity::kVERBOSE = 4, default level is <= kINFO.
+     */
+    void SetLogLevel(int severity);
+
+    /**
      * @description: add dynamic shape profile
      */
     void AddDynamicShapeProfile(const std::string& inputName,
@@ -177,7 +183,7 @@ protected:
     void SaveEngine(const std::string& fileName);
 
 protected:
-    TrtLogger mLogger;
+    TrtLogger* mLogger = nullptr;
 
     // tensorrt run mode 0:fp32 1:fp16 2:int8
     int mRunMode;

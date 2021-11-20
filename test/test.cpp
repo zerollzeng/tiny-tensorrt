@@ -110,6 +110,8 @@ static void show_usage(std::string name) {
               << "\t--dla\t\tset dla core if you want with 0,1..., default is -1(not enable)\n"
               << "\t--input_specs\t\tset input shape when running model with dynamic shape\n"
                  "eg: --input_specs data_1:1x3x16x16:1x3x32x32:1x3x64x64,data_2:1x3x16x16:1x3x32x32:1x3x64x64"
+              << "\t--log_level\t\tSeverity::kINTERNAL_ERROR = 0, Severity::kERROR = 1, Severity::kWARNING = 2, Severity::kINFO = 3,"
+              << "Severity::kVERBOSE = 4, default level is <= kINFO.\n"
               << std::endl;
 }
 
@@ -179,7 +181,6 @@ int main(int argc, char** argv) {
             onnx_net->AddDynamicShapeProfile(input_names[i],min_shapes[i], opt_shapes[i], max_shapes[i]);
         }
     }
-
     if(custom_outputs.size() > 0) {
         onnx_net->SetCustomOutput(custom_outputs);
     }
@@ -187,6 +188,11 @@ int main(int argc, char** argv) {
     onnx_net->SetDLACore(dla_core);
     if(calibrateDataDir != "" || calibrateCache != "") {
         onnx_net->SetInt8Calibrator("Int8EntropyCalibrator2", batch_size, calibrateDataDir, calibrateCache);
+    }
+    const std::string& log_level_string = cmdparams.getCmdOption("--log_level");
+    if(log_level_string != "") {
+        int log_level = std::stoi(log_level_string);
+        onnx_net->SetLogLevel(log_level);
     }
 
     onnx_net->CreateEngine(onnx_path, engine_file, batch_size, run_mode);
