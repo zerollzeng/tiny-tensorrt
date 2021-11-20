@@ -14,7 +14,7 @@
 
 
 # List of currently used arch values
-set(CUDA_known_archs "60" "61" "70" "75")
+set(CUDA_known_archs "60" "61" "70" "72" "75" "80" "86" "87")
 
 set(CUDA_TARGET_ARCHS ${CUDA_known_archs} CACHE STRING "List of target CUDA architectures")
 if ("${CUDA_TARGET_ARCHS}" STREQUAL "")
