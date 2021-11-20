@@ -1,12 +1,11 @@
 message(STATUS "
-  =============> USAGE <===============
-  cmake -DGPU_ARCH=xx -DBUILD_PYTHON=ON/OFF -DBUILD_TEST=ON/OFF ..
-  =====================================
+=============> USAGE <===============
+cmake -DGPU_ARCH=xx -DBUILD_PYTHON=ON/OFF -DBUILD_TEST=ON/OFF ..
+=====================================
 ")
 
 cmake_minimum_required(VERSION 3.0)
 project(tinytrt VERSION 8.0.1)
-set(CMAKE_CXX_FLAGS "-std=c++11")
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 set(CMAKE_INSTALL_LIBDIR /usr/lib CACHE PATH "Install dir for shared libraries")
@@ -19,26 +18,31 @@ option(BUILD_PYTHON "compile python api" OFF)
 option(BUILD_TEST "compile test" ON)
 
 find_package(CUDA REQUIRED)
+find_package(ZLIB REQUIRED)
+# TensorRT
+find_path(TENSORRT_INCLUDE_DIR NvInfer.h
+  HINTS ${TENSORRT_ROOT} ${CUDA_TOOLKIT_ROOT_DIR}
+  PATH_SUFFIXES include)
+MESSAGE(STATUS "Found TensorRT headers at ${TENSORRT_INCLUDE_DIR}")
 
 include(cmake/CUDA_utils.cmake)
+message(WARNING "
+=============> SM VERSION SETTING <===============
+It would be better that you specify with your device's sm version.
+you will get better compilation speed up, usage:
+cmake -DGPU_ARCH=53 ..
+For more information about compute capability, please refer to 
+https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/
+=================================================="
+)
 set(GPU_ARCH "" CACHE STRING "Description")
 if(GPU_ARCH)
   set(CUDA_targeted_archs ${GPU_ARCH})
   CUDA_get_gencode_args(CUDA_gencode_flags ${CUDA_targeted_archs})
 else()
   # Discover what architectures does nvcc support
-  message(WARNING "
-  =============> SM VERSION SETTING <===============
-  It would be better that you specify with your device's sm version.
-  you will get faster compilation speed, usage:
-  cmake -DGPU_ARCH=53 ..
-
-  For more information about compute capability, please refer to 
-  https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/
-  ")
   CUDA_find_supported_arch_values(CUDA_supported_archs ${CUDA_known_archs})
   message(STATUS "CUDA supported archs: ${CUDA_supported_archs}")
-
   set(CUDA_TARGET_ARCHS_SORTED ${CUDA_TARGET_ARCHS})
   list(SORT CUDA_TARGET_ARCHS_SORTED)
   CUDA_find_supported_arch_values(CUDA_targeted_archs ${CUDA_TARGET_ARCHS_SORTED})
@@ -56,20 +60,14 @@ include_directories(spdlog)
 include_directories(pybind11/include)
 include_directories(./)
 include_directories(./plugin)
-
-find_package(ZLIB REQUIRED)
 include_directories(${ZLIB_INCLUDE_DIRS})
 
-# TensorRT
-find_path(TENSORRT_INCLUDE_DIR NvInfer.h
-  HINTS ${TENSORRT_ROOT} ${CUDA_TOOLKIT_ROOT_DIR}
-  PATH_SUFFIXES include)
-MESSAGE(STATUS "Found TensorRT headers at ${TENSORRT_INCLUDE_DIR}")
-
 message(STATUS "
+=============> Final Config <===============
 Generated gencode flags: ${CUDA_gencode_flags} 
 BUILD_PYTHON : ${BUILD_PYTHON} 
 BUILD_TEST : ${BUILD_TEST} 
+============================================
 ")
 
 
