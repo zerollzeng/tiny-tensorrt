@@ -12,7 +12,7 @@
 An easy-to-use nvidia TensorRT wrapper for onnx model with c++ and python api. you will be able to deploy your model with tiny-tensorrt in few lines of code!
 
 ```c++
-Trt* net = Trt();
+Trt* net = new Trt();
 net->CreateEngine(onnxModel, engineFile,maxBatchSize, precision);
 net->CopyFromHostToDevice(input, inputBindIndex);
 net->Forward();
