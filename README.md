@@ -42,35 +42,9 @@ cmake .. && make
 ```
 Then you can intergrate it into your own project with libtinytrt.so and Trt.h, for python module, you get pytrt.so
 
-## News
-
-Add support for dynamic shapes, **currently dynamic shape can not work with int8** - 2021-8-18
-
-Upgrade to TensorRT 8.0 API, **checkout 7.x branch for use under TensorRT 7** - 2021-7-9
-
-Better int8 calibrator api, refer to [User Guide](https://github.com/zerollzeng/tiny-tensorrt/blob/master/docs/UserGuide.md) - 2021-5-24
-
-Remove caffe and uff support, convert to onnx with tf2onnx or keras.onnx. - 2021-4-23
-
-Want to implement your own onnx plugin and don't know where to start? - 2021-1-29
-
-[onnx plugin template](https://github.com/zerollzeng/tiny-tensorrt/blob/master/plugin/CuteSamplePlugin)
-
-## Features
-- [x] Add dynamic shapes support
-- [x] Add DLA support
-- [x] Custom plugin tutorial and well_commented sample
-- [x] Custom onnx model output node
-- [x] Engine serialization and deserialization
-- [x] INT8 support
-- [x] Python api support
-- [x] Set device
-
 ## Docs
 
-[User Guide](https://github.com/zerollzeng/tiny-tensorrt/blob/master/docs/UserGuide.md)
-
-[Custom Plugin Tutorial](https://github.com/zerollzeng/tiny-tensorrt/blob/master/docs/CustomPlugin.md) (En-Ch)
+Please refer to [Wiki](https://github.com/zerollzeng/tiny-tensorrt/wiki)
 
 ## About License
 
