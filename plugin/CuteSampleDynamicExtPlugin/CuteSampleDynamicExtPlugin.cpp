@@ -33,7 +33,7 @@ CuteSampleDynamicExtPlugin::CuteSampleDynamicExtPlugin(const void* data, size_t 
     cutelog("wow I run to here now");
 }
 // IPluginV2DynamicExt Methods
-nvinfer1::IPluginV2DynamicExt* CuteSampleDynamicExtPlugin::clone() const noexcept
+nvinfer1::IPluginV2DynamicExt* CuteSampleDynamicExtPlugin::clone() const IS_NOEXCEPT
 {
     cutelog("wow I run to here now");
     auto* plugin = new CuteSampleDynamicExtPlugin(*this);
@@ -42,14 +42,14 @@ nvinfer1::IPluginV2DynamicExt* CuteSampleDynamicExtPlugin::clone() const noexcep
 }
 
 nvinfer1::DimsExprs CuteSampleDynamicExtPlugin::getOutputDimensions(
-    int outputIndex, const nvinfer1::DimsExprs* inputs, int nbInputs, nvinfer1::IExprBuilder& exprBuilder) noexcept
+    int outputIndex, const nvinfer1::DimsExprs* inputs, int nbInputs, nvinfer1::IExprBuilder& exprBuilder) IS_NOEXCEPT
 {
     cutelog("wow I run to here now");
     return inputs[0];
 }
 
 bool CuteSampleDynamicExtPlugin::supportsFormatCombination(
-    int pos, const nvinfer1::PluginTensorDesc* inOut, int nbInputs, int nbOutputs) noexcept
+    int pos, const nvinfer1::PluginTensorDesc* inOut, int nbInputs, int nbOutputs) IS_NOEXCEPT
 {
 
     cutelog("wow I run to here now");
@@ -57,20 +57,20 @@ bool CuteSampleDynamicExtPlugin::supportsFormatCombination(
 }
 
 void CuteSampleDynamicExtPlugin::configurePlugin(const nvinfer1::DynamicPluginTensorDesc* in, int nbInputs,
-    const nvinfer1::DynamicPluginTensorDesc* out, int nbOutputs) noexcept
+    const nvinfer1::DynamicPluginTensorDesc* out, int nbOutputs) IS_NOEXCEPT
 {
     cutelog("wow I run to here now");
 }
 
 size_t CuteSampleDynamicExtPlugin::getWorkspaceSize(const nvinfer1::PluginTensorDesc* inputs, int nbInputs,
-    const nvinfer1::PluginTensorDesc* outputs, int nbOutputs) const noexcept
+    const nvinfer1::PluginTensorDesc* outputs, int nbOutputs) const IS_NOEXCEPT
 {
     cutelog("wow I run to here now");
     return 0;
 }
 int CuteSampleDynamicExtPlugin::enqueue(const nvinfer1::PluginTensorDesc* inputDesc,
     const nvinfer1::PluginTensorDesc* outputDesc, const void* const* inputs, void* const* outputs, void* workspace,
-    cudaStream_t stream) noexcept
+    cudaStream_t stream) IS_NOEXCEPT
 {
     cutelog("wow I run to here now");
     return 1;
@@ -78,7 +78,7 @@ int CuteSampleDynamicExtPlugin::enqueue(const nvinfer1::PluginTensorDesc* inputD
 
 // IPluginV2Ext Methods
 nvinfer1::DataType CuteSampleDynamicExtPlugin::getOutputDataType(
-    int index, const nvinfer1::DataType* inputTypes, int nbInputs) const noexcept
+    int index, const nvinfer1::DataType* inputTypes, int nbInputs) const IS_NOEXCEPT
 {
     cutelog("wow I run to here now");
     return inputTypes[0];
@@ -86,59 +86,59 @@ nvinfer1::DataType CuteSampleDynamicExtPlugin::getOutputDataType(
 
 // IPluginV2 Methods
 
-const char* CuteSampleDynamicExtPlugin::getPluginType() const noexcept
+const char* CuteSampleDynamicExtPlugin::getPluginType() const IS_NOEXCEPT
 {
     cutelog("wow I run to here now");
     return PLUGIN_NAME;
 }
 
-const char* CuteSampleDynamicExtPlugin::getPluginVersion() const noexcept
+const char* CuteSampleDynamicExtPlugin::getPluginVersion() const IS_NOEXCEPT
 {
     cutelog("wow I run to here now");
     return PLUGIN_VERSION;
 }
 
-int CuteSampleDynamicExtPlugin::getNbOutputs() const noexcept
+int CuteSampleDynamicExtPlugin::getNbOutputs() const IS_NOEXCEPT
 {
     cutelog("wow I run to here now");
     return 1;
 }
 
-int CuteSampleDynamicExtPlugin::initialize() noexcept
+int CuteSampleDynamicExtPlugin::initialize() IS_NOEXCEPT
 {
     cutelog("wow I run to here now");
     return 0;
 }
 
-void CuteSampleDynamicExtPlugin::terminate() noexcept
+void CuteSampleDynamicExtPlugin::terminate() IS_NOEXCEPT
 {
     cutelog("wow I run to here now");
 }
 
-size_t CuteSampleDynamicExtPlugin::getSerializationSize() const noexcept
+size_t CuteSampleDynamicExtPlugin::getSerializationSize() const IS_NOEXCEPT
 {
     cutelog("wow I run to here now");
     return 0;
 }
 
-void CuteSampleDynamicExtPlugin::serialize(void* buffer) const noexcept
+void CuteSampleDynamicExtPlugin::serialize(void* buffer) const IS_NOEXCEPT
 {
     cutelog("wow I run to here now");
 }
 
-void CuteSampleDynamicExtPlugin::destroy() noexcept
+void CuteSampleDynamicExtPlugin::destroy() IS_NOEXCEPT
 {
     cutelog("wow I run to here now");
     delete this;
 }
 
-void CuteSampleDynamicExtPlugin::setPluginNamespace(const char* libNamespace) noexcept
+void CuteSampleDynamicExtPlugin::setPluginNamespace(const char* libNamespace) IS_NOEXCEPT
 {
     cutelog("wow I run to here now");
     mNamespace = libNamespace;
 }
 
-const char* CuteSampleDynamicExtPlugin::getPluginNamespace() const noexcept
+const char* CuteSampleDynamicExtPlugin::getPluginNamespace() const IS_NOEXCEPT
 {
     cutelog("wow I run to here now");
     return mNamespace.c_str();
@@ -153,44 +153,44 @@ CuteSampleDynamicExtPluginCreator::CuteSampleDynamicExtPluginCreator()
     mFC.fields = mPluginAttributes.data();
 }
 
-const char* CuteSampleDynamicExtPluginCreator::getPluginName() const noexcept
+const char* CuteSampleDynamicExtPluginCreator::getPluginName() const IS_NOEXCEPT
 {
     cutelog("wow I run to here now");
     return PLUGIN_NAME;
 }
 
-const char* CuteSampleDynamicExtPluginCreator::getPluginVersion() const noexcept
+const char* CuteSampleDynamicExtPluginCreator::getPluginVersion() const IS_NOEXCEPT
 {
     cutelog("wow I run to here now");
     return PLUGIN_VERSION;
 }
 
-const PluginFieldCollection* CuteSampleDynamicExtPluginCreator::getFieldNames() noexcept
+const PluginFieldCollection* CuteSampleDynamicExtPluginCreator::getFieldNames() IS_NOEXCEPT
 {
     cutelog("wow I run to here now");
     return &mFC;
 }
 
-IPluginV2* CuteSampleDynamicExtPluginCreator::createPlugin(const char* name, const PluginFieldCollection* fc) noexcept
+IPluginV2* CuteSampleDynamicExtPluginCreator::createPlugin(const char* name, const PluginFieldCollection* fc) IS_NOEXCEPT
 {
     cutelog("wow I run to here now");
     return new CuteSampleDynamicExtPlugin();
 }
 
 IPluginV2* CuteSampleDynamicExtPluginCreator::deserializePlugin(
-    const char* name, const void* serialData, size_t serialLength) noexcept
+    const char* name, const void* serialData, size_t serialLength) IS_NOEXCEPT
 {
     cutelog("wow I run to here now");
     return new CuteSampleDynamicExtPlugin(serialData, serialLength);
 }
 
-void CuteSampleDynamicExtPluginCreator::setPluginNamespace(const char* libNamespace) noexcept
+void CuteSampleDynamicExtPluginCreator::setPluginNamespace(const char* libNamespace) IS_NOEXCEPT
 {
     cutelog("wow I run to here now");
     mNamespace = libNamespace;
 }
 
-const char* CuteSampleDynamicExtPluginCreator::getPluginNamespace() const noexcept
+const char* CuteSampleDynamicExtPluginCreator::getPluginNamespace() const IS_NOEXCEPT
 {
     cutelog("wow I run to here now");
     return mNamespace.c_str();

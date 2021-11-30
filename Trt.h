@@ -207,6 +207,8 @@ protected:
 
     nvinfer1::IOptimizationProfile* mProfile = nullptr;
 
+    nvinfer1::IHostMemory* mPlan = nullptr;
+
     std::vector<std::string> mCustomOutputs;
 
     std::vector<void*> mBinding;

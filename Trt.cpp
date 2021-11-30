@@ -21,6 +21,7 @@
 #include "NvInferRuntime.h"
 #include "NvOnnxParser.h"
 #include "NvInferPlugin.h"
+#include "NvInferVersion.h"
 
 using NDCFLAG = nvinfer1::NetworkDefinitionCreationFlag;
 
@@ -56,15 +57,49 @@ void TrtLogger::setLogSeverity(Severity severity) {
 
 
 Trt::Trt() {
+#if NV_TENSORRT_MAJOR < 7
+    assert(false && "tiny-tensorrt only support TRT version greater than 7");
+#endif
     spdlog::info("create Trt instance");
     mLogger = new TrtLogger();
     mBuilder = nvinfer1::createInferBuilder(*mLogger);
     mConfig = mBuilder->createBuilderConfig();
     mProfile = mBuilder->createOptimizationProfile();
+    mRuntime = nvinfer1::createInferRuntime(*mLogger);
 }
 
 Trt::~Trt() {
     spdlog::info("destroy Trt instance");
+#if NV_TENSORRT_MAJOR < 8
+    if(mContext != nullptr) {
+        mContext->destroy();
+        mContext = nullptr;
+    }
+    if(mEngine != nullptr) {
+        mEngine->destroy();
+        mEngine = nullptr;
+    }
+    if(mConfig != nullptr) {
+        mConfig -> destroy();
+        mConfig = nullptr;
+    }
+    if(mBuilder !=nullptr) {
+        mBuilder -> destroy();
+        mBuilder = nullptr;
+    }
+    if(mNetwork !=nullptr) {
+        mNetwork -> destroy();
+        mNetwork = nullptr;
+    }
+    if(mRuntime != nullptr) {
+        mRuntime -> destroy();
+        mRuntime = nullptr;
+    }
+    if(mPlan != nullptr) {
+        mPlan->destroy();
+        mPlan = nullptr;
+    }
+#else
     if(mContext != nullptr) {
         delete mContext;
         mContext = nullptr;
@@ -85,6 +120,15 @@ Trt::~Trt() {
         delete mNetwork;
         mNetwork = nullptr;
     }
+    if(mRuntime != nullptr) {
+        delete mRuntime;
+        mRuntime=nullptr;
+    }
+    if(mPlan != nullptr) {
+        delete mPlan;
+        mPlan = nullptr;
+    }
+#endif
     for(size_t i=0;i<mBinding.size();i++) {
         safeCudaFree(mBinding[i]);
     }
@@ -277,16 +321,14 @@ void Trt::SaveEngine(const std::string& fileName) {
     }
     if(mEngine != nullptr) {
         spdlog::info("save engine to {}...",fileName);
-        nvinfer1::IHostMemory* data = mEngine->serialize();
         std::ofstream file;
         file.open(fileName,std::ios::binary | std::ios::out);
         if(!file.is_open()) {
             spdlog::error("read create engine file {} failed",fileName);
             return;
         }
-        file.write((const char*)data->data(), data->size());
+        file.write((const char*)mPlan->data(), mPlan->size());
         file.close();
-        delete data;
     } else {
         spdlog::error("engine is empty, save engine failed");
     }
@@ -303,18 +345,17 @@ bool Trt::DeserializeEngine(const std::string& engineFile) {
         std::unique_ptr<char[]> engineBuf(new char[bufCount]);
         in.read(engineBuf.get(), bufCount);
         initLibNvInferPlugins(mLogger, "");
-        mRuntime = nvinfer1::createInferRuntime(*mLogger);
         mEngine = mRuntime->deserializeCudaEngine((void*)engineBuf.get(), bufCount);
         assert(mEngine != nullptr);
         mBatchSize = mEngine->getMaxBatchSize();
         spdlog::info("max batch size of deserialized engine: {}",mEngine->getMaxBatchSize());
-        delete mRuntime;
         return true;
     }
     return false;
 }
 
 void Trt::BuildEngine() {
+    spdlog::info("build engine...");
     if (mRunMode == 1)
     {
         spdlog::info("setFp16Mode");
@@ -325,12 +366,16 @@ void Trt::BuildEngine() {
     }
     mBuilder->setMaxBatchSize(mBatchSize);
     // set the maximum GPU temporary memory which the engine can use at execution time.
-    mConfig->setMaxWorkspaceSize(10 << 20);
+    mConfig->setMaxWorkspaceSize(2 << 30); // 2GB
+    spdlog::info("set max workspace size: {}", mConfig->getMaxWorkspaceSize());
 
-    spdlog::info("Max batchsize: {}",mBuilder->getMaxBatchSize());
-    spdlog::info("Max workspace size: {}",mConfig->getMaxWorkspaceSize());
-    spdlog::info("build engine...");
+#if NV_TENSORRT_MAJOR < 8
     mEngine = mBuilder -> buildEngineWithConfig(*mNetwork, *mConfig);
+    mPlan = mEngine ->serialize();
+#else
+    mPlan = mBuilder -> buildSerializedNetwork(*mNetwork, *mConfig);
+    mEngine = mRuntime -> deserializeCudaEngine(mPlan->data(), mPlan->size());
+#endif
     assert(mEngine != nullptr);
 }
 
@@ -386,10 +431,12 @@ bool Trt::BuildEngineWithOnnx(const std::string& onnxModel,
         }
     }
     BuildEngine();
-
     SaveEngine(engineFile);
-
+#if NV_TENSORRT_MAJOR < 8
+    parser->destroy();
+#else
     delete parser;
+#endif
 
     return true;
 }
