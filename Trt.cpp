@@ -114,7 +114,7 @@ void Trt::Forward() {
     }
 }
 
-void Trt::ForwardAsync(const cudaStream_t& stream) {
+void Trt::Forward(const cudaStream_t& stream) {
     if(mFlags == 1U << static_cast<uint32_t>(NDCFLAG::kEXPLICIT_BATCH)) {
         mContext->enqueueV2(&mBinding[0], stream, nullptr);
     } else {

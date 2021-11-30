@@ -58,7 +58,7 @@ public:
      * @description: async inference on engine context
      * @stream cuda stream for async inference and data transfer
      */
-    void ForwardAsync(const cudaStream_t& stream);
+    void Forward(const cudaStream_t& stream);
 
     void SetBindingDimensions(std::vector<int>& inputDims, int bindIndex);
     /**
