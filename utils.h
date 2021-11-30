@@ -60,43 +60,4 @@ inline void safeCudaFree(void* deviceMem) {
     CUDA_CHECK(cudaFree(deviceMem));
 }
 
-inline void error(const std::string& message, const int line, const std::string& function, const std::string& file) {
-    std::cout << message << " at " << line << " in " << function << " in " << file << std::endl;
-}
-#define COMPILE_TEMPLATE_BASIC_TYPES_CLASS(className) COMPILE_TEMPLATE_BASIC_TYPES(className, class)
-#define COMPILE_TEMPLATE_BASIC_TYPES_STRUCT(className) COMPILE_TEMPLATE_BASIC_TYPES(className, struct)
-#define COMPILE_TEMPLATE_BASIC_TYPES(className, classType) \
-    template classType  className<char>; \
-    template classType  className<signed char>; \
-    template classType  className<short>; \
-    template classType  className<int>; \
-    template classType  className<long>; \
-    template classType  className<long long>; \
-    template classType  className<unsigned char>; \
-    template classType  className<unsigned short>; \
-    template classType  className<unsigned int>; \
-    template classType  className<unsigned long>; \
-    template classType  className<unsigned long long>; \
-    template classType  className<float>; \
-    template classType  className<double>; \
-    template classType  className<long double>
-
-// const auto CUDA_NUM_THREADS = 512u;
-// inline unsigned int getNumberCudaBlocks(const unsigned int totalRequired,
-//     const unsigned int numberCudaThreads = CUDA_NUM_THREADS)
-// {
-// return (totalRequired + numberCudaThreads - 1) / numberCudaThreads;
-// }
-
-struct YoloKernel;
-
-static constexpr int LOCATIONS = 4;
-struct alignas(float) Detection{
-    //x y w h
-    float bbox[LOCATIONS];
-    //float objectness;
-    int classId;
-    float prob;
-};
-
 #endif
