@@ -1,6 +1,6 @@
 message(STATUS "
 =============> USAGE <===============
-cmake -DGPU_ARCH=xx -DBUILD_PYTHON=ON/OFF -DBUILD_TEST=ON/OFF -DTENSORRT_INCLUDE_PATH=/path \
+cmake -DGPU_ARCH=xx -DBUILD_PYTHON=ON/OFF -DBUILD_SAMPLE=ON/OFF -DTENSORRT_INCLUDE_PATH=/path \
 -DTENSORRT_LIB_PATH=/path ..
 =====================================
 ")
@@ -16,7 +16,7 @@ set(CMAKE_INSTALL_BINDIR /usr/bin CACHE PATH "Install dir for binary")
 
 # set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib CACHE PATH "")
 option(BUILD_PYTHON "compile python api" OFF)
-option(BUILD_TEST "compile test" ON)
+option(BUILD_SAMPLE "build samples" ON)
 
 set(GPU_ARCH "" CACHE STRING "GPU compute capability")
 set(TENSORRT_LIB_PATH "" CACHE STRING "absolute path to tensorrt libraries")
@@ -54,9 +54,10 @@ endif()
 # Add ptx & bin flags for cuda
 set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} ${CUDA_gencode_flags}")
 
-include_directories(spdlog)
-include_directories(pybind11/include)
+include_directories(third_party/spdlog/include)
+include_directories(third_party/pybind11/include)
 include_directories(./)
+include_directories(./src)
 include_directories(./plugin)
 include_directories(${ZLIB_INCLUDE_DIRS})
 include_directories(${TENSORRT_INCLUDE_DIR})
@@ -67,7 +68,7 @@ TensorRT headers: ${TENSORRT_INCLUDE_DIR}
 TensorRT library: ${LIBNVINFER}
 Generated gencode flags: ${CUDA_gencode_flags} 
 BUILD_PYTHON : ${BUILD_PYTHON} 
-BUILD_TEST : ${BUILD_TEST} 
+BUILD_SAMPLE : ${BUILD_SAMPLE} 
 
 for -DGPU_ARCH, refer to 
 https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/
@@ -76,9 +77,9 @@ https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-c
 
 
 file(GLOB_RECURSE trt_source
-     Trt.cpp
-     cnpy.cpp
-     Int8Calibrator.cpp
+     src/Trt.cpp
+     src/cnpy.cpp
+     src/Int8Calibrator.cpp
      plugin/*.cu
      plugin/*.cpp
      )
@@ -92,11 +93,8 @@ install(TARGETS tinytrt
   PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 if(BUILD_PYTHON)
-  # set(Python3_ROOT_DIR /root/miniconda3/bin)
-  # find_package(Python3 REQUIRED)
-  include_directories(${PYTHON_INCLUDE_DIRS})
-  add_subdirectory(pybind11)
-  pybind11_add_module(pytrt SHARED PyTrt.cpp)
+  add_subdirectory(third_party/pybind11)
+  pybind11_add_module(pytrt SHARED src/PyTrt.cpp)
   target_link_libraries(pytrt PRIVATE tinytrt)
   target_link_libraries(pytrt PRIVATE ${LIBNVINFER})
   target_link_libraries(pytrt PRIVATE ${LIBNVINFER_PLUGIN})
@@ -107,11 +105,11 @@ endif()
 
 link_directories(lib/)
 ## custom test
-if(BUILD_TEST)
-  file(GLOB test_source
-      test/test.cpp
+if(BUILD_SAMPLE)
+  file(GLOB tinyexec_source
+      samples/tinyexec/tinyexec.cpp
       )
-  add_executable(tinyexec ${test_source})
+  add_executable(tinyexec ${tinyexec_source})
   target_compile_options(tinyexec PUBLIC -std=c++11 -Wall -Wno-deprecated -Wfloat-conversion)
   target_link_libraries(tinyexec tinytrt)
   target_link_libraries(tinyexec ${LIBNVINFER})
