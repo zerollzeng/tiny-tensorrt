@@ -366,7 +366,7 @@ void Trt::BuildEngine() {
     }
     mBuilder->setMaxBatchSize(mBatchSize);
     // set the maximum GPU temporary memory which the engine can use at execution time.
-    mConfig->setMaxWorkspaceSize(2 << 30); // 2GB
+    mConfig->setMaxWorkspaceSize(1 << 30); // 1GB
     spdlog::info("set max workspace size: {}", mConfig->getMaxWorkspaceSize());
 
 #if NV_TENSORRT_MAJOR < 8
