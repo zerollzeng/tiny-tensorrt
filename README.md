@@ -8,6 +8,8 @@
 
 ![image](https://user-images.githubusercontent.com/38289304/71065174-aafc3100-21ab-11ea-9bcb-665d38181e74.png)
 
+tiny-tensorrt 1.0.0.0 release! a lot of code clean && optimization, support both of TRT 7 and TRT 8!
+
 ## tiny-tensorrt
 An easy-to-use nvidia TensorRT wrapper for onnx model with c++ and python api. you will be able to deploy your model with tiny-tensorrt in few lines of code!
 
@@ -21,7 +23,11 @@ net->CopyFromDeviceToHost(output, outputBindIndex)
 
 ## Install
 
-tiny-tensorrt rely on CUDA 10.2+ and TRT 8+. Make sure you has installed those dependencies already. For a quick start, you can use [official docker](https://ngc.nvidia.com/catalog/containers/nvidia:tensorrt)
+tiny-tensorrt rely on CUDA, CUDNN and TensorRT. Make sure you has installed those dependencies already. For a quick start, you can use [official docker](https://ngc.nvidia.com/catalog/containers/nvidia:tensorrt)
+
+Support CUDA version: 10.2, 11.0, 11.1, 11.2, 11.3, 11.4
+
+Support TensorRT version: 7.0, 7.1, 7.2, 8.0, 8.2
 
 To build tiny-tensorrt, you also need some extra packages.
 ```bash
