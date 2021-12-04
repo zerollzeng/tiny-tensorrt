@@ -8,7 +8,7 @@
 
 ![image](https://user-images.githubusercontent.com/38289304/71065174-aafc3100-21ab-11ea-9bcb-665d38181e74.png)
 
-tiny-tensorrt 1.0.0.0 release! a lot of code clean && optimization, support both of TRT 7 and TRT 8!
+tiny-tensorrt 1.0.0 release! a lot of code clean && optimization, support both of TRT 7 and TRT 8!
 
 ## tiny-tensorrt
 An easy-to-use nvidia TensorRT wrapper for onnx model with c++ and python api. you will be able to deploy your model with tiny-tensorrt in few lines of code!
