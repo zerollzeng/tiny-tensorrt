@@ -141,6 +141,7 @@ void Trt::CreateEngine(
         int mode) {
     mBatchSize = maxBatchSize;
     mRunMode = mode;
+    initLibNvInferPlugins(mLogger, "");
     if(!DeserializeEngine(engineFile)) {
         if(!BuildEngineWithOnnx(onnxModel,engineFile,mCustomOutputs)) {
             spdlog::error("error: could not deserialize or build engine");
@@ -344,7 +345,6 @@ bool Trt::DeserializeEngine(const std::string& engineFile) {
         in.seekg(start_pos);
         std::unique_ptr<char[]> engineBuf(new char[bufCount]);
         in.read(engineBuf.get(), bufCount);
-        initLibNvInferPlugins(mLogger, "");
         mEngine = mRuntime->deserializeCudaEngine((void*)engineBuf.get(), bufCount);
         assert(mEngine != nullptr);
         mBatchSize = mEngine->getMaxBatchSize();
