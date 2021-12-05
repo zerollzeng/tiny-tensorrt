@@ -204,12 +204,13 @@ int main(int argc, char** argv) {
         }
     }
 
-    auto time1 = std::chrono::steady_clock::now();
-    onnx_net->Forward();
-    auto time2 = std::chrono::steady_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(time2-time1).count();
-
-    std::cout << "TRT enqueue done, time: " << duration << " ms." << std::endl;
+    for(int i=0; i<10; i++) {
+        auto time1 = std::chrono::steady_clock::now();
+        onnx_net->Forward();
+        auto time2 = std::chrono::steady_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(time2-time1).count();
+        std::cout << "TRT enqueue done, time: " << ((float)duration / 1000) << " ms." << std::endl;
+    }
 
     delete onnx_net;
     
