@@ -14,28 +14,28 @@
 #include <chrono>
 #include <cassert>
 
-class InputParser{                                                              
-    public:                                                                     
-        InputParser (int &argc, char **argv){                                   
-            for (int i=1; i < argc; ++i)                                        
-                this->tokens.push_back(std::string(argv[i]));                   
-        }                                                                       
-        const std::string& getCmdOption(const std::string &option) const{       
-            std::vector<std::string>::const_iterator itr;                       
-            itr =  std::find(this->tokens.begin(), this->tokens.end(), option); 
-            if (itr != this->tokens.end() && ++itr != this->tokens.end()){      
-                return *itr;                                                    
-            }                                                                   
-            static const std::string empty_string("");                          
-            return empty_string;                                                
-        }                                                                       
-        bool cmdOptionExists(const std::string &option) const{                  
-            return std::find(this->tokens.begin(), this->tokens.end(), option)  
-                   != this->tokens.end();                                       
-        }                                                                       
-    private:                                                                    
-        std::vector <std::string> tokens;                                       
-};  
+class InputParser{
+    public:
+        InputParser (int &argc, char **argv){
+            for (int i=1; i < argc; ++i)
+                this->tokens.push_back(std::string(argv[i]));
+        }
+        const std::string& getCmdOption(const std::string &option) const{
+            std::vector<std::string>::const_iterator itr;
+            itr =  std::find(this->tokens.begin(), this->tokens.end(), option);
+            if (itr != this->tokens.end() && ++itr != this->tokens.end()){
+                return *itr;
+            }
+            static const std::string empty_string("");
+            return empty_string;
+        }
+        bool cmdOptionExists(const std::string &option) const{
+            return std::find(this->tokens.begin(), this->tokens.end(), option)
+                   != this->tokens.end();
+        }
+    private:
+        std::vector <std::string> tokens;
+};
 
 static void split_string(std::vector<std::string>& output, std::string input_str, char c) {
     std::stringstream str_stream(input_str);
@@ -46,7 +46,7 @@ static void split_string(std::vector<std::string>& output, std::string input_str
     }
 }
 
-static void parse_specs(const std::string& input_specs_str, 
+static void parse_specs(const std::string& input_specs_str,
         std::vector<std::string>& input_names, std::vector<std::vector<int>>& min_shapes,
         std::vector<std::vector<int>>& opt_shapes, std::vector<std::vector<int>>& max_shapes) {
     std::vector<std::string> profiles;
@@ -98,12 +98,12 @@ static void parse_specs(const std::string& input_specs_str,
 static void show_usage(std::string name) {
     std::cerr << "Usage: " << name << " <option(s)> SOURCES"
               << "Options:\n"
-              << "\t--onnx\t\tinput onnx model, must specify\n"
+              << "\t--onnx\t\tinput onnx model\n"
+              << "\t--load_engine\t\tengine file to load\n"
               << "\t--batch_size\t\tdefault is 1\n"
               << "\t--mode\t\t0 for fp32 1 for fp16 2 for int8, default is 0\n"
               << "\t--engine\t\tsaved path for engine file, if path exists, "
-                  "will load the engine file, otherwise will create the engine file "
-                  "after build engine. dafault is empty\n"
+                  "dafault is empty\n"
               << "\t--calibrate_data\t\tdata path for calibrate data which contain "
                  "npz files, default is empty\n"
               << "\t--gpu\t\tchoose your device, default is 0\n"
@@ -124,7 +124,8 @@ int main(int argc, char** argv) {
     InputParser cmdparams(argc, argv);
 
     const std::string& onnx_path = cmdparams.getCmdOption("--onnx");
-    
+    const std::string& engine = cmdparams.getCmdOption("--load_engine");
+
     std::vector<std::string> custom_outputs;
     const std::string& custom_outputs_string = cmdparams.getCmdOption("--custom_outputs");
     std::istringstream stream(custom_outputs_string);
@@ -195,7 +196,12 @@ int main(int argc, char** argv) {
         onnx_net->SetLogLevel(log_level);
     }
 
-    onnx_net->CreateEngine(onnx_path, engine_file, batch_size, run_mode);
+    if(engine != "") {
+        onnx_net->DeserializeEngine(engine);
+    } else {
+        onnx_net->CreateEngine(onnx_path, engine_file, batch_size, run_mode);
+    }
+
 
     // do inference
     if(input_specs_str != "") {
@@ -213,6 +219,6 @@ int main(int argc, char** argv) {
     }
 
     delete onnx_net;
-    
+
     return 0;
 }

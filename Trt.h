@@ -37,7 +37,7 @@ public:
     /**
      * @description: create engine from onnx model
      * @onnxModel: path to onnx model
-     * @engineFile: path to saved engien file will be load or save, if it's empty them will not
+     * @engineFile: path to saved engien file will be save, if it's empty them will not
      *              save engine file
      * @maxBatchSize: max batch size for inference.
      * @return:
@@ -47,6 +47,14 @@ public:
         const std::string& engineFile,
         int maxBatchSize,
         int mode);
+
+    /**
+     * Deserialize an engine from engineFile
+     * @engineFile: can be create by CreateEngine, or save with trtexec or tiny-exec
+     * return false if deserialization failed.
+     */
+    bool DeserializeEngine(const std::string& engineFile);
+
 
     /**
      * @description: do inference on engine context, make sure you already copy your data to device memory,
@@ -163,8 +171,6 @@ public:
     int GetNbOutputBindings() const;
 
 protected:
-
-    bool DeserializeEngine(const std::string& engineFile);
 
     void BuildEngine();
 

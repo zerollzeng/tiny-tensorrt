@@ -142,13 +142,31 @@ void Trt::CreateEngine(
     mBatchSize = maxBatchSize;
     mRunMode = mode;
     initLibNvInferPlugins(mLogger, "");
-    if(!DeserializeEngine(engineFile)) {
-        if(!BuildEngineWithOnnx(onnxModel,engineFile,mCustomOutputs)) {
-            spdlog::error("error: could not deserialize or build engine");
-            return;
-        }
+    if(!BuildEngineWithOnnx(onnxModel,engineFile,mCustomOutputs)) {
+        spdlog::error("error: could not deserialize or build engine");
+        return;
     }
     InitEngine();
+}
+
+bool Trt::DeserializeEngine(const std::string& engineFile) {
+    std::ifstream in(engineFile.c_str(), std::ifstream::binary);
+    if(in.is_open()) {
+        spdlog::info("deserialize engine from {}",engineFile);
+        auto const start_pos = in.tellg();
+        in.ignore(std::numeric_limits<std::streamsize>::max());
+        size_t bufCount = in.gcount();
+        in.seekg(start_pos);
+        std::unique_ptr<char[]> engineBuf(new char[bufCount]);
+        in.read(engineBuf.get(), bufCount);
+        mEngine = mRuntime->deserializeCudaEngine((void*)engineBuf.get(), bufCount);
+        assert(mEngine != nullptr);
+        mBatchSize = mEngine->getMaxBatchSize();
+        spdlog::info("max batch size of deserialized engine: {}",mEngine->getMaxBatchSize());
+        InitEngine();
+        return true;
+    }
+    return false;
 }
 
 void Trt::Forward() {
@@ -333,25 +351,6 @@ void Trt::SaveEngine(const std::string& fileName) {
     } else {
         spdlog::error("engine is empty, save engine failed");
     }
-}
-
-bool Trt::DeserializeEngine(const std::string& engineFile) {
-    std::ifstream in(engineFile.c_str(), std::ifstream::binary);
-    if(in.is_open()) {
-        spdlog::info("deserialize engine from {}",engineFile);
-        auto const start_pos = in.tellg();
-        in.ignore(std::numeric_limits<std::streamsize>::max());
-        size_t bufCount = in.gcount();
-        in.seekg(start_pos);
-        std::unique_ptr<char[]> engineBuf(new char[bufCount]);
-        in.read(engineBuf.get(), bufCount);
-        mEngine = mRuntime->deserializeCudaEngine((void*)engineBuf.get(), bufCount);
-        assert(mEngine != nullptr);
-        mBatchSize = mEngine->getMaxBatchSize();
-        spdlog::info("max batch size of deserialized engine: {}",mEngine->getMaxBatchSize());
-        return true;
-    }
-    return false;
 }
 
 void Trt::BuildEngine() {
