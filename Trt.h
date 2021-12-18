@@ -35,7 +35,7 @@ public:
     ~Trt();
 
     /**
-     * @description: create engine from onnx model
+     * create engine from onnx model
      * @onnxModel: path to onnx model
      * @engineFile: path to saved engien file will be save, if it's empty them will not
      *              save engine file
@@ -57,22 +57,25 @@ public:
 
 
     /**
-     * @description: do inference on engine context, make sure you already copy your data to device memory,
-     *               see DataTransfer and CopyFromHostToDevice etc.
+     * do inference on engine context, make sure you already copy your data to device memory,
      */
     void Forward();
 
     /**
-     * @description: async inference on engine context
+     * async inference on engine context
      * @stream cuda stream for async inference and data transfer
      */
     void Forward(const cudaStream_t& stream);
 
-    void SetBindingDimensions(std::vector<int>& inputDims, int bindIndex);
     /**
-     * @description: data transfer between host and device, for example befor Forward, you need
-     *               copy input data from host to device, and after Forward, you need to transfer
-     *               output result from device to host.
+     * Set input dimentiosn for an inference, call this before forward with dynamic shape mode.
+     */
+    void SetBindingDimensions(std::vector<int>& inputDims, int bindIndex);
+
+    /**
+     * Data transfer between host and device, for example befor Forward, you need
+     * copy input data from host to device, and after Forward, you need to transfer
+     * output result from device to host.
      * @bindIndex binding data index, you can see this in CreateEngine log output.
      */
     void CopyFromHostToDevice(const std::vector<float>& input, int bindIndex);
@@ -83,45 +86,73 @@ public:
 
     void CopyFromDeviceToHost(std::vector<float>& output, int bindIndex,const cudaStream_t& stream);
 
+    /**
+     * get binding data pointer in device. for example if you want to do some post processing
+     * on inference output but want to process them in gpu directly for efficiency, you can
+     * use this function to avoid extra data IO, or you can copy inputs from device to
+     * binding prt directly so that you don't need to call CopyFromHostToDevice. hence
+     * good for performance.
+     * @return: pointer point to device memory.
+     */
+    void* GetBindingPtr(int bindIndex) const;
+
+    /**
+     * Set device for build engine
+     */
     void SetDevice(int device);
 
+    /**
+     * Get device for build engine
+     */
     int GetDevice() const;
 
     /**
-     * @description: setting a int8 calibrator.To run INT8 calibration for a network with dynamic shapes, calibration optimization profile must be set. Calibration is performed using kOPT values of the profile. Calibration input data size must match this profile.
+     * setting a int8 calibrator.To run INT8 calibration for a network with dynamic shapes, calibration optimization 
+     * profile must be set. Calibration is performed using kOPT values of the profile. Calibration input data size 
+     * must match this profile.
      * @calibratorData: use for int8 mode, calabrator data is a batch of sample input,
      *                  for classification task you need around 500 sample input. and this
      *                  is for int8 mode
      * @calibratorType: there are four calibrator types now.
-     *                  EntropyCalibratorV2: This is the recommended calibrator and is required for DLA. Calibration happens before Layer fusion by default. This is recommended for CNN based networks.
-     *                  MinMaxCalibrator:This is the preferred calibrator for NLP tasks for all backends. Calibration happens before Layer fusion by default. This is recommended for BERT like networks.
-     *                  EntropyCalibrator:This is the legacy entropy calibrator.This is less complicated than a legacy calibrator and produces better results. Calibration happens after Layer fusion by default. See kCALIBRATION_BEFORE_FUSION for enabling calibration before fusion.
-     *                  LegacyCalibrator:This calibrator is for compatibility with TensorRT 2.0 EA. This calibrator requires user parameterization, and is provided as a fallback option if the other calibrators yield poor results. Calibration happens after Layer fusion by default. See kCALIBRATION_BEFORE_FUSION for enabling calibration before fusion. Users can customize this calibrator to implement percentile max, like 99.99% percentile max is proved to have best accuracy for BERT. For more information, refer to the Integer Quantization for Deep Learning Inference: Principles and Empirical Evaluation paper.
+     *                  EntropyCalibratorV2: This is the recommended calibrator and is required for DLA. Calibration 
+     *                  happens before Layer fusion by default. This is recommended for CNN based networks.
+     *                  MinMaxCalibrator:This is the preferred calibrator for NLP tasks for all backends. 
+     *                  Calibration happens before Layer fusion by default. This is recommended for BERT like networks.
+     *                  EntropyCalibrator:This is the legacy entropy calibrator.This is less complicated than a legacy 
+     *                  calibrator and produces better results. Calibration happens after Layer fusion by default. See 
+     *                  kCALIBRATION_BEFORE_FUSION for enabling calibration before fusion.
+     *                  LegacyCalibrator:This calibrator is for compatibility with TensorRT 2.0 EA. 
+     *                  This calibrator requires user parameterization, and is provided as a fallback option if the 
+     *                  other calibrators yield poor results. Calibration happens after Layer fusion by default. 
+     *                  See kCALIBRATION_BEFORE_FUSION for enabling calibration before fusion. Users can customize 
+     *                  this calibrator to implement percentile max, like 99.99% percentile max is proved to have best 
+     *                  accuracy for BERT. For more information, refer to the Integer Quantization for Deep Learning 
+     *                  Inference: Principles and Empirical Evaluation paper.
      */
     void SetInt8Calibrator(const std::string& calibratorType, const int batchSize,
                            const std::string& dataPath, const std::string& calibrateCachePath);
 
     /**
-     * @description: set dla core
+     * set dla core
      * @dlaCore dla core index, eg 0,1...
      */
     void SetDLACore(int dlaCore);
 
     /**
-     * @description: set custom output, this will un-mark the original output
+     * set custom output, this will un-mark the original output
      * @customOutputs custom output node name list
      */
     void SetCustomOutput(const std::vector<std::string>& customOutputs);
 
     /**
-     * @description: set tensorrt internal log level
+     * set tensorrt internal log level
      * @level Severity::kINTERNAL_ERROR = 0, Severity::kERROR = 1, Severity::kWARNING = 2, Severity::kINFO = 3,
      *                  Severity::kVERBOSE = 4, default level is <= kINFO.
      */
     void SetLogLevel(int severity);
 
     /**
-     * @description: add dynamic shape profile
+     * add dynamic shape profile
      */
     void AddDynamicShapeProfile(const std::string& inputName,
                                 const std::vector<int>& minDimVec,
@@ -129,45 +160,43 @@ public:
                                 const std::vector<int>& maxDimVec);
 
     /**
-     * @description: get max batch size of build engine.
+     * get max batch size of build engine.
      * @return: max batch size of build engine.
      */
     int GetMaxBatchSize() const;
 
     /**
-     * @description: get binding data pointer in device. for example if you want to do some post processing
-     *               on inference output but want to process them in gpu directly for efficiency, you can
-     *               use this function to avoid extra data io
-     * @return: pointer point to device memory.
-     */
-    void* GetBindingPtr(int bindIndex) const;
-
-    /**
-     * @description: get binding data size in byte, so maybe you need to divide it by sizeof(T) where T is data type
+     * get binding data size in byte, so maybe you need to divide it by sizeof(T) where T is data type
      *               like float.
      * @return: size in byte.
      */
     size_t GetBindingSize(int bindIndex) const;
 
     /**
-     * @description: get binding dimemsions
+     * get binding dimemsions
      * @return: binding dimemsions, see https://docs.nvidia.com/deeplearning/sdk/tensorrt-api/c_api/classnvinfer1_1_1_dims.html
      */
     nvinfer1::Dims GetBindingDims(int bindIndex) const;
 
     /**
-     * @description: get binding data type
+     * get binding data type
      * @return: binding data type, see https://docs.nvidia.com/deeplearning/sdk/tensorrt-api/c_api/namespacenvinfer1.html#afec8200293dc7ed40aca48a763592217
      */
     nvinfer1::DataType GetBindingDataType(int bindIndex) const;
 
     /**
-     * @description: get binding name
+     * get binding name
      */
     std::string GetBindingName(int bindIndex) const;
 
+    /**
+     * get number of input bindings.
+     */
     int GetNbInputBindings() const;
 
+    /**
+     * get number of output bindings.
+     */
     int GetNbOutputBindings() const;
 
 protected:
@@ -179,12 +208,12 @@ protected:
                      const std::vector<std::string>& customOutput);
 
     /**
-     * description: Init resource such as device memory
+     * Init resource such as device memory
      */
     void InitEngine();
 
     /**
-     * description: save engine to engine file
+     * save engine to engine file
      */
     void SaveEngine(const std::string& fileName);
 
