@@ -1,10 +1,3 @@
-/*
- * @Description: int8 entrophy calibrator 2
- * @Author: zengren
- * @Date: 2019-08-21 16:52:06
- * @LastEditTime: 2019-08-22 17:04:49
- * @LastEditors: Please set LastEditors
- */
 #include "Int8Calibrator.h"
 #include "spdlog/spdlog.h"
 #include "cnpy.h"

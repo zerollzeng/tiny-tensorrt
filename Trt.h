@@ -1,9 +1,3 @@
-/*
- * @Date: 2019-08-29 09:48:01
- * @LastEditors: zerollzeng
- * @LastEditTime: 2020-03-02 14:58:37
- */
-
 #ifndef TRT_HPP
 #define TRT_HPP
 
@@ -12,9 +6,24 @@
 #include <iostream>
 #include <numeric>
 #include <algorithm>
+#include <memory>
 
 #include "NvInfer.h"
 
+template <typename T>
+struct TrtDestroyer
+{
+    void operator()(T* t)
+    {
+#if NV_TENSORRT_MAJOR < 8
+        t->destroy();
+#else
+        delete t;
+#endif
+    }
+};
+template <typename T>
+using TrtUniquePtr = std::unique_ptr<T, TrtDestroyer<T>>;
 
 using Severity = nvinfer1::ILogger::Severity;
 class TrtLogger : public nvinfer1::ILogger {
@@ -27,6 +36,16 @@ private:
     Severity mSeverity = Severity::kINFO;
 };
 
+/**
+    * Set the GPU to use
+    */
+void SetDevice(int device);
+
+/**
+    * Get the GPU to use
+    */
+int GetDevice();
+
 class Trt {
 public:
 
@@ -34,80 +53,22 @@ public:
 
     ~Trt();
 
+    Trt(const Trt& trt) = delete;
+
+    Trt& operator=(const Trt& trt) = delete;
+
     /**
-     * create engine from onnx model
-     * @onnxModel: path to onnx model
-     * @engineFile: path to saved engien file will be save, if it's empty them will not
-     *              save engine file
-     * @maxBatchSize: max batch size for inference.
-     * @return:
+     * Enable FP16 precision, by default TensorRT enable FP32 precision.
      */
-    void CreateEngine(
-        const std::string& onnxModel,
-        const std::string& engineFile,
-        int maxBatchSize,
-        int mode);
+    void EnableFP16();
 
     /**
-     * Deserialize an engine from engineFile
-     * @engineFile: can be create by CreateEngine, or save with trtexec or tiny-exec
-     * return false if deserialization failed.
+     * Enable INT8 precision, by default TensorRT enable FP32 precision.
      */
-    bool DeserializeEngine(const std::string& engineFile);
-
-
-    /**
-     * do inference on engine context, make sure you already copy your data to device memory,
-     */
-    void Forward();
+    void EnableINT8();
 
     /**
-     * async inference on engine context
-     * @stream cuda stream for async inference and data transfer
-     */
-    void Forward(const cudaStream_t& stream);
-
-    /**
-     * Set input dimentiosn for an inference, call this before forward with dynamic shape mode.
-     */
-    void SetBindingDimensions(std::vector<int>& inputDims, int bindIndex);
-
-    /**
-     * Data transfer between host and device, for example befor Forward, you need
-     * copy input data from host to device, and after Forward, you need to transfer
-     * output result from device to host.
-     * @bindIndex binding data index, you can see this in CreateEngine log output.
-     */
-    void CopyFromHostToDevice(const std::vector<float>& input, int bindIndex);
-
-    void CopyFromDeviceToHost(std::vector<float>& output, int bindIndex);
-
-    void CopyFromHostToDevice(const std::vector<float>& input, int bindIndex,const cudaStream_t& stream);
-
-    void CopyFromDeviceToHost(std::vector<float>& output, int bindIndex,const cudaStream_t& stream);
-
-    /**
-     * get binding data pointer in device. for example if you want to do some post processing
-     * on inference output but want to process them in gpu directly for efficiency, you can
-     * use this function to avoid extra data IO, or you can copy inputs from device to
-     * binding prt directly so that you don't need to call CopyFromHostToDevice. hence
-     * good for performance.
-     * @return: pointer point to device memory.
-     */
-    void* GetBindingPtr(int bindIndex) const;
-
-    /**
-     * Set device for build engine
-     */
-    void SetDevice(int device);
-
-    /**
-     * Get device for build engine
-     */
-    int GetDevice() const;
-
-    /**
-     * setting a int8 calibrator.To run INT8 calibration for a network with dynamic shapes, calibration optimization 
+     * Setting a int8 calibrator.To run INT8 calibration for a network with dynamic shapes, calibration optimization 
      * profile must be set. Calibration is performed using kOPT values of the profile. Calibration input data size 
      * must match this profile.
      * @calibratorData: use for int8 mode, calabrator data is a batch of sample input,
@@ -133,26 +94,89 @@ public:
                            const std::string& dataPath, const std::string& calibrateCachePath);
 
     /**
-     * set dla core
+     * Set the maximum GPU temporary memory which the engine can use at execution time.
+     */
+    void SetWorkpaceSize(size_t workspaceSize);
+
+    /**
+     * Set dla core
      * @dlaCore dla core index, eg 0,1...
      */
     void SetDLACore(int dlaCore);
 
     /**
-     * set custom output, this will un-mark the original output
+     * Set custom output, this will un-mark the original output
      * @customOutputs custom output node name list
      */
     void SetCustomOutput(const std::vector<std::string>& customOutputs);
 
     /**
-     * set tensorrt internal log level
+     * Set tensorrt internal log level
      * @level Severity::kINTERNAL_ERROR = 0, Severity::kERROR = 1, Severity::kWARNING = 2, Severity::kINFO = 3,
      *                  Severity::kVERBOSE = 4, default level is <= kINFO.
      */
     void SetLogLevel(int severity);
+    
+    /**
+     * Create engine from onnx model
+     * @onnxModel: path to onnx model
+     * @engineFile: path to saved engien file will be save, if it's empty them will not
+     *              save engine file
+     * @return:
+     */
+    void BuildEngine(const std::string& onnxModel, const std::string& engineFile);
 
     /**
-     * add dynamic shape profile
+     * Deserialize an engine from engineFile
+     * @engineFile: can be create by BuildEngine, or save with trtexec or tiny-exec
+     * @dlaCore: dla core to use, you can build engine on dla core 0 and deserialize the
+     *           engine to core 1. Only available on jetson platform has DLA support.
+     * return false if deserialization failed.
+     */
+    bool DeserializeEngine(const std::string& engineFile, int dlaCore=-1);
+
+
+    /**
+     * Do inference on engine context, make sure you already copy your data to device memory,
+     * return true if success
+     */
+    bool Forward();
+
+    /**
+     * Async inference on engine context, return true if success
+     * @stream cuda stream for async inference and data transfer
+     */
+    bool Forward(const cudaStream_t& stream);
+
+    /**
+     * Set input dimentiosn for an inference, call this before forward with dynamic shape mode.
+     */
+    void SetBindingDimensions(std::vector<int>& inputDims, int bindIndex);
+
+    /**
+     * Copy input from host to device
+     * @bindIndex binding data index, you can see this in BuildEngine log output.
+     */
+    void CopyFromHostToDevice(const std::vector<float>& input, int bindIndex,const cudaStream_t& stream = 0);
+
+    /**
+     * Copy input from device to host
+     * @bindIndex binding data index, you can see this in BuildEngine log output.
+     */
+    void CopyFromDeviceToHost(std::vector<float>& output, int bindIndex,const cudaStream_t& stream = 0);
+
+    /**
+     * Get binding data pointer in device. for example if you want to do some post processing
+     * on inference output but want to process them in gpu directly for efficiency, you can
+     * use this function to avoid extra data IO, or you can copy inputs from device to
+     * binding prt directly so that you don't need to call CopyFromHostToDevice. Hence
+     * good for performance.
+     * @return: pointer point to device memory.
+     */
+    void* GetBindingPtr(int bindIndex) const;
+
+    /**
+     * Add dynamic shape profile
      */
     void AddDynamicShapeProfile(const std::string& inputName,
                                 const std::vector<int>& minDimVec,
@@ -160,89 +184,53 @@ public:
                                 const std::vector<int>& maxDimVec);
 
     /**
-     * get max batch size of build engine.
-     * @return: max batch size of build engine.
-     */
-    int GetMaxBatchSize() const;
-
-    /**
-     * get binding data size in byte, so maybe you need to divide it by sizeof(T) where T is data type
+     * Get binding data size in byte, so maybe you need to divide it by sizeof(T) where T is data type
      *               like float.
      * @return: size in byte.
      */
     size_t GetBindingSize(int bindIndex) const;
 
     /**
-     * get binding dimemsions
+     * Get binding dimemsions
      * @return: binding dimemsions, see https://docs.nvidia.com/deeplearning/sdk/tensorrt-api/c_api/classnvinfer1_1_1_dims.html
      */
     nvinfer1::Dims GetBindingDims(int bindIndex) const;
 
     /**
-     * get binding data type
+     * Get binding data type
      * @return: binding data type, see https://docs.nvidia.com/deeplearning/sdk/tensorrt-api/c_api/namespacenvinfer1.html#afec8200293dc7ed40aca48a763592217
      */
     nvinfer1::DataType GetBindingDataType(int bindIndex) const;
 
     /**
-     * get binding name
+     * Get binding name
      */
     std::string GetBindingName(int bindIndex) const;
 
     /**
-     * get number of input bindings.
+     * Get number of input bindings.
      */
     int GetNbInputBindings() const;
 
     /**
-     * get number of output bindings.
+     * Get number of output bindings.
      */
     int GetNbOutputBindings() const;
 
 protected:
+    void CreateDeviceBuffer();
 
-    void BuildEngine();
+    TrtUniquePtr<TrtLogger> mLogger{nullptr};
 
-    bool BuildEngineWithOnnx(const std::string& onnxModel,
-                     const std::string& engineFile,
-                     const std::vector<std::string>& customOutput);
+    TrtUniquePtr<nvinfer1::IBuilder> mBuilder{nullptr};
 
-    /**
-     * Init resource such as device memory
-     */
-    void InitEngine();
+    TrtUniquePtr<nvinfer1::IBuilderConfig> mConfig{nullptr};
 
-    /**
-     * save engine to engine file
-     */
-    void SaveEngine(const std::string& fileName);
+    TrtUniquePtr<nvinfer1::ICudaEngine> mEngine{nullptr};
 
-protected:
-    TrtLogger* mLogger = nullptr;
-
-    // tensorrt run mode 0:fp32 1:fp16 2:int8
-    int mRunMode;
-
-    // batch size
-    int mBatchSize;
-
-    nvinfer1::NetworkDefinitionCreationFlags mFlags = 0;
-
-    nvinfer1::IBuilderConfig* mConfig = nullptr;
-
-    nvinfer1::IBuilder* mBuilder = nullptr;
-
-    nvinfer1::INetworkDefinition* mNetwork = nullptr;
-
-    nvinfer1::ICudaEngine* mEngine = nullptr;
-
-    nvinfer1::IExecutionContext* mContext = nullptr;
-
-    nvinfer1::IRuntime* mRuntime = nullptr;
+    TrtUniquePtr<nvinfer1::IExecutionContext> mContext{nullptr};
 
     nvinfer1::IOptimizationProfile* mProfile = nullptr;
-
-    nvinfer1::IHostMemory* mPlan = nullptr;
 
     std::vector<std::string> mCustomOutputs;
 

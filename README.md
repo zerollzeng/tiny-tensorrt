@@ -15,7 +15,8 @@ An easy-to-use nvidia TensorRT wrapper for onnx model with c++ and python api. y
 
 ```c++
 Trt* net = new Trt();
-net->CreateEngine(onnxModel, engineFile,maxBatchSize, precision);
+net->SetFP16();
+net->BuildEngine(onnxModel, engineFile);
 net->CopyFromHostToDevice(input, inputBindIndex);
 net->Forward();
 net->CopyFromDeviceToHost(output, outputBindIndex)

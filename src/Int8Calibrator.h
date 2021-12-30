@@ -1,10 +1,3 @@
-/*
- * @Description: In User Settings Edit
- * @Author: your name
- * @Date: 2019-08-21 16:48:34
- * @LastEditTime: 2019-08-22 17:06:20
- * @LastEditors: Please set LastEditors
- */
 #ifndef _ENTROY_CALIBRATOR_H
 #define _ENTROY_CALIBRATOR_H
 

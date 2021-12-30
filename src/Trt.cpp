@@ -1,10 +1,3 @@
-/*
- * @Description: In User Settings Edit
- * @Author: your name
- * @Date: 2019-08-21 14:06:38
- * @LastEditTime: 2020-06-10 11:51:09
- * @LastEditors: zerollzeng
- */
 #include "Trt.h"
 #include "utils.h"
 #include "spdlog/spdlog.h"
@@ -15,7 +8,6 @@
 #include <iostream>
 #include <cassert>
 #include <fstream>
-#include <memory>
 
 #include "NvInfer.h"
 #include "NvInferRuntime.h"
@@ -23,7 +15,38 @@
 #include "NvInferPlugin.h"
 #include "NvInferVersion.h"
 
-using NDCFLAG = nvinfer1::NetworkDefinitionCreationFlag;
+void SetDevice(int device) {
+    spdlog::info("set device {}", device);
+    CUDA_CHECK(cudaSetDevice(device));
+}
+
+int GetDevice() {
+    int device = -1;
+    CUDA_CHECK(cudaGetDevice(&device));
+    if(device != -1) {
+        return device;
+    } else {
+        spdlog::error("Get Device Error");
+        return -1;
+    }
+}
+
+void SaveEngine(const std::string& fileName, TrtUniquePtr<nvinfer1::IHostMemory>& plan) {
+    if(fileName == "") {
+        spdlog::warn("empty engine file name, skip save");
+        return;
+    }
+    assert(plan != nullptr);
+    spdlog::info("save engine to {}...",fileName);
+    std::ofstream file;
+    file.open(fileName,std::ios::binary | std::ios::out);
+    if(!file.is_open()) {
+        spdlog::error("read create engine file {} failed",fileName);
+        return;
+    }
+    file.write((const char*)plan->data(), plan->size());
+    file.close();
+}
 
 void TrtLogger::log(Severity severity, const char* msg) noexcept {
     if (severity <= mSeverity) {
@@ -61,206 +84,60 @@ Trt::Trt() {
     assert(false && "tiny-tensorrt only support TRT version greater than 7");
 #endif
     spdlog::info("create Trt instance");
-    mLogger = new TrtLogger();
-    mBuilder = nvinfer1::createInferBuilder(*mLogger);
-    mConfig = mBuilder->createBuilderConfig();
+    mLogger.reset(new TrtLogger());
+    initLibNvInferPlugins(mLogger.get(), "");
+    mBuilder.reset(nvinfer1::createInferBuilder(*mLogger));
+    assert(mBuilder != nullptr && "create trt builder failed");
+    mConfig.reset(mBuilder->createBuilderConfig());
+    assert(mConfig != nullptr && "create trt builder config failed");
+    mConfig->setMaxWorkspaceSize(1 << 30); // 1GB
     mProfile = mBuilder->createOptimizationProfile();
-    mRuntime = nvinfer1::createInferRuntime(*mLogger);
+    assert(mProfile != nullptr && "create trt builder optimazation profile failed");
 }
 
 Trt::~Trt() {
     spdlog::info("destroy Trt instance");
-#if NV_TENSORRT_MAJOR < 8
-    if(mContext != nullptr) {
-        mContext->destroy();
-        mContext = nullptr;
-    }
-    if(mEngine != nullptr) {
-        mEngine->destroy();
-        mEngine = nullptr;
-    }
-    if(mConfig != nullptr) {
-        mConfig -> destroy();
-        mConfig = nullptr;
-    }
-    if(mBuilder !=nullptr) {
-        mBuilder -> destroy();
-        mBuilder = nullptr;
-    }
-    if(mNetwork !=nullptr) {
-        mNetwork -> destroy();
-        mNetwork = nullptr;
-    }
-    if(mRuntime != nullptr) {
-        mRuntime -> destroy();
-        mRuntime = nullptr;
-    }
-    if(mPlan != nullptr) {
-        mPlan->destroy();
-        mPlan = nullptr;
-    }
-#else
-    if(mContext != nullptr) {
-        delete mContext;
-        mContext = nullptr;
-    }
-    if(mEngine !=nullptr) {
-        delete mEngine;
-        mEngine = nullptr;
-    }
-    if(mConfig !=nullptr) {
-        delete mConfig;
-        mConfig = nullptr;
-    }
-    if(mBuilder !=nullptr) {
-        delete mBuilder;
-        mBuilder = nullptr;
-    }
-    if(mNetwork !=nullptr) {
-        delete mNetwork;
-        mNetwork = nullptr;
-    }
-    if(mRuntime != nullptr) {
-        delete mRuntime;
-        mRuntime=nullptr;
-    }
-    if(mPlan != nullptr) {
-        delete mPlan;
-        mPlan = nullptr;
-    }
-#endif
+    mProfile = nullptr;
     for(size_t i=0;i<mBinding.size();i++) {
         safeCudaFree(mBinding[i]);
     }
 }
 
-void Trt::CreateEngine(
-        const std::string& onnxModel,
-        const std::string& engineFile,
-        int maxBatchSize,
-        int mode) {
-    mBatchSize = maxBatchSize;
-    mRunMode = mode;
-    initLibNvInferPlugins(mLogger, "");
-    if(!BuildEngineWithOnnx(onnxModel,engineFile,mCustomOutputs)) {
-        spdlog::error("error: could not deserialize or build engine");
-        return;
+void Trt::EnableFP16() {
+    assert(mBuilder != nullptr && mConfig !=nullptr && "Please set config before build engine");
+    spdlog::info("enable FP16");
+    if (!mBuilder->platformHasFastFp16()) {
+        spdlog::warn("the platform doesn't have native fp16 support");
     }
-    InitEngine();
+    mConfig->setFlag(nvinfer1::BuilderFlag::kFP16);
 }
 
-bool Trt::DeserializeEngine(const std::string& engineFile) {
-    std::ifstream in(engineFile.c_str(), std::ifstream::binary);
-    if(in.is_open()) {
-        spdlog::info("deserialize engine from {}",engineFile);
-        auto const start_pos = in.tellg();
-        in.ignore(std::numeric_limits<std::streamsize>::max());
-        size_t bufCount = in.gcount();
-        in.seekg(start_pos);
-        std::unique_ptr<char[]> engineBuf(new char[bufCount]);
-        in.read(engineBuf.get(), bufCount);
-        mEngine = mRuntime->deserializeCudaEngine((void*)engineBuf.get(), bufCount);
-        assert(mEngine != nullptr);
-        mBatchSize = mEngine->getMaxBatchSize();
-        spdlog::info("max batch size of deserialized engine: {}",mEngine->getMaxBatchSize());
-        InitEngine();
-        return true;
+void Trt::EnableINT8() {
+    assert(mBuilder != nullptr && mConfig !=nullptr && "Please set config before build engine");
+    spdlog::info("enable int8, call SetInt8Calibrator to set int8 calibrator");
+    if (!mBuilder->platformHasFastInt8()) {
+        spdlog::warn("the platform doesn't have native int8 support");
     }
-    return false;
-}
-
-void Trt::Forward() {
-    if(mFlags == 1U << static_cast<uint32_t>(NDCFLAG::kEXPLICIT_BATCH)) {
-        mContext->executeV2(&mBinding[0]);
-    } else {
-        mContext->execute(mBatchSize, &mBinding[0]);
-    }
-}
-
-void Trt::Forward(const cudaStream_t& stream) {
-    if(mFlags == 1U << static_cast<uint32_t>(NDCFLAG::kEXPLICIT_BATCH)) {
-        mContext->enqueueV2(&mBinding[0], stream, nullptr);
-    } else {
-        mContext->enqueue(mBatchSize, &mBinding[0], stream, nullptr);
-    }
-}
-
-void Trt::SetBindingDimensions(std::vector<int>& inputDims, int bindIndex) {
-    nvinfer1::Dims dims;
-    int nbDims = inputDims.size();
-    dims.nbDims = nbDims;
-    for(int i=0; i< nbDims; i++) {
-        dims.d[i] = inputDims[i];
-    }
-    mContext->setBindingDimensions(bindIndex, dims);
-}
-
-void Trt::CopyFromHostToDevice(const std::vector<float>& input, int bindIndex) {
-    assert(input.size()*sizeof(float) <= mBindingSize[bindIndex]);
-    CUDA_CHECK(cudaMemcpy(mBinding[bindIndex], input.data(),
-        input.size()*sizeof(float), cudaMemcpyHostToDevice));
-}
-
-void Trt::CopyFromHostToDevice(const std::vector<float>& input,
-                               int bindIndex, const cudaStream_t& stream) {
-    assert(input.size()*sizeof(float) <= mBindingSize[bindIndex]);
-    CUDA_CHECK(cudaMemcpyAsync(mBinding[bindIndex], input.data(),
-        input.size()*sizeof(float), cudaMemcpyHostToDevice, stream));
-}
-
-void Trt::CopyFromDeviceToHost(std::vector<float>& output, int bindIndex) {
-    output.resize(mBindingSize[bindIndex]/sizeof(float));
-    CUDA_CHECK(cudaMemcpy(output.data(), mBinding[bindIndex],
-        mBindingSize[bindIndex], cudaMemcpyDeviceToHost));
-}
-
-void Trt::CopyFromDeviceToHost(std::vector<float>& output, int bindIndex,
-                               const cudaStream_t& stream) {
-    output.resize(mBindingSize[bindIndex]/sizeof(float));
-    CUDA_CHECK(cudaMemcpyAsync(output.data(), mBinding[bindIndex],
-        mBindingSize[bindIndex], cudaMemcpyDeviceToHost, stream));
-}
-
-void Trt::SetDevice(int device) {
-    spdlog::info("set device {}", device);
-    CUDA_CHECK(cudaSetDevice(device));
-}
-
-int Trt::GetDevice() const {
-    int device = -1;
-    CUDA_CHECK(cudaGetDevice(&device));
-    if(device != -1) {
-        return device;
-    } else {
-        spdlog::error("Get Device Error");
-        return -1;
-    }
+    mConfig->setFlag(nvinfer1::BuilderFlag::kINT8);
 }
 
 void Trt::SetInt8Calibrator(const std::string& calibratorType, const int batchSize,
                             const std::string& dataPath, const std::string& calibrateCachePath) {
+    assert(mBuilder != nullptr && mConfig !=nullptr && "Please set config before build engine");
     spdlog::info("set int8 inference mode");
-    mRunMode = 2;
     nvinfer1::IInt8Calibrator* calibrator = GetInt8Calibrator(
         calibratorType, batchSize, dataPath, calibrateCachePath);
-    if (!mBuilder->platformHasFastInt8()) {
-        spdlog::warn("Warning: current platform doesn't support int8 inference");
-    }
-    // enum class BuilderFlag : int
-    // {
-    //     kFP16 = 0,         //!< Enable FP16 layer selection.
-    //     kINT8 = 1,         //!< Enable Int8 layer selection.
-    //     kDEBUG = 2,        //!< Enable debugging of layers via synchronizing after every layer.
-    //     kGPU_FALLBACK = 3, //!< Enable layers marked to execute on GPU if layer cannot execute on DLA.
-    //     kSTRICT_TYPES = 4, //!< Enables strict type constraints.
-    //     kREFIT = 5,        //!< Enable building a refittable engine.
-    // };
-    mConfig->setFlag(nvinfer1::BuilderFlag::kINT8);
-    mConfig->setFlag(nvinfer1::BuilderFlag::kFP16);
     mConfig->setInt8Calibrator(calibrator);
 }
 
+void Trt::SetWorkpaceSize(size_t workspaceSize) {
+    assert(mBuilder != nullptr && mConfig !=nullptr && "Please set config before build engine");
+    mConfig->setMaxWorkspaceSize(workspaceSize);
+    spdlog::info("set max workspace size: {}", mConfig->getMaxWorkspaceSize());
+}
+
 void Trt::SetDLACore(int dlaCore) {
+    assert(mBuilder != nullptr && mConfig !=nullptr && "Please set config before build engine");
     spdlog::info("set dla core {}", dlaCore);
     if(dlaCore >= 0) {
         mConfig->setDefaultDeviceType(nvinfer1::DeviceType::kDLA);
@@ -270,6 +147,7 @@ void Trt::SetDLACore(int dlaCore) {
 }
 
 void Trt::SetCustomOutput(const std::vector<std::string>& customOutputs) {
+    assert(mBuilder != nullptr && mConfig !=nullptr && "Please set config before build engine");
     spdlog::info("set custom output");
     mCustomOutputs = customOutputs;
 }
@@ -297,12 +175,129 @@ void Trt::AddDynamicShapeProfile(const std::string& inputName,
     mProfile->setDimensions(inputName.c_str(), nvinfer1::OptProfileSelector::kMIN, minDim);
     mProfile->setDimensions(inputName.c_str(), nvinfer1::OptProfileSelector::kOPT, optDim);
     mProfile->setDimensions(inputName.c_str(), nvinfer1::OptProfileSelector::kMAX, maxDim);
-    assert(mProfile->isValid());
-    mConfig->addOptimizationProfile(mProfile);
 }
 
-int Trt::GetMaxBatchSize() const{
-    return mBatchSize;
+void Trt::BuildEngine(
+        const std::string& onnxModel,
+        const std::string& engineFile) {
+    spdlog::info("build onnx engine from {}...",onnxModel);
+    TrtUniquePtr<nvinfer1::IRuntime> runtime{nvinfer1::createInferRuntime(*mLogger)};
+    assert(runtime != nullptr && "create trt runtime failed");
+    auto flag = 1U << static_cast<uint32_t>(nvinfer1::NetworkDefinitionCreationFlag::kEXPLICIT_BATCH);
+    TrtUniquePtr<nvinfer1::INetworkDefinition> network{mBuilder->createNetworkV2(flag)};
+    assert(network != nullptr && "create trt network failed");
+    TrtUniquePtr<nvonnxparser::IParser> parser{nvonnxparser::createParser(*network, *mLogger)};
+    assert(network != nullptr && "create trt onnx parser failed");
+    bool parse_success = parser->parseFromFile(onnxModel.c_str(),
+        static_cast<int>(Severity::kWARNING));
+    assert(parse_success && "parse onnx file failed");
+#ifdef DEBUG
+    for(int i=0;i<network->getNbLayers();i++) {
+        nvinfer1::ILayer* custom_output = network->getLayer(i);
+        for(int j=0;j<custom_output->getNbInputs();j++) {
+            nvinfer1::ITensor* input_tensor = custom_output->getInput(j);
+            std::cout << input_tensor->getName() << " ";
+        }
+        std::cout << " -------> ";
+        for(int j=0;j<custom_output->getNbOutputs();j++) {
+            nvinfer1::ITensor* output_tensor = custom_output->getOutput(j);
+            std::cout << output_tensor->getName() << " ";
+        }
+        std::cout << std::endl;
+    }
+#endif
+    if(mCustomOutputs.size() > 0) {
+        spdlog::info("unmark original output...");
+        for(int i=0;i<network->getNbOutputs();i++) {
+            nvinfer1::ITensor* origin_output = network->getOutput(i);
+            network->unmarkOutput(*origin_output);
+        }
+        spdlog::info("mark custom output...");
+        for(int i=0;i<network->getNbLayers();i++) {
+            nvinfer1::ILayer* custom_output = network->getLayer(i);
+            for(int j=0;j<custom_output->getNbOutputs();j++) {
+                nvinfer1::ITensor* output_tensor = custom_output->getOutput(j);
+                for(size_t k=0; k<mCustomOutputs.size();k++) {
+                    std::string layer_name(output_tensor->getName());
+                    if(layer_name == mCustomOutputs[k]) {
+                        network->markOutput(*output_tensor);
+                        break;
+                    }
+                }
+            }
+
+        }
+    }
+    // if(mProfile != nullptr) {
+    //     assert(mProfile->isValid() && "Invalid dynamic shape profile");
+    //     mConfig->addOptimizationProfile(mProfile);
+    // }
+#if NV_TENSORRT_MAJOR < 8
+    mEngine.reset(mBuilder -> buildEngineWithConfig(*network, *mConfig));
+    TrtUniquePtr<nvinfer1::IHostMemory> plan{engine ->serialize()};
+#else
+    TrtUniquePtr<nvinfer1::IHostMemory> plan{mBuilder -> buildSerializedNetwork(*network, *mConfig)};
+    mEngine.reset(runtime -> deserializeCudaEngine(plan->data(), plan->size()));
+#endif
+    assert(mEngine != nullptr && "build trt engine failed");
+    SaveEngine(engineFile, plan);
+    CreateDeviceBuffer();
+    mContext.reset(mEngine->createExecutionContext());
+    assert(mContext != nullptr);
+    mBuilder.reset(nullptr);
+    mConfig.reset(nullptr);
+}
+
+bool Trt::DeserializeEngine(const std::string& engineFile, int dlaCore) {
+    std::ifstream in(engineFile.c_str(), std::ifstream::binary);
+    if(in.is_open()) {
+        spdlog::info("deserialize engine from {}",engineFile);
+        auto const start_pos = in.tellg();
+        in.ignore(std::numeric_limits<std::streamsize>::max());
+        size_t bufCount = in.gcount();
+        in.seekg(start_pos);
+        std::unique_ptr<char[]> engineBuf(new char[bufCount]);
+        in.read(engineBuf.get(), bufCount);
+        TrtUniquePtr<nvinfer1::IRuntime> runtime{nvinfer1::createInferRuntime(*mLogger)};
+        runtime->setDLACore(dlaCore);
+        mEngine.reset(runtime->deserializeCudaEngine((void*)engineBuf.get(), bufCount));
+        assert(mEngine != nullptr);
+        mContext.reset(mEngine->createExecutionContext());
+        assert(mContext != nullptr);
+        CreateDeviceBuffer();
+        return true;
+    }
+    return false;
+}
+
+bool Trt::Forward() {
+    return mContext->executeV2(&mBinding[0]);
+}
+
+bool Trt::Forward(const cudaStream_t& stream) {
+    return mContext->enqueueV2(&mBinding[0], stream, nullptr);
+}
+
+void Trt::SetBindingDimensions(std::vector<int>& inputDims, int bindIndex) {
+    nvinfer1::Dims dims;
+    int nbDims = inputDims.size();
+    dims.nbDims = nbDims;
+    for(int i=0; i< nbDims; i++) {
+        dims.d[i] = inputDims[i];
+    }
+    mContext->setBindingDimensions(bindIndex, dims);
+}
+
+void Trt::CopyFromHostToDevice(const std::vector<float>& input,
+                               int bindIndex, const cudaStream_t& stream) {
+    CUDA_CHECK(cudaMemcpyAsync(mBinding[bindIndex], input.data(),
+        input.size()*sizeof(float), cudaMemcpyHostToDevice, stream));
+}
+
+void Trt::CopyFromDeviceToHost(std::vector<float>& output, int bindIndex,
+                               const cudaStream_t& stream) {
+    CUDA_CHECK(cudaMemcpyAsync(output.data(), mBinding[bindIndex],
+        mBindingSize[bindIndex], cudaMemcpyDeviceToHost, stream));
 }
 
 void* Trt::GetBindingPtr(int bindIndex) const {
@@ -333,125 +328,14 @@ int Trt::GetNbOutputBindings() const {
     return mNbOutputBindings;
 }
 
-void Trt::SaveEngine(const std::string& fileName) {
-    if(fileName == "") {
-        spdlog::warn("empty engine file name, skip save");
-        return;
-    }
-    if(mEngine != nullptr) {
-        spdlog::info("save engine to {}...",fileName);
-        std::ofstream file;
-        file.open(fileName,std::ios::binary | std::ios::out);
-        if(!file.is_open()) {
-            spdlog::error("read create engine file {} failed",fileName);
-            return;
-        }
-        file.write((const char*)mPlan->data(), mPlan->size());
-        file.close();
-    } else {
-        spdlog::error("engine is empty, save engine failed");
-    }
-}
-
-void Trt::BuildEngine() {
-    spdlog::info("build engine...");
-    if (mRunMode == 1)
-    {
-        spdlog::info("setFp16Mode");
-        if (!mBuilder->platformHasFastFp16()) {
-            spdlog::warn("the platform do not has fast for fp16");
-        }
-        mConfig->setFlag(nvinfer1::BuilderFlag::kFP16);
-    }
-    mBuilder->setMaxBatchSize(mBatchSize);
-    // set the maximum GPU temporary memory which the engine can use at execution time.
-    mConfig->setMaxWorkspaceSize(1 << 30); // 1GB
-    spdlog::info("set max workspace size: {}", mConfig->getMaxWorkspaceSize());
-
-#if NV_TENSORRT_MAJOR < 8
-    mEngine = mBuilder -> buildEngineWithConfig(*mNetwork, *mConfig);
-    mPlan = mEngine ->serialize();
-#else
-    mPlan = mBuilder -> buildSerializedNetwork(*mNetwork, *mConfig);
-    mEngine = mRuntime -> deserializeCudaEngine(mPlan->data(), mPlan->size());
-#endif
-    assert(mEngine != nullptr);
-}
-
-bool Trt::BuildEngineWithOnnx(const std::string& onnxModel,
-                      const std::string& engineFile,
-                      const std::vector<std::string>& customOutput) {
-    spdlog::info("build onnx engine from {}...",onnxModel);
-    assert(mBuilder != nullptr);
-    mFlags = 1U << static_cast<uint32_t>(NDCFLAG::kEXPLICIT_BATCH);
-    mNetwork = mBuilder->createNetworkV2(mFlags);
-    assert(mNetwork != nullptr);
-    nvonnxparser::IParser* parser = nvonnxparser::createParser(*mNetwork, *mLogger);
-    if(!parser->parseFromFile(onnxModel.c_str(),
-            static_cast<int>(nvinfer1::ILogger::Severity::kWARNING))) {
-        spdlog::error("error: could not parse onnx engine");
-        return false;
-    }
-#ifdef DEBUG
-    for(int i=0;i<mNetwork->getNbLayers();i++) {
-        nvinfer1::ILayer* custom_output = mNetwork->getLayer(i);
-        for(int j=0;j<custom_output->getNbInputs();j++) {
-            nvinfer1::ITensor* input_tensor = custom_output->getInput(j);
-            std::cout << input_tensor->getName() << " ";
-        }
-        std::cout << " -------> ";
-        for(int j=0;j<custom_output->getNbOutputs();j++) {
-            nvinfer1::ITensor* output_tensor = custom_output->getOutput(j);
-            std::cout << output_tensor->getName() << " ";
-        }
-        std::cout << std::endl;
-    }
-#endif
-    if(customOutput.size() > 0) {
-        spdlog::info("unmark original output...");
-        for(int i=0;i<mNetwork->getNbOutputs();i++) {
-            nvinfer1::ITensor* origin_output = mNetwork->getOutput(i);
-            mNetwork->unmarkOutput(*origin_output);
-        }
-        spdlog::info("mark custom output...");
-        for(int i=0;i<mNetwork->getNbLayers();i++) {
-            nvinfer1::ILayer* custom_output = mNetwork->getLayer(i);
-            for(int j=0;j<custom_output->getNbOutputs();j++) {
-                nvinfer1::ITensor* output_tensor = custom_output->getOutput(j);
-                for(size_t k=0; k<customOutput.size();k++) {
-                    std::string layer_name(output_tensor->getName());
-                    if(layer_name == customOutput[k]) {
-                        mNetwork->markOutput(*output_tensor);
-                        break;
-                    }
-                }
-            }
-
-        }
-    }
-    BuildEngine();
-    SaveEngine(engineFile);
-#if NV_TENSORRT_MAJOR < 8
-    parser->destroy();
-#else
-    delete parser;
-#endif
-
-    return true;
-}
-
-void Trt::InitEngine() {
-    spdlog::info("init engine...");
-    mContext = mEngine->createExecutionContext();
-    assert(mContext != nullptr);
-
+void Trt::CreateDeviceBuffer() {
     spdlog::info("malloc device memory");
     int nbBindings = mEngine->getNbBindings();
     if(mConfig->getNbOptimizationProfiles() > 0) {
         spdlog::info("malloc memory with max dims when use dynamic shape");
         nbBindings = nbBindings / 2;
     }
-    std::cout << "nbBingdings: " << nbBindings << std::endl;
+    spdlog::info("nbBingdings: {}", nbBindings);
     mBinding.resize(nbBindings);
     mBindingSize.resize(nbBindings);
     mBindingName.resize(nbBindings);
@@ -472,7 +356,7 @@ void Trt::InitEngine() {
         } else {
             dims = mEngine->getBindingDimensions(i);
         }
-        int64_t totalSize = volume(dims) * mBatchSize * getElementSize(dtype);
+        int64_t totalSize = volume(dims) * getElementSize(dtype);
         mBindingSize[i] = totalSize;
         mBindingName[i] = name;
         mBindingDims[i] = dims;

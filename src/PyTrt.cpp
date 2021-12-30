@@ -1,9 +1,3 @@
-/*
- * @Author: zerollzeng
- * @Date: 2019-08-29 15:45:15
- * @LastEditors: zerollzeng
- * @LastEditTime: 2020-03-02 15:09:53
- */
 #include "pybind11/pybind11.h"
 #include "pybind11/numpy.h"
 #include "pybind11/stl.h"
@@ -21,12 +15,12 @@ PYBIND11_MODULE(pytrt, m) {
         .def(py::init([]() {
             return std::unique_ptr<Trt>(new Trt());
         }))
-        .def("CreateEngine", (void (Trt::*)(
+        .def("BuildEngine", (void (Trt::*)(
             const std::string&,
             const std::string&,
             int,
             int
-            )) &Trt::CreateEngine, "create engine with onnx model")
+            )) &Trt::BuildEngine, "create engine with onnx model")
         .def("Forward", (void (Trt::*)()) &Trt::Forward, "inference")
         .def("SetDevice", (void (Trt::*)(
             int

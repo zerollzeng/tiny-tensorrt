@@ -1,10 +1,3 @@
-/*
- * @Email: zerollzeng@gmail.com
- * @Author: zerollzeng
- * @Date: 2019-11-12 11:53:56
- * @LastEditors: zerollzeng
- * @LastEditTime: 2019-12-06 17:17:13
- */
 #ifndef UTILS_H
 #define UTILS_H
 

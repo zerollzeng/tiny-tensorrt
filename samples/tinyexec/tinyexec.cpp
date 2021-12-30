@@ -98,20 +98,22 @@ static void parse_specs(const std::string& input_specs_str,
 static void show_usage(std::string name) {
     std::cerr << "Usage: " << name << " <option(s)> SOURCES"
               << "Options:\n"
-              << "\t--onnx\t\tinput onnx model\n"
-              << "\t--load_engine\t\tengine file to load\n"
-              << "\t--batch_size\t\tdefault is 1\n"
-              << "\t--mode\t\t0 for fp32 1 for fp16 2 for int8, default is 0\n"
-              << "\t--engine\t\tsaved path for engine file, if path exists, "
+              << "\t--onnx\t\t input onnx model\n"
+              << "\t--load_engine\t\t engine file to load\n"
+              << "\t--batch_size\t\t default is 1\n"
+              << "\t--mode\t\t 0 for fp32 1 for fp16 2 for int8, default is 0\n"
+              << "\t--save_engine\t\t saved path for engine file, if path exists, "
                   "dafault is empty\n"
-              << "\t--calibrate_data\t\tdata path for calibrate data which contain "
+              << "\t--calibrate_data\t\t data path for calibrate data which contain "
                  "npz files, default is empty\n"
-              << "\t--gpu\t\tchoose your device, default is 0\n"
-              << "\t--dla\t\tset dla core if you want with 0,1..., default is -1(not enable)\n"
-              << "\t--input_specs\t\tset input shape when running model with dynamic shape\n"
+              << "\t--gpu\t\t choose your device, default is 0\n"
+              << "\t--dla\t\t set dla core if you want with 0,1..., default is -1(not enable)\n"
+              << "\t--input_specs\t\t set input shape when running model with dynamic shape\n"
                  "eg: --input_specs data_1:1x3x16x16:1x3x32x32:1x3x64x64,data_2:1x3x16x16:1x3x32x32:1x3x64x64"
-              << "\t--log_level\t\tSeverity::kINTERNAL_ERROR = 0, Severity::kERROR = 1, Severity::kWARNING = 2, Severity::kINFO = 3,"
+              << "\t--log_level\t\t Severity::kINTERNAL_ERROR = 0, Severity::kERROR = 1, Severity::kWARNING = 2, Severity::kINFO = 3,"
               << "Severity::kVERBOSE = 4, default level is <= kINFO.\n"
+              << "\t--int8\t\t enable int8\n"
+              << "\t--fp16\t\t enable fp16\n"
               << std::endl;
 }
 
@@ -136,13 +138,7 @@ int main(int argc, char** argv) {
         }
     }
 
-    int run_mode = 0;
-    const std::string& run_mode_string = cmdparams.getCmdOption("--mode");
-    if(run_mode_string != "") {
-        run_mode = std::stoi(run_mode_string);
-    }
-
-    const std::string& engine_file = cmdparams.getCmdOption("--engine");
+    const std::string& engine_file = cmdparams.getCmdOption("--save_engine");
 
     int batch_size = 1;
     const std::string& batch_size_string = cmdparams.getCmdOption("--batch_size");
@@ -176,6 +172,14 @@ int main(int argc, char** argv) {
     // build engine
     Trt* onnx_net = new Trt();
 
+    if(cmdparams.cmdOptionExists("--int8")) {
+        onnx_net->EnableINT8();
+    }
+
+    if(cmdparams.cmdOptionExists("--fp16")) {
+        onnx_net->EnableFP16();
+    }
+
     if(input_specs_str != "") {
         for(size_t i=0;i<input_names.size();i++) {
             std::cout << "Add profile for: " << input_names[i] << std::endl;
@@ -185,7 +189,7 @@ int main(int argc, char** argv) {
     if(custom_outputs.size() > 0) {
         onnx_net->SetCustomOutput(custom_outputs);
     }
-    onnx_net->SetDevice(device);
+    SetDevice(device);
     onnx_net->SetDLACore(dla_core);
     if(calibrateDataDir != "" || calibrateCache != "") {
         onnx_net->SetInt8Calibrator("Int8EntropyCalibrator2", batch_size, calibrateDataDir, calibrateCache);
@@ -199,7 +203,7 @@ int main(int argc, char** argv) {
     if(engine != "") {
         onnx_net->DeserializeEngine(engine);
     } else {
-        onnx_net->CreateEngine(onnx_path, engine_file, batch_size, run_mode);
+        onnx_net->BuildEngine(onnx_path, engine_file);
     }
 
 

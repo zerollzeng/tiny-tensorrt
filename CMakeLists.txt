@@ -6,7 +6,7 @@ cmake -DGPU_ARCH=xx -DBUILD_PYTHON=ON/OFF -DBUILD_SAMPLE=ON/OFF -DTENSORRT_INCLU
 ")
 
 cmake_minimum_required(VERSION 3.0)
-project(tinytrt VERSION 1.0.0)
+project(tinytrt VERSION 1.1.0)
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 set(CMAKE_INSTALL_LIBDIR /usr/lib CACHE PATH "Install dir for shared libraries")
@@ -106,18 +106,7 @@ endif()
 link_directories(lib/)
 ## custom test
 if(BUILD_SAMPLE)
-  file(GLOB tinyexec_source
-      samples/tinyexec/tinyexec.cpp
-      )
-  add_executable(tinyexec ${tinyexec_source})
-  target_compile_options(tinyexec PUBLIC -std=c++11 -Wall -Wno-deprecated -Wfloat-conversion)
-  target_link_libraries(tinyexec tinytrt)
-  target_link_libraries(tinyexec ${LIBNVINFER})
-  target_link_libraries(tinyexec ${LIBNVINFER_PLUGIN})
-  target_link_libraries(tinyexec ${LIBNVPARSERS})
-  target_link_libraries(tinyexec ${LIBNVONNXPARSER})
-  target_link_libraries(tinyexec ${ZLIB_LIBRARIES})
-  install(TARGETS tinyexec DESTINATION ${CMAKE_INSTALL_BINDIR})
+  add_subdirectory(samples)
 endif()
 
 ## uninstall with xargs rm < install_manifest.txt

@@ -2,6 +2,8 @@
 set -x
 
 image_list=(
+    # TRT 8.2.1
+    "nvcr.io/nvidia/tensorrt:21.12-py3"
     # TRT 8.0.3
     "nvcr.io/nvidia/tensorrt:21.09-py3"
     # TRT 7.2.3.4

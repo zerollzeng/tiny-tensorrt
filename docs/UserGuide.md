@@ -10,16 +10,16 @@ Take a look at test/test.cpp or test/test.py
 
 Trt trt;
 // create engine and running context, note that engine file is device specific, so don't copy engine file to new device, it may cause crash
-trt.CreateEngine(onnxModelpath, engineFile, customOutput, maxBatchSize, mode); // for onnx model
+trt.BuildEngine(onnxModelpath, engineFile, customOutput, maxBatchSize, mode); // for onnx model
 
 // you might need to do some pre-processing in input such as normalization, it depends on your model.
-trt.CopyFromHostToDevice(input,0); // 0 for input index, you can get it from CreateEngine phase log output.
+trt.CopyFromHostToDevice(input,0); // 0 for input index, you can get it from BuildEngine phase log output.
 
 //run model, it will read your input and run inference. and generate output.
 trt.Forward();
 
 //  get output.
-trt.CopyFromDeviceToHost(output, outputIndex) // you can get outputIndex in CreateEngine phase
+trt.CopyFromDeviceToHost(output, outputIndex) // you can get outputIndex in BuildEngine phase
 // them you can do post processing in output
 ```
 
@@ -32,7 +32,7 @@ import pytrt
 # help(pytrt)
 
 trt = pytrt.Trt()
-trt.CreateEngine(prototxt, caffemodel, engineFile, outputBlobName, maxBatchSize, mode)
+trt.BuildEngine(prototxt, caffemodel, engineFile, outputBlobName, maxBatchSize, mode)
 trt.CopyFromHostToDevice(input_numpy_array, 0)
 trt.Forward()
 output_numpy_array = trt.CopyFromDeviceToHost(1)
