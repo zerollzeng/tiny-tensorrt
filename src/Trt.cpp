@@ -175,6 +175,7 @@ void Trt::AddDynamicShapeProfile(const std::string& inputName,
     mProfile->setDimensions(inputName.c_str(), nvinfer1::OptProfileSelector::kMIN, minDim);
     mProfile->setDimensions(inputName.c_str(), nvinfer1::OptProfileSelector::kOPT, optDim);
     mProfile->setDimensions(inputName.c_str(), nvinfer1::OptProfileSelector::kMAX, maxDim);
+    mConfig->addOptimizationProfile(mProfile);
 }
 
 void Trt::BuildEngine(
