@@ -228,10 +228,10 @@ void Trt::BuildEngine(
 
         }
     }
-    // if(mProfile != nullptr) {
-    //     assert(mProfile->isValid() && "Invalid dynamic shape profile");
-    //     mConfig->addOptimizationProfile(mProfile);
-    // }
+    if(mProfile != nullptr) {
+        assert(mProfile->isValid() && "Invalid dynamic shape profile");
+        mConfig->addOptimizationProfile(mProfile);
+    }
 #if NV_TENSORRT_MAJOR < 8
     mEngine.reset(mBuilder -> buildEngineWithConfig(*network, *mConfig));
     TrtUniquePtr<nvinfer1::IHostMemory> plan{engine ->serialize()};
