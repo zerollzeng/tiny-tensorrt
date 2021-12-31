@@ -242,9 +242,9 @@ void Trt::BuildEngine(
 #endif
     assert(mEngine != nullptr && "build trt engine failed");
     SaveEngine(engineFile, plan);
-    CreateDeviceBuffer();
     mContext.reset(mEngine->createExecutionContext());
     assert(mContext != nullptr);
+    CreateDeviceBuffer();
     mBuilder.reset(nullptr);
     mConfig.reset(nullptr);
 }
