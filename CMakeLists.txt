@@ -8,7 +8,7 @@ cmake -DGPU_ARCH=xx -DBUILD_PYTHON=ON/OFF -DBUILD_SAMPLE=ON/OFF -DTENSORRT_INCLU
 cmake_minimum_required(VERSION 3.0)
 project(tinytrt VERSION 1.1.0)
 
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY lib)
 set(CMAKE_INSTALL_LIBDIR /usr/lib CACHE PATH "Install dir for shared libraries")
 set(CMAKE_INSTALL_INCLUDEDIR /usr/include CACHE PATH "Install dir for headers")
 set(CMAKE_INSTALL_LIBDIR /usr/lib CACHE PATH "Install dir for shared libraries")
