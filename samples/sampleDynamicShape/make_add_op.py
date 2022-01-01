@@ -16,4 +16,4 @@ model_def = onnx.helper.make_model(graph, producer_name="add_def")
 
 onnx.checker.check_model(model_def)
 
-onnx.save_model(model_def, "add.onnx")
+onnx.save_model(model_def, "/tmp/sample_add.onnx")

@@ -13,12 +13,12 @@ int main() {
     onnx_net->AddDynamicShapeProfile("y", {4,128,128,128}, {4,128,256,256}, {4,128,512,512});
 
     // build engine
-    onnx_net->BuildEngine("./add.onnx", "");
+    onnx_net->BuildEngine("/tmp/sample_add.onnx", "/tmp/sample_add.plan");
 
     // do inference
     int start = 128;
     int step = 48;
-    for(int i=0; i<8; i++) {
+    for(int i=0; i<=8; i++) {
         int h = start + i*step;
         int w = start + i*step;
         std::vector<float> x(4*128*h*w, 1.0);

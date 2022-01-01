@@ -333,6 +333,7 @@ void Trt::CreateDeviceBuffer() {
         nvinfer1::DataType dtype = mEngine->getBindingDataType(i);
         nvinfer1::Dims dims;
         if(mConfig->getNbOptimizationProfiles() > 0) {
+            // specify max input dimensions to get max output dimensions
             if(mEngine->bindingIsInput(i)) {
                 dims = mProfile->getDimensions(name, nvinfer1::OptProfileSelector::kMAX);
                 mContext->setBindingDimensions(i, dims);
