@@ -1,4 +1,5 @@
 build/
 lib/
 models/
+*.onnx
 .vscode/

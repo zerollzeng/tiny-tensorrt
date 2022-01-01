@@ -191,21 +191,6 @@ void Trt::BuildEngine(
     bool parse_success = parser->parseFromFile(onnxModel.c_str(),
         static_cast<int>(Severity::kWARNING));
     assert(parse_success && "parse onnx file failed");
-#ifdef DEBUG
-    for(int i=0;i<network->getNbLayers();i++) {
-        nvinfer1::ILayer* custom_output = network->getLayer(i);
-        for(int j=0;j<custom_output->getNbInputs();j++) {
-            nvinfer1::ITensor* input_tensor = custom_output->getInput(j);
-            std::cout << input_tensor->getName() << " ";
-        }
-        std::cout << " -------> ";
-        for(int j=0;j<custom_output->getNbOutputs();j++) {
-            nvinfer1::ITensor* output_tensor = custom_output->getOutput(j);
-            std::cout << output_tensor->getName() << " ";
-        }
-        std::cout << std::endl;
-    }
-#endif
     if(mCustomOutputs.size() > 0) {
         spdlog::info("unmark original output...");
         for(int i=0;i<network->getNbOutputs();i++) {
@@ -290,14 +275,20 @@ void Trt::SetBindingDimensions(std::vector<int>& inputDims, int bindIndex) {
 
 void Trt::CopyFromHostToDevice(const std::vector<float>& input,
                                int bindIndex, const cudaStream_t& stream) {
+#ifdef DEBUG
+    spdlog::info("input size: {}, binding size: {}", input.size()*sizeof(float), mBindingSize[bindIndex]);
+#endif
     CUDA_CHECK(cudaMemcpyAsync(mBinding[bindIndex], input.data(),
         input.size()*sizeof(float), cudaMemcpyHostToDevice, stream));
 }
 
 void Trt::CopyFromDeviceToHost(std::vector<float>& output, int bindIndex,
                                const cudaStream_t& stream) {
+#ifdef DEBUG
+    spdlog::info("output size: {}, binding size: {}", output.size()*sizeof(float), mBindingSize[bindIndex]);
+#endif
     CUDA_CHECK(cudaMemcpyAsync(output.data(), mBinding[bindIndex],
-        mBindingSize[bindIndex], cudaMemcpyDeviceToHost, stream));
+        output.size()*sizeof(float), cudaMemcpyDeviceToHost, stream));
 }
 
 void* Trt::GetBindingPtr(int bindIndex) const {
@@ -331,10 +322,6 @@ int Trt::GetNbOutputBindings() const {
 void Trt::CreateDeviceBuffer() {
     spdlog::info("malloc device memory");
     int nbBindings = mEngine->getNbBindings();
-    if(mConfig->getNbOptimizationProfiles() > 0) {
-        spdlog::info("malloc memory with max dims when use dynamic shape");
-        nbBindings = nbBindings / 2;
-    }
     spdlog::info("nbBingdings: {}", nbBindings);
     mBinding.resize(nbBindings);
     mBindingSize.resize(nbBindings);
