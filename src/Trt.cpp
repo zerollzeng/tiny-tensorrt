@@ -175,6 +175,7 @@ void Trt::AddDynamicShapeProfile(const std::string& inputName,
     mProfile->setDimensions(inputName.c_str(), nvinfer1::OptProfileSelector::kMIN, minDim);
     mProfile->setDimensions(inputName.c_str(), nvinfer1::OptProfileSelector::kOPT, optDim);
     mProfile->setDimensions(inputName.c_str(), nvinfer1::OptProfileSelector::kMAX, maxDim);
+    mIsDynamicShape = true;
 }
 
 void Trt::BuildEngine(
@@ -213,7 +214,7 @@ void Trt::BuildEngine(
 
         }
     }
-    if(mProfile != nullptr) {
+    if(mIsDynamicShape) {
         assert(mProfile->isValid() && "Invalid dynamic shape profile");
         mConfig->addOptimizationProfile(mProfile);
     }
@@ -249,6 +250,10 @@ bool Trt::DeserializeEngine(const std::string& engineFile, int dlaCore) {
         assert(mEngine != nullptr);
         mContext.reset(mEngine->createExecutionContext());
         assert(mContext != nullptr);
+        if(mIsDynamicShape) {
+            assert(mProfile->isValid() && "Invalid dynamic shape profile");
+            mConfig->addOptimizationProfile(mProfile);
+        }
         CreateDeviceBuffer();
         return true;
     }
@@ -332,7 +337,7 @@ void Trt::CreateDeviceBuffer() {
         const char* name = mEngine->getBindingName(i);
         nvinfer1::DataType dtype = mEngine->getBindingDataType(i);
         nvinfer1::Dims dims;
-        if(mConfig->getNbOptimizationProfiles() > 0) {
+        if(mIsDynamicShape) {
             // specify max input dimensions to get max output dimensions
             if(mEngine->bindingIsInput(i)) {
                 dims = mProfile->getDimensions(name, nvinfer1::OptProfileSelector::kMAX);

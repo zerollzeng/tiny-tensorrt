@@ -240,6 +240,8 @@ protected:
     int mNbInputBindings = 0;
 
     int mNbOutputBindings = 0;
+
+    bool mIsDynamicShape = false;
 };
 
 #endif
