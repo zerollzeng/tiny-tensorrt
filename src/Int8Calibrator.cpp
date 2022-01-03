@@ -28,12 +28,7 @@ void read_directory(const std::string& name, std::vector<std::string>& v)
 nvinfer1::IInt8Calibrator* GetInt8Calibrator(const std::string& calibratorType,
                 int batchSize,const std::string& dataPath,
                 const std::string& calibrateCachePath) {
-    if(calibratorType == "Int8EntropyCalibrator2") {
-        return new Int8EntropyCalibrator2(batchSize,dataPath,calibrateCachePath);
-    } else {
-        spdlog::error("unsupported calibrator type");
-        assert(false);
-    }
+    return new TrtInt8Calibrator(calibratorType, batchSize,dataPath,calibrateCachePath);
 }
 
 inline bool ends_with(std::string const & value, std::string const & ending)
@@ -43,12 +38,14 @@ inline bool ends_with(std::string const & value, std::string const & ending)
 }
 
 
-Int8EntropyCalibrator2::Int8EntropyCalibrator2(const int batchSize, const std::string& dataPath,
-                                               const std::string& calibrateCachePath)
+TrtInt8Calibrator::TrtInt8Calibrator(const std::string& calibratorType, 
+    const int batchSize, const std::string& dataPath,
+    const std::string& calibrateCachePath)
 {
     spdlog::info("init calibrator...");
     mBatchSize = batchSize;
     mCalibrateCachePath = calibrateCachePath;
+    mCalibratorType = calibratorType;
 
     if(dataPath != "") {
         std::string path = dataPath;
@@ -72,21 +69,22 @@ Int8EntropyCalibrator2::Int8EntropyCalibrator2(const int batchSize, const std::s
 }
 
 
-Int8EntropyCalibrator2::~Int8EntropyCalibrator2()
+TrtInt8Calibrator::~TrtInt8Calibrator()
 {
     for(size_t i=0;i<mDeviceBatchData.size();i++) {
         safeCudaFree(mDeviceBatchData[i]);
     }
 }
 
-int Int8EntropyCalibrator2::getBatchSize() const noexcept{
+int TrtInt8Calibrator::getBatchSize() const noexcept{
     spdlog::info("get batch size {}", mBatchSize);
     return mBatchSize;
 }
 
 
-bool Int8EntropyCalibrator2::getBatch(void* bindings[], const char* names[], int nbBindings) noexcept
+bool TrtInt8Calibrator::getBatch(void* bindings[], const char* names[], int nbBindings) noexcept
 {
+    spdlog::info("load catlibrate data {}/{}...", mCurBatchIdx, mCount);
     if (mCurBatchIdx + mBatchSize > mCount) {
         return false;
     }
@@ -107,11 +105,10 @@ bool Int8EntropyCalibrator2::getBatch(void* bindings[], const char* names[], int
     for(int j=0;j<nbBindings;j++) {
         bindings[j] = mDeviceBatchData[j];
     }
-    spdlog::info("load catlibrate data {}/{} done", mCurBatchIdx, mCount);
     return true;
 }
 
-const void* Int8EntropyCalibrator2::readCalibrationCache(size_t& length) noexcept
+const void* TrtInt8Calibrator::readCalibrationCache(size_t& length) noexcept
 {
     spdlog::info("read calibration cache");
     mCalibrationCache.clear();
@@ -127,10 +124,25 @@ const void* Int8EntropyCalibrator2::readCalibrationCache(size_t& length) noexcep
     return length ? &mCalibrationCache[0] : nullptr;
 }
 
-void Int8EntropyCalibrator2::writeCalibrationCache(const void* cache, size_t length) noexcept
+void TrtInt8Calibrator::writeCalibrationCache(const void* cache, size_t length) noexcept
 {
     spdlog::info("write calibration cache");
     std::ofstream output(mCalibrateCachePath, std::ios::binary);
     output.write(reinterpret_cast<const char*>(cache), length);
 }
+
+nvinfer1::CalibrationAlgoType TrtInt8Calibrator::getAlgorithm() noexcept
+{
+    spdlog::info("get calibrator algorithm type");
+    if(mCalibratorType == "EntropyCalibratorV2") {
+        return nvinfer1::CalibrationAlgoType::kENTROPY_CALIBRATION_2;
+    } else if(mCalibratorType == "EntropyCalibrator") {
+        return nvinfer1::CalibrationAlgoType::kENTROPY_CALIBRATION;
+    } else if(mCalibratorType == "MinMaxCalibrator") {
+        return nvinfer1::CalibrationAlgoType::kMINMAX_CALIBRATION;
+    } else {
+        assert(false && "unsupported calibrator type");
+    }
+}
+ 
 

@@ -74,21 +74,14 @@ public:
      * @calibratorData: use for int8 mode, calabrator data is a batch of sample input,
      *                  for classification task you need around 500 sample input. and this
      *                  is for int8 mode
-     * @calibratorType: there are four calibrator types now.
-     *                  EntropyCalibratorV2: This is the recommended calibrator and is required for DLA. Calibration 
+     * @calibratorType: there are 3 calibrator types now.
+     *                  "EntropyCalibratorV2" : This is the recommended calibrator and is required for DLA. Calibration 
      *                  happens before Layer fusion by default. This is recommended for CNN based networks.
-     *                  MinMaxCalibrator:This is the preferred calibrator for NLP tasks for all backends. 
+     *                  "MinMaxCalibrator" : This is the preferred calibrator for NLP tasks for all backends. 
      *                  Calibration happens before Layer fusion by default. This is recommended for BERT like networks.
-     *                  EntropyCalibrator:This is the legacy entropy calibrator.This is less complicated than a legacy 
+     *                  "EntropyCalibrator" : This is the legacy entropy calibrator.This is less complicated than a legacy 
      *                  calibrator and produces better results. Calibration happens after Layer fusion by default. See 
      *                  kCALIBRATION_BEFORE_FUSION for enabling calibration before fusion.
-     *                  LegacyCalibrator:This calibrator is for compatibility with TensorRT 2.0 EA. 
-     *                  This calibrator requires user parameterization, and is provided as a fallback option if the 
-     *                  other calibrators yield poor results. Calibration happens after Layer fusion by default. 
-     *                  See kCALIBRATION_BEFORE_FUSION for enabling calibration before fusion. Users can customize 
-     *                  this calibrator to implement percentile max, like 99.99% percentile max is proved to have best 
-     *                  accuracy for BERT. For more information, refer to the Integer Quantization for Deep Learning 
-     *                  Inference: Principles and Empirical Evaluation paper.
      */
     void SetInt8Calibrator(const std::string& calibratorType, const int batchSize,
                            const std::string& dataPath, const std::string& calibrateCachePath);
