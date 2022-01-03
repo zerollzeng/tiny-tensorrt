@@ -109,18 +109,27 @@ public:
      *                  Severity::kVERBOSE = 4, default level is <= kINFO.
      */
     void SetLogLevel(int severity);
+
+    /**
+     * Add dynamic shape profile
+     */
+    void AddDynamicShapeProfile(const std::string& inputName,
+                                const std::vector<int>& minDimVec,
+                                const std::vector<int>& optDimVec,
+                                const std::vector<int>& maxDimVec);
     
     /**
      * Create engine from onnx model
      * @onnxModel: path to onnx model
      * @engineFile: path to saved engien file will be save, if it's empty them will not
      *              save engine file
-     * @return:
      */
     void BuildEngine(const std::string& onnxModel, const std::string& engineFile);
 
     /**
      * Deserialize an engine from engineFile
+     * Note: If your model has dynamic shapes, you must call AddDynamicShapeProfile
+     *       before DesirializeEngine as you did when building engien from onnx.
      * @engineFile: can be create by BuildEngine, or save with trtexec or tiny-exec
      * @dlaCore: dla core to use, you can build engine on dla core 0 and deserialize the
      *           engine to core 1. Only available on jetson platform has DLA support.
@@ -167,14 +176,6 @@ public:
      * @return: pointer point to device memory.
      */
     void* GetBindingPtr(int bindIndex) const;
-
-    /**
-     * Add dynamic shape profile
-     */
-    void AddDynamicShapeProfile(const std::string& inputName,
-                                const std::vector<int>& minDimVec,
-                                const std::vector<int>& optDimVec,
-                                const std::vector<int>& maxDimVec);
 
     /**
      * Get binding data size in byte, so maybe you need to divide it by sizeof(T) where T is data type
