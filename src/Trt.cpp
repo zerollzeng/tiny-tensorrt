@@ -220,7 +220,7 @@ void Trt::BuildEngine(
     }
 #if NV_TENSORRT_MAJOR < 8
     mEngine.reset(mBuilder -> buildEngineWithConfig(*network, *mConfig));
-    TrtUniquePtr<nvinfer1::IHostMemory> plan{engine ->serialize()};
+    TrtUniquePtr<nvinfer1::IHostMemory> plan{mEngine ->serialize()};
 #else
     TrtUniquePtr<nvinfer1::IHostMemory> plan{mBuilder -> buildSerializedNetwork(*network, *mConfig)};
     mEngine.reset(runtime -> deserializeCudaEngine(plan->data(), plan->size()));

@@ -214,7 +214,7 @@ public:
 protected:
     void CreateDeviceBuffer();
 
-    TrtUniquePtr<TrtLogger> mLogger{nullptr};
+    std::unique_ptr<TrtLogger> mLogger{nullptr};
 
     TrtUniquePtr<nvinfer1::IBuilder> mBuilder{nullptr};
 

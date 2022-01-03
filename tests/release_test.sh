@@ -14,8 +14,7 @@ image_list=(
     "nvcr.io/nvidia/tensorrt:20.03-py3"
 )
 
-test_command="rm -rf build && mkdir build && cd build && cmake .. && make && \
-./tinyexec --onnx /usr/src/tensorrt/data/resnet50/ResNet50.onnx"
+test_command="rm -rf build && mkdir build && cd build && cmake .. && make"
 
 cd ..
 for image in ${image_list[@]}
