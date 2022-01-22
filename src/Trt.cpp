@@ -48,6 +48,51 @@ void SaveEngine(const std::string& fileName, TrtUniquePtr<nvinfer1::IHostMemory>
     file.close();
 }
 
+bool setTensorDynamicRange(const nvinfer1::INetworkDefinition& network, float inRange, float outRange)
+{
+    // Ensure that all layer inputs have a dynamic range.
+    for (int l = 0; l < network.getNbLayers(); l++)
+    {
+        auto* layer = network.getLayer(l);
+        for (int i = 0; i < layer->getNbInputs(); i++)
+        {
+            nvinfer1::ITensor* input{layer->getInput(i)};
+            // Optional inputs are nullptr here and are from RNN layers.
+            if (input && !input->dynamicRangeIsSet())
+            {
+                if (!input->setDynamicRange(-inRange, inRange))
+                {
+                    return false;
+                }
+            }
+        }
+        for (int o = 0; o < layer->getNbOutputs(); o++)
+        {
+            nvinfer1::ITensor* output{layer->getOutput(o)};
+            // Optional outputs are nullptr here and are from RNN layers.
+            if (output && !output->dynamicRangeIsSet())
+            {
+                // Pooling must have the same input and output dynamic range.
+                if (layer->getType() == nvinfer1::LayerType::kPOOLING)
+                {
+                    if (!output->setDynamicRange(-inRange, inRange))
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    if (!output->setDynamicRange(-outRange, outRange))
+                    {
+                        return false;
+                    }
+                }
+            }
+        }
+    }
+    return true;
+}
+
 void TrtLogger::log(Severity severity, const char* msg) noexcept {
     if (severity <= mSeverity) {
         switch (severity)
@@ -213,6 +258,10 @@ void Trt::BuildEngine(
             }
 
         }
+    }
+    if(mConfig->getFlag(nvinfer1::BuilderFlag::kINT8) && mConfig->getInt8Calibrator() == nullptr) {
+        spdlog::warn("No calibrator found, using fake scale");
+        setTensorDynamicRange(*network, 2.0f, 4.0f);
     }
     if(mIsDynamicShape) {
         assert(mProfile->isValid() && "Invalid dynamic shape profile");

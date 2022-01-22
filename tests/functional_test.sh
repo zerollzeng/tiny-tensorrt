@@ -7,6 +7,7 @@ image="nvcr.io/nvidia/tensorrt:21.12-py3"
 test_command="rm -rf build && mkdir build && cd build && cmake .. && make && \
 ./samples/tinyexec/tinyexec --onnx /usr/src/tensorrt/data/resnet50/ResNet50.onnx --save_engine /tmp/resnet50_fp32.plan && \
 ./samples/tinyexec/tinyexec --load_engine /tmp/resnet50_fp32.plan && \
+./samples/tinyexec/tinyexec --onnx /usr/src/tensorrt/data/resnet50/ResNet50.onnx --int8 --fp16 --save_engine /tmp/resnet50_fp32.plan && \
 pip3 install -r ../samples/sampleDynamicShape/requirements.txt && \
 python3 ../samples/sampleDynamicShape/make_add_op.py && \
 ./samples/sampleDynamicShape/sampleDynamicShape && \
