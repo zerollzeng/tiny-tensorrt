@@ -9,7 +9,7 @@
 ![image](https://user-images.githubusercontent.com/38289304/71065174-aafc3100-21ab-11ea-9bcb-665d38181e74.png)
 
 ## tiny-tensorrt
-An easy-to-use nvidia TensorRT wrapper for onnx model with c++ and python api. you will be able to deploy your model with tiny-tensorrt in few lines of code!
+An easy-to-use nvidia TensorRT wrapper for onnx model with c++ and python api. you are able to deploy your model with tiny-tensorrt in few lines of code!
 
 ```c++
 Trt* net = new Trt();
