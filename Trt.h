@@ -9,6 +9,7 @@
 #include <memory>
 
 #include "NvInfer.h"
+#include "NvInferVersion.h"
 
 template <typename T>
 struct TrtDestroyer
