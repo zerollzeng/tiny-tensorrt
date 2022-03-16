@@ -294,7 +294,9 @@ bool Trt::DeserializeEngine(const std::string& engineFile, int dlaCore) {
         std::unique_ptr<char[]> engineBuf(new char[bufCount]);
         in.read(engineBuf.get(), bufCount);
         TrtUniquePtr<nvinfer1::IRuntime> runtime{nvinfer1::createInferRuntime(*mLogger)};
-        runtime->setDLACore(dlaCore);
+        if(dlaCore >= 0) {
+            runtime->setDLACore(dlaCore);
+        }
         mEngine.reset(runtime->deserializeCudaEngine((void*)engineBuf.get(), bufCount));
         assert(mEngine != nullptr);
         mContext.reset(mEngine->createExecutionContext());
