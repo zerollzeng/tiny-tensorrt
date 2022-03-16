@@ -17,9 +17,7 @@ PYBIND11_MODULE(pytrt, m) {
         }))
         .def("BuildEngine", (void (Trt::*)(
             const std::string&,
-            const std::string&,
-            int,
-            int
+            const std::string&
             )) &Trt::BuildEngine, "create engine with onnx model")
         .def("Forward", (bool (Trt::*)()) &Trt::Forward, "inference")
         .def("CopyFromHostToDevice", [](Trt& self, py::array_t<float, py::array::c_style | py::array::forcecast> array, int index) {
