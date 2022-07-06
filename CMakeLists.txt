@@ -56,7 +56,6 @@ set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} ${CUDA_gencode_flags}")
 
 include_directories(third_party/spdlog/include)
 include_directories(third_party/pybind11/include)
-include_directories(./)
 include_directories(./src)
 include_directories(./plugin)
 include_directories(${ZLIB_INCLUDE_DIRS})
@@ -84,6 +83,7 @@ file(GLOB_RECURSE trt_source
      plugin/*.cpp
      )
 cuda_add_library(tinytrt SHARED ${trt_source})
+target_include_directories(tinytrt PUBLIC ./)
 target_compile_options(tinytrt PUBLIC -std=c++11 -Wall -Wno-deprecated -Wfloat-conversion)
 set_target_properties(tinytrt PROPERTIES POSITION_INDEPENDENT_CODE ON)
 set_target_properties(tinytrt PROPERTIES VERSION ${PROJECT_VERSION})
