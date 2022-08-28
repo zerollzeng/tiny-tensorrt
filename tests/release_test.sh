@@ -2,6 +2,8 @@
 set -x
 
 image_list=(
+    # TRT 8.4.1
+    "nvcr.io/nvidia/tensorrt:22.07-py3"
     # TRT 8.2.1
     "nvcr.io/nvidia/tensorrt:21.12-py3"
     # TRT 8.0.3
@@ -19,5 +21,5 @@ test_command="rm -rf build && mkdir build && cd build && cmake .. && make"
 cd ..
 for image in ${image_list[@]}
 do
-    docker run --rm --gpus all -v `pwd`:/tiny-tensorrt -w /tiny-tensorrt ${image} /bin/bash -c "${test_command}"
+    docker run --rm --gpus all -u $(id -u):$(id -g) -v `pwd`:/tiny-tensorrt -w /tiny-tensorrt ${image} /bin/bash -c "${test_command}"
 done

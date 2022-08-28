@@ -90,7 +90,10 @@ public:
     /**
      * Set the maximum GPU temporary memory which the engine can use at execution time.
      */
+// depricated at TRT 8.4
+#if NV_TENSORRT_MAJOR >= 8 && NV_TENSORRT_MINOR >=4
     void SetWorkpaceSize(size_t workspaceSize);
+#endif
 
     /**
      * Set dla core

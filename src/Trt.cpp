@@ -175,11 +175,14 @@ void Trt::SetInt8Calibrator(const std::string& calibratorType, const int batchSi
     mConfig->setInt8Calibrator(calibrator);
 }
 
+// depricated at TRT 8.4
+#if NV_TENSORRT_MAJOR >= 8 && NV_TENSORRT_MINOR >=4
 void Trt::SetWorkpaceSize(size_t workspaceSize) {
     assert(mBuilder != nullptr && mConfig !=nullptr && "Please set config before build engine");
     mConfig->setMaxWorkspaceSize(workspaceSize);
     spdlog::info("set max workspace size: {}", mConfig->getMaxWorkspaceSize());
 }
+#endif // NV_TENSORRT_MAJOR >= 8 && NV_TENSORRT_MINOR >=4
 
 void Trt::SetDLACore(int dlaCore) {
     assert(mBuilder != nullptr && mConfig !=nullptr && "Please set config before build engine");
