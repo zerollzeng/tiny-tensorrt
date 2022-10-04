@@ -26,7 +26,7 @@ tiny-tensorrt rely on CUDA, CUDNN and TensorRT. Make sure you has installed thos
 
 Support CUDA version: 10.2, 11.0, 11.1, 11.2, 11.3, 11.4
 
-Support TensorRT version: 7.0, 7.1, 7.2, 8.0, 8.2
+Support TensorRT version: 7.0, 7.1, 7.2, 8.0, 8.2 8.4
 
 To build tiny-tensorrt, you also need some extra packages.
 ```bash

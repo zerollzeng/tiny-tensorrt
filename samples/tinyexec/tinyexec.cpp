@@ -192,7 +192,7 @@ int main(int argc, char** argv) {
     SetDevice(device);
     onnx_net->SetDLACore(dla_core);
     if(calibrateDataDir != "" || calibrateCache != "") {
-        onnx_net->SetInt8Calibrator("Int8EntropyCalibrator2", batch_size, calibrateDataDir, calibrateCache);
+        onnx_net->SetInt8Calibrator("EntropyCalibratorV2", batch_size, calibrateDataDir, calibrateCache);
     }
     const std::string& log_level_string = cmdparams.getCmdOption("--log_level");
     if(log_level_string != "") {
