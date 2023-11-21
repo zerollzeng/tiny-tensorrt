@@ -8,6 +8,10 @@
 
 ![image](https://user-images.githubusercontent.com/38289304/71065174-aafc3100-21ab-11ea-9bcb-665d38181e74.png)
 
+**This Project is no longer maintained since we already have better alternatives for engine build, you can use TensorRT's python API, or make use of trtexec/polygraphy tool to build the engine quickly**
+
+**For any issue about TensorRT, you can file issue against https://github.com/NVIDIA/TensorRT/issues**
+
 ## tiny-tensorrt
 An easy-to-use nvidia TensorRT wrapper for onnx model with c++ and python api. you are able to deploy your model with tiny-tensorrt in few lines of code!
 
